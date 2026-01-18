@@ -105,7 +105,6 @@ const App: React.FC = () => {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/content" element={<AdminContentCreator />} />
             <Route path="/admin/finance" element={<FinancialControl />} />
-            {/* Adicionar outras rotas de admin aqui se necessário */}
           </Route>
           <Route path="/admin/agenda" element={<AdminAgenda />} />
           <Route path="/admin/agenda/day/:date" element={<AdminTimeline />} />
@@ -115,7 +114,6 @@ const App: React.FC = () => {
           <Route path="/admin/client/:id" element={<ClientDetailsAdmin />} />
           <Route path="/admin/professional/:id" element={<ProfessionalDetailsAdmin />} />
           <Route path="/admin/notifications" element={<AdminNotifications />} />
-          <Route path="/admin/content" element={<AdminContentCreator />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="/admin/professionals" element={<AdminProfessionals />} />
           <Route path="/admin/faq" element={<AdminFAQManagement />} />

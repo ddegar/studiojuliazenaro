@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Professional, Service } from '../types';
 import { supabase } from '../services/supabase';
@@ -11,9 +11,11 @@ const Services: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        // Fetch strictly from database
         const [prosRes, servsRes] = await Promise.all([
           supabase.from('professionals').select('*').eq('active', true),
           supabase.from('services').select('*').eq('active', true)
@@ -21,22 +23,31 @@ const Services: React.FC = () => {
 
         if (prosRes.data) {
           setProfessionals(prosRes.data.map((p: any) => ({
-            ...p,
-            // Map standard fields if needed, assumes mostly matching or UI ignores extras
+            id: p.id,
+            name: p.name,
+            role: p.role || 'Especialista',
+            avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
+            active: p.active
           })));
         }
 
         if (servsRes.data) {
           setServices(servsRes.data.map((s: any) => ({
-            ...s,
-            imageUrl: s.image_url,
-            professionalIds: s.professional_ids,
-            pointsReward: s.points_reward,
-            isPopular: s.is_popular
+            id: s.id,
+            name: s.name,
+            description: s.description,
+            price: s.price,
+            duration: s.duration,
+            category: s.category || 'Procedimento',
+            imageUrl: s.image_url || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+            professionalIds: s.professional_ids || [],
+            pointsReward: s.points_reward || 0,
+            isPopular: s.is_popular || false,
+            active: s.active
           })));
         }
       } catch (error) {
-        console.error('Error fetching data', error);
+        console.error('Error fetching services/pros:', error);
       } finally {
         setLoading(false);
       }
@@ -45,6 +56,15 @@ const Services: React.FC = () => {
   }, []);
 
   const filteredServices = services.filter(s => selectedPro && s.professionalIds.includes(selectedPro.id));
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-screen bg-background-light items-center justify-center">
+        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-primary font-bold animate-pulse uppercase text-[10px] tracking-widest">Carregando Catálogo...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-background-light pb-32">
@@ -65,7 +85,7 @@ const Services: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-5">
-              {loading ? <p className="text-center text-gray-500">Carregando...</p> : professionals.map(pro => (
+              {professionals.length > 0 ? professionals.map(pro => (
                 <button
                   key={pro.id}
                   onClick={() => setSelectedPro(pro)}
@@ -83,7 +103,12 @@ const Services: React.FC = () => {
                     </div>
                   </div>
                 </button>
-              ))}
+              )) : (
+                <div className="py-20 text-center opacity-30 border-2 border-dashed border-gray-300 rounded-[40px]">
+                  <span className="material-symbols-outlined !text-6xl">person_off</span>
+                  <p className="mt-4 font-bold text-sm">Nenhuma profissional ativa.</p>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -103,7 +128,7 @@ const Services: React.FC = () => {
             </div>
 
             <div className="space-y-6">
-              {filteredServices.map(service => (
+              {filteredServices.length > 0 ? filteredServices.map(service => (
                 <div key={service.id} className="bg-white rounded-[40px] overflow-hidden border border-gray-100 shadow-sm flex flex-col group">
                   <div className="h-56 overflow-hidden relative">
                     <img src={service.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt={service.name} />
@@ -130,13 +155,17 @@ const Services: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="py-20 text-center opacity-30">
+                  <span className="material-symbols-outlined !text-6xl">inventory_2</span>
+                  <p className="mt-4 font-bold text-sm">Nenhum serviço disponível para esta profissional.</p>
+                </div>
+              )}
             </div>
           </div>
         )}
       </main>
 
-      {/* Nav de 5 itens */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav border-t border-gray-100 flex justify-around items-center py-6 px-4 z-50 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1.5 text-gray-400">
           <span className="material-symbols-outlined !text-3xl">home</span>

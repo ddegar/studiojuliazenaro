@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Service, Professional, Appointment } from '../types';
 import { supabase } from '../services/supabase';
@@ -15,33 +15,6 @@ const Booking: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [bookedAppointments, setBookedAppointments] = useState<Partial<Appointment>[]>([]);
   const [loading, setLoading] = useState(true);
-
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [prosRes, servsRes] = await Promise.all([
-          supabase.from('professionals').select('*').eq('active', true),
-          supabase.from('services').select('*').eq('active', true)
-        ]);
-
-        if (prosRes.data) setProfessionals(prosRes.data);
-        if (servsRes.data) {
-          setServices(servsRes.data.map((s: any) => ({
-            ...s,
-            imageUrl: s.image_url,
-            professionalIds: s.professional_ids,
-            pointsReward: s.points_reward
-          })));
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
   const [step, setStep] = useState<BookingStep>(
     preSelected?.service ? 'DATE' : (preSelected?.professional ? 'SERVICE' : 'PROFESSIONAL')
   );
@@ -52,17 +25,57 @@ const Booking: React.FC = () => {
     date?: string;
     time?: string;
   }>({
+    professional: preSelected?.professional,
     service: preSelected?.service,
   });
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [prosRes, servsRes] = await Promise.all([
+          supabase.from('professionals').select('*').eq('active', true),
+          supabase.from('services').select('*').eq('active', true)
+        ]);
+
+        if (prosRes.data) {
+          setProfessionals(prosRes.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            role: p.role || 'Especialista',
+            avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`
+          })));
+        }
+        if (servsRes.data) {
+          setServices(servsRes.data.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            description: s.description,
+            price: s.price,
+            duration: s.duration,
+            imageUrl: s.image_url,
+            professionalIds: s.professional_ids || [],
+            pointsReward: s.points_reward
+          })));
+        }
+      } catch (e) {
+        console.error('Booking fetch error:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   // Fetch appointments for availability
-  React.useEffect(() => {
+  useEffect(() => {
     if (selection.date && selection.professional) {
       const fetchAppts = async () => {
         const { data } = await supabase.from('appointments')
-          .select('*')
+          .select('date, time, professional_id, status')
           .eq('date', selection.date)
-          .eq('professional_id', selection.professional!.id); // UUID match
+          .eq('professional_id', selection.professional!.id)
+          .neq('status', 'CANCELLED');
 
         if (data) {
           setBookedAppointments(data.map((a: any) => ({
@@ -81,12 +94,33 @@ const Booking: React.FC = () => {
 
   const availableHours = useMemo(() => {
     if (!selection.date || !selection.professional) return [];
-    const allHours = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
+    // Standard working hours - Could be fetched from a studio_settings table in future
+    const allHours = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
     const occupied = bookedAppointments
       .filter(a => a.date === selection.date && a.professionalId === selection.professional?.id)
       .map(a => a.time);
     return allHours.filter(h => !occupied.includes(h));
   }, [selection.date, selection.professional, bookedAppointments]);
+
+  // Generate real dates (Next 14 days)
+  const availableDates = useMemo(() => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 1; i <= 14; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      // Skip Sundays (optional studio rule)
+      if (d.getDay() !== 0) {
+        dates.push({
+          full: d.toISOString().split('T')[0],
+          day: d.getDate().toString().padStart(2, '0'),
+          month: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+          weekday: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
+        });
+      }
+    }
+    return dates;
+  }, []);
 
   const handleStepBack = () => {
     if (step === 'CONFIRM') setStep('TIME');
@@ -95,6 +129,14 @@ const Booking: React.FC = () => {
     else if (step === 'SERVICE') setStep('PROFESSIONAL');
     else navigate(-1);
   };
+
+  if (loading && professionals.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background-light">
+        <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-background-light">
@@ -132,7 +174,7 @@ const Booking: React.FC = () => {
               <p className="text-sm text-gray-500 italic">Cada profissional tem um estilo único e especial</p>
             </div>
             <div className="space-y-5">
-              {loading ? <p>Carregando...</p> : professionals.map(p => (
+              {professionals.length > 0 ? professionals.map(p => (
                 <button
                   key={p.id}
                   onClick={() => { setSelection({ professional: p }); setStep('SERVICE'); }}
@@ -145,7 +187,9 @@ const Booking: React.FC = () => {
                   </div>
                   <span className="material-symbols-outlined text-gray-200">chevron_right</span>
                 </button>
-              ))}
+              )) : (
+                <p className="text-center text-gray-400 py-10 italic">Nenhuma profissional disponível no momento.</p>
+              )}
             </div>
           </div>
         )}
@@ -157,20 +201,23 @@ const Booking: React.FC = () => {
               <p className="text-sm text-gray-500 italic">Escolha o serviço que combina com você hoje</p>
             </div>
             <div className="space-y-4">
-              {loading ? <p>Carregando...</p> : services.filter(s => s.professionalIds.includes(selection.professional?.id!)).map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => { setSelection(prev => ({ ...prev, service: s })); setStep('DATE'); }}
-                  className="w-full bg-white p-6 rounded-[32px] border border-gray-100 flex items-center gap-5 active:scale-[0.98] transition-all shadow-sm text-left group"
-                >
-                  <img src={s.imageUrl} className="size-16 rounded-2xl object-cover" alt={s.name} />
-                  <div className="flex-1 space-y-0.5">
-                    <p className="font-bold text-lg text-primary">{s.name}</p>
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{s.duration} min • R$ {s.price}</p>
-                  </div>
-                  <span className="material-symbols-outlined text-gray-200">chevron_right</span>
-                </button>
-              ))}
+              {services.filter(s => s.professionalIds.includes(selection.professional?.id!)).length > 0 ?
+                services.filter(s => s.professionalIds.includes(selection.professional?.id!)).map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => { setSelection(prev => ({ ...prev, service: s })); setStep('DATE'); }}
+                    className="w-full bg-white p-6 rounded-[32px] border border-gray-100 flex items-center gap-5 active:scale-[0.98] transition-all shadow-sm text-left group"
+                  >
+                    <img src={s.imageUrl || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=100'} className="size-16 rounded-2xl object-cover" alt={s.name} />
+                    <div className="flex-1 space-y-0.5">
+                      <p className="font-bold text-lg text-primary">{s.name}</p>
+                      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{s.duration} min • R$ {s.price}</p>
+                    </div>
+                    <span className="material-symbols-outlined text-gray-200">chevron_right</span>
+                  </button>
+                )) : (
+                  <p className="text-center text-gray-400 py-10 italic">Esta profissional não possui serviços cadastrados.</p>
+                )}
             </div>
           </div>
         )}
@@ -182,21 +229,22 @@ const Booking: React.FC = () => {
               <p className="text-sm text-gray-500 italic">Escolha com calma. Estamos aqui para te receber.</p>
             </div>
 
-            <div className="bg-white p-10 rounded-[48px] border border-gray-50 premium-shadow space-y-12">
-              <div className="flex justify-between">
-                {['06', '07', '08', '09', '10'].map(d => (
+            <div className="bg-white p-6 rounded-[48px] border border-gray-50 premium-shadow space-y-8">
+              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1">
+                {availableDates.map(d => (
                   <button
-                    key={d}
-                    onClick={() => { setSelection({ ...selection, date: `2023-11-${d}`, time: undefined }); setStep('TIME'); }}
-                    className={`size-16 rounded-2xl flex flex-col items-center justify-center transition-all ${selection.date?.includes(d) ? 'bg-primary text-white shadow-2xl scale-110' : 'bg-gray-50 text-gray-400'}`}
+                    key={d.full}
+                    onClick={() => { setSelection({ ...selection, date: d.full, time: undefined }); setStep('TIME'); }}
+                    className={`shrink-0 w-20 h-24 rounded-3xl flex flex-col items-center justify-center transition-all border ${selection.date === d.full ? 'bg-primary text-white border-primary shadow-xl scale-105' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
                   >
-                    <span className="text-[9px] font-black uppercase tracking-widest">Nov</span>
-                    <span className="text-xl font-black">{d}</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest mb-1">{d.weekday}</span>
+                    <span className="text-2xl font-black">{d.day}</span>
+                    <span className="text-[8px] font-black uppercase tracking-widest mt-1">{d.month}</span>
                   </button>
                 ))}
               </div>
 
-              <div className="bg-accent-gold/5 p-5 rounded-2xl flex items-center gap-4">
+              <div className="bg-accent-gold/5 p-5 rounded-2xl flex items-center gap-4 border border-accent-gold/10">
                 <span className="material-symbols-outlined text-accent-gold">event_available</span>
                 <p className="text-[10px] text-primary/70 font-medium leading-relaxed">Selecionamos apenas dias com agenda aberta para sua comodidade.</p>
               </div>
@@ -225,7 +273,6 @@ const Booking: React.FC = () => {
                 <div className="col-span-3 py-16 text-center opacity-30">
                   <span className="material-symbols-outlined !text-6xl">event_busy</span>
                   <p className="text-sm font-bold mt-4">Nenhum horário livre para este dia.😔</p>
-                  <p className="text-[10px] uppercase font-black tracking-widest mt-2">Vamos encontrar outro perfeito para você</p>
                 </div>
               )}
             </div>
@@ -236,30 +283,28 @@ const Booking: React.FC = () => {
 
         {step === 'CONFIRM' && (
           <div className="p-8 space-y-12 animate-fade-in">
-            <div className="bg-white rounded-[48px] p-10 border border-gray-100 premium-shadow space-y-10">
+            <div className="bg-white rounded-[48px] p-8 border border-gray-100 premium-shadow space-y-10">
               <div className="text-center space-y-3">
                 <h3 className="text-4xl font-display font-bold text-primary">Tudo certo 💖</h3>
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.25em]">Seu atendimento foi reservado com carinho</p>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.25em]">Sua reserva está quase concluída</p>
               </div>
 
-              <div className="space-y-8 pt-6 border-t border-gray-50">
+              <div className="space-y-6 pt-6 border-t border-gray-50">
                 <div className="flex justify-between items-center">
-                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Especialista</p>
+                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Especialista</p>
                   <p className="text-sm font-bold text-primary">{selection.professional?.name}</p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Procedimento</p>
+                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Procedimento</p>
                   <p className="text-sm font-bold text-primary">{selection.service?.name}</p>
                 </div>
                 <div className="flex justify-between items-center">
-                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Data & Hora</p>
-                  <p className="text-sm font-bold text-primary">{selection.date} • {selection.time}</p>
+                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Data & Hora</p>
+                  <p className="text-sm font-bold text-primary">{selection.date?.split('-').reverse().join('/')} • {selection.time}</p>
                 </div>
-                <div className="flex justify-between pt-8 border-t border-dashed border-gray-100">
-                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Total Estimado</p>
-                  <div className="text-right">
-                    <p className="text-3xl font-black text-primary">R$ {selection.service?.price}</p>
-                  </div>
+                <div className="flex justify-between pt-6 border-t border-dashed border-gray-100">
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Investimento</p>
+                  <p className="text-3xl font-black text-primary">R$ {selection.service?.price}</p>
                 </div>
               </div>
             </div>
@@ -267,12 +312,9 @@ const Booking: React.FC = () => {
             <button
               onClick={async () => {
                 try {
-                  // Get current user (assuming auth wrapper/context handles this or we fetch it)
-                  // For now, let's blindly insert. If RLS fails, we catch error.
-                  // Ideally we get user_id from session.
                   const { data: { user } } = await supabase.auth.getUser();
                   if (!user) {
-                    alert('Você precisa estar logado para agendar.');
+                    alert('Sessão expirada. Por favor, faça login novamente.');
                     navigate('/login');
                     return;
                   }
@@ -284,12 +326,14 @@ const Booking: React.FC = () => {
                     date: selection.date,
                     time: selection.time,
                     price: selection.service!.price,
-                    status: 'PENDING'
+                    status: 'PENDING',
+                    service_name: selection.service!.name,
+                    professional_name: selection.professional!.name
                   });
                   if (error) throw error;
                   navigate('/booking/confirmed', { state: { selection } });
                 } catch (e: any) {
-                  alert('Erro ao agendar: ' + e.message);
+                  alert('Erro ao confirmar: ' + e.message);
                 }
               }}
               className="w-full h-18 bg-primary text-white rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl active:scale-95 transition-transform"

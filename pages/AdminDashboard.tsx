@@ -38,14 +38,24 @@ const AdminDashboard: React.FC = () => {
         if (profile) {
           const today = new Date().toISOString().split('T')[0];
 
-          // Parallel fetching for performance
+          // Corrected filtering logic
+          const apptsQuery = supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today);
+          if (profile.role !== 'MASTER_ADMIN') {
+            apptsQuery.eq('professional_id', profile.id);
+          }
+
+          const transQuery = supabase
+            .from('transactions')
+            .select('amount, type, date')
+            .gte('date', last7Days[0]);
+          if (profile.role !== 'MASTER_ADMIN') {
+            transQuery.eq('user_id', profile.id);
+          }
+
           const [clientsRes, apptsRes, transRes] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'CLIENT'),
-            supabase.from('appointments').select('*', { count: 'exact', head: true })
-              .eq('date', today)
-              .filter(profile.role !== 'MASTER_ADMIN' ? 'professional_id' : 'id', 'eq', profile.role !== 'MASTER_ADMIN' ? profile.id : undefined),
-            supabase.from('transactions').select('amount, type, date')
-              .filter(profile.role !== 'MASTER_ADMIN' ? 'user_id' : 'id', 'eq', profile.role !== 'MASTER_ADMIN' ? profile.id : undefined)
+            apptsQuery,
+            transQuery
           ]);
 
           // Calculate revenue
@@ -99,7 +109,7 @@ const AdminDashboard: React.FC = () => {
     { label: 'Profissionais', icon: 'badge', path: '/admin/professionals', masterOnly: true },
     { label: 'Financeiro', icon: 'payments', path: '/admin/finance' },
     { label: 'Conteúdo', subheader: true },
-    { label: 'Stories', icon: 'history_toggle_off', path: '/admin/stories' },
+    { label: 'Stories / Posts', icon: 'history_toggle_off', path: '/admin/content' },
     { label: 'Dicas (Pré/Pós)', icon: 'lightbulb', path: '/admin/tips' },
     { label: 'FAQ (Dúvidas)', icon: 'help', path: '/admin/faq' },
     { label: 'Depoimentos', icon: 'reviews', path: '/admin/testimonials' },

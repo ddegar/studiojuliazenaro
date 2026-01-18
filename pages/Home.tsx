@@ -9,6 +9,7 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Visitante');
+  const [profileImg, setProfileImg] = useState('');
   const [nextAppt, setNextAppt] = useState<any>(null);
   const [stories, setStories] = useState<any[]>([]);
 
@@ -29,7 +30,7 @@ const Home: React.FC = () => {
             `)
             .gt('expires_at', new Date().toISOString())
             .order('created_at', { ascending: false }),
-          user ? supabase.from('profiles').select('name').eq('id', user.id).single() : Promise.resolve({ data: null })
+          user ? supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single() : Promise.resolve({ data: null })
         ]);
 
         if (storiesRes.data) {
@@ -44,7 +45,8 @@ const Home: React.FC = () => {
         }
 
         if (user && profileRes.data) {
-          setUserName(profileRes.data.name.split(' ')[0]);
+          setUserName(profileRes.data.name?.split(' ')[0] || 'Visitante');
+          setProfileImg(profileRes.data.avatar_url || `https://ui-avatars.com/api/?name=${profileRes.data.name}&background=random`);
 
           const today = new Date().toISOString().split('T')[0];
           const { data: appts } = await supabase.from('appointments')
@@ -93,7 +95,7 @@ const Home: React.FC = () => {
       <header className="sticky top-0 z-50 glass-nav p-6 pb-3 flex justify-between items-center rounded-b-[28px]">
         <div className="flex items-center gap-3">
           <div className="ring-2 ring-accent-gold ring-offset-1 rounded-full overflow-hidden w-10 h-10 shadow-md">
-            <img src="https://picsum.photos/100/100?sig=maria" alt="profile" />
+            <img src={profileImg} alt="profile" className="w-full h-full object-cover" />
           </div>
           <div>
             <p className="text-[8px] font-black uppercase tracking-[0.2em] text-primary/60">Seu momento 💖</p>

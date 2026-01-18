@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 
@@ -8,13 +8,14 @@ type Step = 1 | 2 | 3 | 4 | 5;
 const AestheticProfile: React.FC = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
 
   // States for all selections
   const [eyeShape, setEyeShape] = useState('amendoado');
   const [style, setStyle] = useState('natural');
   const [curvature, setCurvature] = useState('D');
-  const [length, setLength] = useState(50); // 0-100 slider
+  const [length, setLength] = useState(50);
   const [thickness, setThickness] = useState('natural');
   const [pigment, setPigment] = useState(50);
   const [maintenance, setMaintenance] = useState('3');
@@ -26,6 +27,38 @@ const AestheticProfile: React.FC = () => {
     music: 'jazz',
     snack: 'bolacha'
   });
+
+  useEffect(() => {
+    const fetchExisting = async () => {
+      setLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+          if (data) {
+            setProfile(data);
+            if (data.preferences) {
+              const p = data.preferences;
+              setEyeShape(p.eyeShape || 'amendoado');
+              setStyle(p.style || 'natural');
+              setCurvature(p.curvature || 'D');
+              setLength(p.length || 50);
+              setThickness(p.thickness || 'natural');
+              setPigment(p.pigment || 50);
+              setMaintenance(p.maintenance || '3');
+              setAllergies(p.allergies || '');
+              if (p.hospitality) setHospitality(p.hospitality);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching preferences:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExisting();
+  }, []);
 
   const handleNext = () => {
     if (step < 5) setStep((step + 1) as Step);
@@ -55,7 +88,8 @@ const AestheticProfile: React.FC = () => {
         pigment,
         maintenance,
         allergies,
-        hospitality
+        hospitality,
+        lastUpdate: new Date().toLocaleDateString('pt-BR')
       };
 
       const { error } = await supabase
@@ -75,9 +109,16 @@ const AestheticProfile: React.FC = () => {
     }
   };
 
+  if (loading && step === 1 && !profile) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#fbfaf9]">
+        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full bg-[#fbfaf9]">
-      {/* Header Fixo Premium */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md p-6 border-b border-gray-100 flex items-center justify-between">
         <button onClick={handleBack} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
         <div className="text-center">
@@ -93,7 +134,6 @@ const AestheticProfile: React.FC = () => {
         <span className="material-symbols-outlined text-primary opacity-60">info</span>
       </header>
 
-      {/* Progress Bar Passo a Passo */}
       <div className="px-8 pt-6 pb-2">
         <div className="flex justify-between items-center mb-3">
           <span className="text-[10px] font-black text-primary uppercase tracking-widest">
@@ -159,10 +199,10 @@ const AestheticProfile: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               {[
-                { id: 'natural', label: 'Natural Look', desc: 'Um fio por vez, realce discreto.', img: 'https://picsum.photos/400/500?sig=10' },
-                { id: 'rimel', label: 'Efeito Rímel', desc: 'Volume clássico com mais definição.', img: 'https://picsum.photos/400/500?sig=11' },
-                { id: 'russo', label: 'Volume Russo', desc: 'Preenchimento total e glamour.', img: 'https://picsum.photos/400/500?sig=12' },
-                { id: 'lifting', label: 'Lash Lifting', desc: 'Curvatura natural sem extensões.', img: 'https://picsum.photos/400/500?sig=13' }
+                { id: 'natural', label: 'Natural Look', desc: 'Um fio por vez, realce discreto.', img: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400' },
+                { id: 'rimel', label: 'Efeito Rímel', desc: 'Volume clássico com mais definição.', img: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400' },
+                { id: 'russo', label: 'Volume Russo', desc: 'Preenchimento total e glamour.', img: 'https://images.unsplash.com/photo-1583001809033-00e930cd2645?w=400' },
+                { id: 'lifting', label: 'Lash Lifting', desc: 'Curvatura natural sem extensões.', img: 'https://images.unsplash.com/photo-1519415510236-85591199360e?w=400' }
               ].map((opt) => (
                 <button
                   key={opt.id}
@@ -212,7 +252,7 @@ const AestheticProfile: React.FC = () => {
             <section className="space-y-6">
               <div className="flex justify-between items-center px-1">
                 <h3 className="font-display font-bold text-xl text-primary">Comprimento</h3>
-                <span className="bg-gray-100 px-4 py-1.5 rounded-full text-[10px] font-black text-primary">11-13mm (Médio)</span>
+                <span className="bg-gray-100 px-4 py-1.5 rounded-full text-[10px] font-black text-primary">{length > 70 ? 'Impactante' : length > 30 ? 'Equilibrado' : 'Discreto'}</span>
               </div>
               <div className="px-4">
                 <input
@@ -265,7 +305,7 @@ const AestheticProfile: React.FC = () => {
             <section className="space-y-6">
               <div className="flex justify-between items-center px-1">
                 <h3 className="font-display font-bold text-xl text-primary">Intensidade do Pigmento</h3>
-                <span className="bg-gray-100 px-4 py-1.5 rounded-full text-[10px] font-black text-primary">Médio</span>
+                <span className="bg-gray-100 px-4 py-1.5 rounded-full text-[10px] font-black text-primary">{pigment > 70 ? 'Marcante' : pigment > 30 ? 'Equilibrado' : 'Discreto'}</span>
               </div>
               <div className="px-4">
                 <input
@@ -280,10 +320,6 @@ const AestheticProfile: React.FC = () => {
                   <span className="text-primary">Equilibrado</span>
                   <span>Marcante</span>
                 </div>
-              </div>
-              <div className="bg-accent-gold/5 p-6 rounded-3xl border border-accent-gold/20 flex gap-4">
-                <span className="material-symbols-outlined text-accent-gold">lightbulb</span>
-                <p className="text-[11px] text-primary/70 italic leading-relaxed">A intensidade "Equilibrada" é a mais escolhida para Lash Lifting, proporcionando brilho e profundidade sem pesar o olhar.</p>
               </div>
             </section>
           </div>
@@ -332,10 +368,7 @@ const AestheticProfile: React.FC = () => {
                 value={allergies}
                 onChange={(e) => setAllergies(e.target.value)}
               />
-              <p className="text-right text-[9px] font-black text-gray-300 uppercase tracking-widest">Opcional</p>
             </section>
-
-            <p className="text-center font-display italic text-primary/40 text-lg pt-4 animate-pulse">Estamos quase lá ✨</p>
           </div>
         )}
 
@@ -347,7 +380,6 @@ const AestheticProfile: React.FC = () => {
             </div>
 
             <section className="space-y-8">
-              {/* Preferência de Bebida */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-primary">
                   <span className="material-symbols-outlined">coffee</span>
@@ -371,7 +403,6 @@ const AestheticProfile: React.FC = () => {
                 </div>
               </div>
 
-              {/* Preferência de Música */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-primary">
                   <span className="material-symbols-outlined">music_note</span>
@@ -395,7 +426,6 @@ const AestheticProfile: React.FC = () => {
                 </div>
               </div>
 
-              {/* Preferência de Snacks */}
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-primary">
                   <span className="material-symbols-outlined">cookie</span>
@@ -429,7 +459,6 @@ const AestheticProfile: React.FC = () => {
         )}
       </main>
 
-      {/* Botão de Ação Inferior */}
       <div className="fixed bottom-0 inset-x-0 p-8 glass-nav border-t border-gray-100 rounded-t-[40px] shadow-[0_-15px_40px_rgba(0,0,0,0.05)] z-50">
         <button
           onClick={handleNext}

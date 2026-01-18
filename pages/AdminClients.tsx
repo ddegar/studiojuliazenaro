@@ -16,49 +16,50 @@ const AdminClients: React.FC = () => {
 
    const fetchClients = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-         .from('profiles')
-         .select(`
-            *,
-            preferences,
-            appointments (
-                date,
-                professional_name
-            )
-         `)
-         .order('name');
+      try {
+         const { data, error } = await supabase
+            .from('profiles')
+            .select(`
+              *,
+              appointments (
+                  date,
+                  professional_name
+              )
+           `)
+            .eq('role', 'CLIENT')
+            .order('name');
 
-      if (error) {
-         console.error(error);
+         if (error) throw error;
+
+         const formatted = data.map((p: any) => {
+            const appts = p.appointments?.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()) || [];
+            const lastAppt = appts[0];
+            const points = p.lash_points || 0;
+
+            let tier = 'Silver';
+            if (points >= 500) tier = 'Ouro';
+            if (points >= 1000) tier = 'Diamante';
+
+            return {
+               id: p.id,
+               name: p.name || 'Sem Nome',
+               status: tier,
+               points,
+               last: lastAppt ? new Date(lastAppt.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'Novo',
+               pro: lastAppt?.professional_name || '-',
+               phone: p.phone || '-',
+               img: p.avatar_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
+               active: lastAppt ? (new Date().getTime() - new Date(lastAppt.date).getTime()) < 30 * 24 * 60 * 60 * 1000 : false,
+               preferences: p.preferences || {}
+            };
+         });
+
+         setClients(formatted);
+      } catch (err) {
+         console.error('Error fetching clients:', err);
+      } finally {
          setLoading(false);
-         return;
       }
-
-      const formatted = data.map((p: any) => {
-         const appts = p.appointments?.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()) || [];
-         const lastAppt = appts[0];
-         const points = p.lash_points || 0;
-
-         let status = 'Silver';
-         if (points > 500) status = 'Ouro';
-         if (points > 1000) status = 'Diamante';
-
-         return {
-            id: p.id,
-            name: p.name || 'Sem Nome',
-            status,
-            points,
-            last: lastAppt ? new Date(lastAppt.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'Novo',
-            pro: lastAppt?.professional_name || '-',
-            phone: p.phone || '-',
-            img: p.avatar_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
-            active: lastAppt ? (new Date().getTime() - new Date(lastAppt.date).getTime()) < 30 * 24 * 60 * 60 * 1000 : false,
-            preferences: p.preferences
-         };
-      });
-
-      setClients(formatted);
-      setLoading(false);
    };
 
    const filteredClients = clients.filter(c => {
@@ -80,7 +81,7 @@ const AdminClients: React.FC = () => {
                      <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{clients.length} Cadastradas</p>
                   </div>
                </div>
-               <button className="size-11 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+               <button onClick={() => navigate('/admin/clients/new')} className="size-11 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                   <span className="material-symbols-outlined">person_add</span>
                </button>
             </div>
@@ -120,16 +121,9 @@ const AdminClients: React.FC = () => {
                         <h4 className="font-bold text-sm leading-tight text-white group-hover:text-accent-gold transition-colors">{client.name}</h4>
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2">
-                              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${client.status === 'Diamante' ? 'bg-accent-gold text-primary shadow-lg shadow-accent-gold/20' : 'bg-white/10 text-gray-400'}`}>{client.status}</span>
+                              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${client.status === 'Diamante' ? 'bg-accent-gold text-primary shadow-lg' : 'bg-white/10 text-gray-400'}`}>{client.status}</span>
                               <span className="text-[9px] text-gray-500 font-bold uppercase">{client.points} pts</span>
                            </div>
-                           {client.preferences && (
-                              <div className="flex flex-wrap gap-1">
-                                 {Object.entries(client.preferences).slice(0, 3).map(([k, v]) => (
-                                    <span key={k} className="text-[7px] text-accent-gold/50 font-bold uppercase border border-accent-gold/20 px-1 rounded-sm">{String(v)}</span>
-                                 ))}
-                              </div>
-                           )}
                            <p className="text-[9px] text-gray-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">Último: {client.last} com {client.pro}</p>
                         </div>
                      </div>
@@ -149,7 +143,7 @@ const AdminClients: React.FC = () => {
             )}
          </main>
 
-         <nav className="fixed bottom-0 inset-x-0 bg-background-dark/95 backdrop-blur-xl border-t border-white/10 px-6 py-4 flex justify-between items-center z-50 rounded-t-[32px]">
+         <nav className="fixed bottom-0 inset-x-0 bg-background-dark/95 backdrop-blur-xl border-t border-white/10 px-6 py-4 flex justify-between items-center z-50 rounded-t-[32px] max-w-[430px] left-1/2 -translate-x-1/2">
             <button onClick={() => navigate('/admin')} className="flex flex-col items-center gap-1.5 text-gray-500">
                <span className="material-symbols-outlined !text-3xl">grid_view</span>
                <span className="text-[8px] font-black uppercase tracking-widest">Painel</span>
