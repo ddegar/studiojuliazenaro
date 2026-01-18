@@ -319,18 +319,33 @@ const Booking: React.FC = () => {
                     return;
                   }
 
-                  const { error } = await supabase.from('appointments').insert({
+                  const isRescheduling = location.state?.isRescheduling;
+                  const oldApptId = location.state?.oldApptId;
+
+                  const payload = {
                     user_id: user.id,
                     service_id: selection.service!.id,
                     professional_id: selection.professional!.id,
                     date: selection.date,
                     time: selection.time,
                     price: selection.service!.price,
-                    status: 'PENDING',
+                    status: 'pending',
                     service_name: selection.service!.name,
                     professional_name: selection.professional!.name
-                  });
-                  if (error) throw error;
+                  };
+
+                  if (isRescheduling && oldApptId) {
+                    const { error } = await supabase.from('appointments')
+                      .update({
+                        ...payload,
+                        status: 'pending' // Resets to pending for new confirmation
+                      })
+                      .eq('id', oldApptId);
+                    if (error) throw error;
+                  } else {
+                    const { error } = await supabase.from('appointments').insert(payload);
+                    if (error) throw error;
+                  }
                   navigate('/booking/confirmed', { state: { selection } });
                 } catch (e: any) {
                   alert('Erro ao confirmar: ' + e.message);

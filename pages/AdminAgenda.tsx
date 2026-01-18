@@ -36,31 +36,30 @@ const AdminAgenda: React.FC = () => {
                .single();
 
             if (profile) {
-               setCurrentUser(profile);
+               setCurrentUser(profile as { id: string, role: UserRole });
 
-               // Fetch real professionals
+               // Fetch real professionals from professionals table
                const { data: pros } = await supabase
-                  .from('profiles')
-                  .select('id, name, role, avatar_url, active')
-                  .in('role', ['MASTER_ADMIN', 'PROFESSIONAL_ADMIN'])
+                  .from('professionals')
+                  .select('*')
                   .eq('active', true);
 
                const formattedPros: Professional[] = (pros || []).map(p => ({
                   id: p.id,
                   name: p.name || 'Sem nome',
-                  role: p.role === 'MASTER_ADMIN' ? 'Master' : 'Designer',
-                  avatar: p.avatar_url || `https://ui-avatars.com/api/?name=${p.name}`,
+                  role: p.role || 'Designer',
+                  avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}`,
                   active: p.active,
                   specialties: [],
-                  rating: 5
+                  rating: p.rating || 5
                }));
 
                setProfessionals(formattedPros);
 
-               // Initial selection
+               // Initial selection: If professional, select self. If master, select self if pro or first pro.
                if (profile.role === 'MASTER_ADMIN') {
-                  const firstPro = formattedPros.find(p => p.id === profile.id) || formattedPros[0];
-                  setSelectedProId(firstPro?.id || profile.id);
+                  const selfPro = formattedPros.find(p => p.id === profile.id);
+                  setSelectedProId(selfPro?.id || formattedPros[0]?.id || profile.id);
                } else {
                   setSelectedProId(profile.id);
                }
@@ -75,7 +74,6 @@ const AdminAgenda: React.FC = () => {
       initAgenda();
    }, [navigate]);
 
-   // Fetch appointments for the current month and professional
    useEffect(() => {
       if (selectedProId) {
          const fetchMonthAppts = async () => {
@@ -137,7 +135,7 @@ const AdminAgenda: React.FC = () => {
                   <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
                   <div>
                      <h1 className="text-xl font-display font-bold">Agenda Mestra</h1>
-                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-[0.2em]">Controle Operacional</p>
+                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-[0.2em]">Sincronizada em Tempo Real</p>
                   </div>
                </div>
                <button onClick={() => navigate('/admin/agenda/new')} className="size-12 rounded-full bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20 ring-4 ring-primary/10">
@@ -145,7 +143,6 @@ const AdminAgenda: React.FC = () => {
                </button>
             </div>
 
-            {/* Filtro de Profissionais (Somente para Master) */}
             {isMaster && visibleProfessionals.length > 1 && (
                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
                   {visibleProfessionals.map(p => (
@@ -168,7 +165,7 @@ const AdminAgenda: React.FC = () => {
                </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-3">
+            <div className="grid grid-cols-7 gap-3 transition-opacity duration-300">
                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => (
                   <div key={d} className="text-center text-[9px] font-black uppercase text-gray-700 pb-2">{d}</div>
                ))}
@@ -178,21 +175,22 @@ const AdminAgenda: React.FC = () => {
                   const isToday = dayDate === now.toISOString().split('T')[0];
 
                   const dayAppts = appointments.filter(a => a.date === dayDate);
-                  const hasAppointments = dayAppts.length > 0;
-                  const isFull = dayAppts.length >= 8; // Simplified "full" logic
-                  const hasCancelled = dayAppts.some(a => a.status === 'CANCELLED');
+                  const activeAppts = dayAppts.filter(a => a.status !== 'cancelled' && a.status !== 'CANCELLED');
+                  const pendingAppts = activeAppts.filter(a => a.status === 'pending' || a.status === 'PENDING');
+                  const hasAppointments = activeAppts.length > 0;
+                  const isFull = activeAppts.length >= 8;
 
                   return (
                      <button
                         key={i}
                         onClick={() => handleDayClick(day)}
-                        className={`aspect-square rounded-3xl border flex flex-col items-center justify-center gap-1.5 transition-all relative ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105' : 'bg-white/5 border-white/5 hover:border-accent-gold/30'}`}
+                        className={`aspect-square rounded-3xl border flex flex-col items-center justify-center gap-1.5 transition-all relative ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}`}
                      >
                         <span className={`text-xs font-black ${isToday ? 'text-white' : 'text-gray-400'}`}>{day}</span>
 
                         <div className="flex gap-1">
-                           {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-accent-gold'}`}></div>}
-                           {hasCancelled && <div className="size-1.5 rounded-full bg-gray-600"></div>}
+                           {pendingAppts.length > 0 && <div className="absolute top-2 right-2 size-2 bg-accent-gold rounded-full animate-pulse shadow-lg shadow-accent-gold/50"></div>}
+                           {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-primary'}`}></div>}
                         </div>
                      </button>
                   );
@@ -200,23 +198,23 @@ const AdminAgenda: React.FC = () => {
             </div>
 
             <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6">
-               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Legenda da Agenda</h3>
+               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Status dos Dias</h3>
                <div className="grid grid-cols-2 gap-6">
                   <div className="flex items-center gap-3">
-                     <div className="size-3 rounded-full bg-accent-gold shadow-[0_0_10px_rgba(228,199,143,0.4)]"></div>
-                     <span className="text-[11px] font-bold text-gray-400">Com Agendamentos</span>
+                     <div className="size-3 rounded-full bg-primary shadow-lg shadow-primary/20"></div>
+                     <span className="text-[11px] font-medium text-gray-400">Atendimentos</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                     <div className="size-3 rounded-full bg-accent-gold animate-pulse"></div>
+                     <span className="text-[11px] font-medium text-gray-400">Pendentes</span>
                   </div>
                   <div className="flex items-center gap-3">
                      <div className="size-3 rounded-full bg-rose-500"></div>
-                     <span className="text-[11px] font-bold text-gray-400">Dia Cheio</span>
+                     <span className="text-[11px] font-medium text-gray-400">Dia Cheio</span>
                   </div>
                   <div className="flex items-center gap-3">
-                     <div className="size-3 rounded-full bg-gray-600"></div>
-                     <span className="text-[11px] font-bold text-gray-400">Cancelados</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                     <div className="size-3 rounded-full border border-dashed border-gray-600"></div>
-                     <span className="text-[11px] font-bold text-gray-400">Livre</span>
+                     <div className="size-3 border border-dashed border-gray-600 rounded-full"></div>
+                     <span className="text-[11px] font-medium text-gray-400">Livre</span>
                   </div>
                </div>
             </div>
