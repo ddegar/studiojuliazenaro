@@ -1,55 +1,95 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const STORIES = [
-  { id: 1, name: 'Julia Z.', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAgP7x4eCYp0QiObY4La3mDeH2HXiRR_zzsFXPoGMHbcgAfGsTX7F6W2ythsxdEMJbo6Qgar7XCdK-OuxM24PzXqUoJXfUXAYWx9BCxE9yBMT4q3dfmhPFymgjk36b5TZa8GDpS2tW4oGeT235bmwnLN7wLCFbGnwOFqT-WJfFJaYudP8IJ35KeI7lzo0pyiPnLm-kERQbD2cC7xYoRLBMEMlNBI2JdQ_ngbL9U516MUkvkgxRQFryjXCnA_uMkCRhpyl6Erek5TYo', isLive: true },
-  { id: 2, name: 'Resultados', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCiUm0OZLOAP3cwAd_kNhaySJIszM9lcCyidOrD36A0RJ6cgwHJtfgn-lnpXqaAtE8iKs_YU3tXlcSsuZ0boGn5bLhQ__y8m82EMKH2DKzjgEEHyZ1pmUPWmW5KqZdNlIbHCMNfZlZgTLPjH7QSoYmAh-qkuUgWkfB1bLAL9lAqTIGQXxHt2HZaaS8wd9pc6vbCGoTliddw2HMZP_26xr-73B0_wHcoCtg2hiy8ZRQqd_0azA75gvWqpOx-6c3PBhvPgsS5zz4Ckuc' },
-  { id: 3, name: 'Dicas', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCrbNG905ki_EKBSesdkup3q0zgyKy4bT6XnNVqDa2A9Bgtz-Rqq57Q3RrlVYO7Ac6WYmQqGkm7z4yb2iVMM21BDGDYwuqPzvXVm5GPe2j4T21BrLuQ599r5_xLOUxE3U89eQbxf6wu9m8IsMd_Pixc7MoorzNVhcuEGkPwcSLNSrDctCYxAYNGlTCtrZoXOq2m0b4d7INR_XUqOwDa1ie2xH7Ju1I8PZ80UukCC2Hb9TTBClh68QYm9ayWVMWwiM1PxjDO6KxR_9s' },
-];
-
 import { supabase } from '../services/supabase';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 
 const Home: React.FC = () => {
   const { subscribeToPush, permission } = usePushNotifications();
   const navigate = useNavigate();
-  const [userName, setUserName] = React.useState('Visitante');
-  const [nextAppt, setNextAppt] = React.useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('Visitante');
+  const [nextAppt, setNextAppt] = useState<any>(null);
+  const [stories, setStories] = useState<any[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchHomeData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Get Profile Name
-        const { data: profile } = await supabase.from('profiles').select('name').eq('id', user.id).single();
-        if (profile) setUserName(profile.name.split(' ')[0]);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
 
-        // Get Next Appointment
-        const today = new Date().toISOString().split('T')[0];
-        const { data: appts } = await supabase.from('appointments')
-          .select(`
-                    *,
-                    services (name),
-                    professionals (name)
-                `)
-          .eq('user_id', user.id)
-          .gte('date', today)
-          .order('date', { ascending: true })
-          .order('time', { ascending: true })
-          .limit(1);
+        // Parallel fetching
+        const [storiesRes, profileRes] = await Promise.all([
+          supabase
+            .from('stories')
+            .select(`
+              id,
+              image_url,
+              type,
+              profiles (name, avatar_url)
+            `)
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false }),
+          user ? supabase.from('profiles').select('name').eq('id', user.id).single() : Promise.resolve({ data: null })
+        ]);
 
-        if (appts && appts.length > 0) {
-          setNextAppt(appts[0]);
+        if (storiesRes.data) {
+          const formatted = storiesRes.data.map(s => ({
+            id: s.id,
+            name: s.type === 'PROFESSIONAL' ? (s.profiles?.name?.split(' ')[0] || 'Studio') : (s.profiles?.name?.split(' ')[0] || 'Cliente'),
+            img: s.image_url,
+            isLive: s.type === 'PROFESSIONAL',
+            avatar: s.profiles?.avatar_url
+          }));
+          setStories(formatted);
         }
+
+        if (user && profileRes.data) {
+          setUserName(profileRes.data.name.split(' ')[0]);
+
+          const today = new Date().toISOString().split('T')[0];
+          const { data: appts } = await supabase.from('appointments')
+            .select(`
+                      id,
+                      date,
+                      time,
+                      status,
+                      service_name,
+                      professional_name
+                  `)
+            .eq('user_id', user.id)
+            .gte('date', today)
+            .neq('status', 'CANCELLED')
+            .order('date', { ascending: true })
+            .order('time', { ascending: true })
+            .limit(1);
+
+          if (appts && appts.length > 0) {
+            setNextAppt(appts[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Home data error:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchHomeData();
-  }, []);
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background-light">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-primary font-display font-bold animate-pulse">Preparando seu espaço...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full pb-20 bg-background-light overflow-y-auto no-scrollbar">
-      {/* Header Premium - Mais compacto */}
+      {/* Header Premium */}
       <header className="sticky top-0 z-50 glass-nav p-6 pb-3 flex justify-between items-center rounded-b-[28px]">
         <div className="flex items-center gap-3">
           <div className="ring-2 ring-accent-gold ring-offset-1 rounded-full overflow-hidden w-10 h-10 shadow-md">
@@ -75,26 +115,33 @@ const Home: React.FC = () => {
       </header>
 
       <main className="px-5 py-4 space-y-6">
-        {/* Stories Tray - Menor padding */}
+        {/* Stories Tray */}
         <section className="space-y-3">
           <div className="flex gap-4 overflow-x-auto no-scrollbar py-1 snap-x px-1">
-            {STORIES.map(story => (
+            {stories.length > 0 ? stories.map(story => (
               <div key={story.id} onClick={() => navigate('/stories')} className="flex flex-col items-center gap-2 cursor-pointer shrink-0 snap-center">
                 <div className={`p-0.5 rounded-full border-2 ${story.isLive ? 'border-primary' : 'border-accent-gold/40'}`}>
                   <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-white">
                     <img src={story.img} className="w-full h-full object-cover" alt={story.name} />
                   </div>
                 </div>
-                <span className="text-[8px] font-black text-primary uppercase tracking-widest">{story.name}</span>
+                <span className="text-[8px] font-black text-primary uppercase tracking-widest text-center truncate w-16">{story.name}</span>
               </div>
-            ))}
+            )) : (
+              <div className="flex flex-col items-center gap-2 opacity-30">
+                <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-400 flex items-center justify-center">
+                  <span className="material-symbols-outlined !text-sm">photo_camera</span>
+                </div>
+                <span className="text-[8px] font-black uppercase tracking-widest">Poste o seu</span>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* Check-in Emocional - Mais fino */}
+        {/* Check-in Emocional */}
         <div
           onClick={() => navigate('/checkin')}
-          className="bg-primary p-4 rounded-[24px] text-white flex items-center justify-between shadow-xl shadow-primary/10 active:scale-[0.98] transition-transform"
+          className="bg-primary p-4 rounded-[24px] text-white flex items-center justify-between shadow-xl shadow-primary/10 active:scale-[0.98] transition-transform cursor-pointer"
         >
           <div className="flex items-center gap-4">
             <div className="size-10 rounded-xl bg-white/10 flex items-center justify-center">
@@ -108,8 +155,7 @@ const Home: React.FC = () => {
           <span className="material-symbols-outlined opacity-40 !text-xl">east</span>
         </div>
 
-        {/* Próximo Atendimento - Compacto */}
-        {/* Próximo Atendimento - Compacto */}
+        {/* Próximo Atendimento */}
         {nextAppt ? (
           <div onClick={() => navigate('/history')} className="relative overflow-hidden rounded-[32px] bg-white p-5 premium-shadow border border-accent-gold/5 group cursor-pointer active:scale-[0.99] transition-all">
             <div className="flex items-center justify-between">
@@ -117,10 +163,10 @@ const Home: React.FC = () => {
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/5 text-primary text-[8px] font-black uppercase tracking-widest">
                   Seu cuidado 💖
                 </span>
-                <h3 className="text-lg font-display font-bold text-primary">{nextAppt.services?.name || 'Atendimento'}</h3>
+                <h3 className="text-lg font-display font-bold text-primary">{nextAppt.service_name || 'Atendimento'}</h3>
                 <div className="flex flex-col gap-0.5">
                   <p className="text-xs font-bold text-gray-700">{nextAppt.date.split('-').reverse().join('/')} • {nextAppt.time}</p>
-                  <p className="text-[10px] text-gray-400 font-medium">Com {nextAppt.professionals?.name || 'Profissional'}</p>
+                  <p className="text-[10px] text-gray-400 font-medium">Com {nextAppt.professional_name || 'Studio'}</p>
                 </div>
               </div>
               <div className="bg-primary/5 p-3 rounded-xl shrink-0">
@@ -139,7 +185,7 @@ const Home: React.FC = () => {
           </div>
         )}
 
-        {/* Botão Agendar Principal - Mais próximo e menor altura */}
+        {/* Botão Agendar Principal */}
         <div onClick={() => navigate('/services')} className="relative overflow-hidden rounded-[28px] bg-primary-dark p-6 text-white shadow-xl cursor-pointer active:scale-[0.98] transition-transform group">
           <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <div className="relative z-10 flex items-center justify-between">
@@ -153,7 +199,7 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* Grid de Links Rápidos - Menor espaçamento */}
+        {/* Grid de Links Rápidos */}
         <div className="grid grid-cols-2 gap-3">
           <div onClick={() => navigate('/profile/refer')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm flex flex-col gap-2 cursor-pointer active:scale-95 transition-all">
             <div className="size-9 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
@@ -196,14 +242,12 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* Quote Final - Reduzido */}
         <div className="py-6 text-center space-y-2 opacity-30 select-none">
           <p className="font-display italic text-base text-primary tracking-widest">Seu espaço de cuidado sempre te espera</p>
           <div className="h-px w-8 bg-primary mx-auto"></div>
         </div>
       </main>
 
-      {/* Navegação Inferior */}
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav border-t border-gray-100 flex justify-around items-center py-4 px-4 z-50 rounded-t-[28px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1 text-primary">
           <span className="material-symbols-outlined !text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>home</span>

@@ -6,36 +6,52 @@ import { supabase } from '../services/supabase';
 
 const History: React.FC = () => {
    const navigate = useNavigate();
+   const [loading, setLoading] = React.useState(true);
    const [upcoming, setUpcoming] = React.useState<any[]>([]);
    const [past, setPast] = React.useState<any[]>([]);
 
    React.useEffect(() => {
       const fetchHistory = async () => {
-         const { data: { user } } = await supabase.auth.getUser();
-         if (user) {
-            const today = new Date().toISOString().split('T')[0];
+         try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+               const today = new Date().toISOString().split('T')[0];
 
-            // Upcoming
-            const { data: up } = await supabase.from('appointments')
-               .select('*, services(name), professionals(name)')
-               .eq('user_id', user.id)
-               .gte('date', today)
-               .order('date', { ascending: true });
+               // Upcoming
+               const { data: up } = await supabase.from('appointments')
+                  .select('*, services(name), professionals(name)')
+                  .eq('user_id', user.id)
+                  .gte('date', today)
+                  .neq('status', 'CANCELLED')
+                  .order('date', { ascending: true });
 
-            if (up) setUpcoming(up);
+               if (up) setUpcoming(up);
 
-            // Past
-            const { data: ps } = await supabase.from('appointments')
-               .select('*, services(name, category), professionals(name)')
-               .eq('user_id', user.id)
-               .lt('date', today)
-               .order('date', { ascending: false });
+               // Past
+               const { data: ps } = await supabase.from('appointments')
+                  .select('*, services(name, category), professionals(name)')
+                  .eq('user_id', user.id)
+                  .lt('date', today)
+                  .order('date', { ascending: false });
 
-            if (ps) setPast(ps);
+               if (ps) setPast(ps);
+            }
+         } catch (err) {
+            console.error('History fetch error:', err);
+         } finally {
+            setLoading(false);
          }
       };
       fetchHistory();
    }, []);
+
+   if (loading) {
+      return (
+         <div className="flex h-screen items-center justify-center bg-background-light">
+            <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+         </div>
+      );
+   }
 
    return (
       <div className="flex flex-col h-full bg-background-light pb-24">

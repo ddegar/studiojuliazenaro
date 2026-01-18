@@ -20,7 +20,9 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export function usePushNotifications() {
     const [subscription, setSubscription] = useState<PushSubscription | null>(null);
-    const [permission, setPermission] = useState<NotificationPermission>(Notification.permission);
+    const [permission, setPermission] = useState<NotificationPermission>(
+        typeof Notification !== 'undefined' ? Notification.permission : 'default'
+    );
 
     const subscribeToPush = async () => {
         if (!('serviceWorker' in navigator) || !PUBLIC_VAPID_KEY || PUBLIC_VAPID_KEY.startsWith('REPLACE')) {

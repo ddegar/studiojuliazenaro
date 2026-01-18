@@ -6,18 +6,33 @@ import { supabase } from '../services/supabase';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = React.useState(true);
   const [profile, setProfile] = React.useState<any>(null);
 
   React.useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-        if (data) setProfile(data);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+          if (data) setProfile(data);
+        }
+      } catch (err) {
+        console.error('Profile fetch error:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchProfile();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background-light">
+        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   const menuItems = [
     { icon: 'person', label: 'Meus Dados', desc: 'Informações pessoais e contato', path: '#' },

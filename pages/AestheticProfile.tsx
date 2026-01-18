@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../services/supabase';
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -18,7 +19,7 @@ const AestheticProfile: React.FC = () => {
   const [pigment, setPigment] = useState(50);
   const [maintenance, setMaintenance] = useState('3');
   const [allergies, setAllergies] = useState('');
-  
+
   // Hospitality Tastes
   const [hospitality, setHospitality] = useState({
     drink: 'cafe',
@@ -36,13 +37,42 @@ const AestheticProfile: React.FC = () => {
     else navigate(-1);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Por favor, faça login para salvar seu perfil.');
+        return;
+      }
+
+      const preferences = {
+        eyeShape,
+        style,
+        curvature,
+        length,
+        thickness,
+        pigment,
+        maintenance,
+        allergies,
+        hospitality
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ preferences })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
       alert('Preferências salvas com carinho! ✨');
       navigate('/profile');
-    }, 1500);
+    } catch (err: any) {
+      console.error('Error saving profile:', err);
+      alert('Erro ao salvar: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,8 +106,8 @@ const AestheticProfile: React.FC = () => {
           <span className="text-[10px] font-black text-accent-gold uppercase tracking-widest">Passo {step} de 5</span>
         </div>
         <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-primary transition-all duration-500 ease-out" 
+          <div
+            className="h-full bg-primary transition-all duration-500 ease-out"
             style={{ width: `${(step / 5) * 100}%` }}
           ></div>
         </div>
@@ -98,7 +128,7 @@ const AestheticProfile: React.FC = () => {
                 { id: 'monolidico', label: 'Monolídico', desc: 'Pálpebra única, exige projeção.', icon: 'remove_red_eye' },
                 { id: 'caido', label: 'Caído', desc: 'Canto externo inclinado para baixo.', icon: 'south_east' }
               ].map((opt) => (
-                <button 
+                <button
                   key={opt.id}
                   onClick={() => setEyeShape(opt.id)}
                   className={`w-full p-6 rounded-[32px] border-2 flex items-center gap-5 transition-all text-left group ${eyeShape === opt.id ? 'border-primary bg-primary/5 shadow-lg' : 'border-gray-100 bg-white'}`}
@@ -134,7 +164,7 @@ const AestheticProfile: React.FC = () => {
                 { id: 'russo', label: 'Volume Russo', desc: 'Preenchimento total e glamour.', img: 'https://picsum.photos/400/500?sig=12' },
                 { id: 'lifting', label: 'Lash Lifting', desc: 'Curvatura natural sem extensões.', img: 'https://picsum.photos/400/500?sig=13' }
               ].map((opt) => (
-                <button 
+                <button
                   key={opt.id}
                   onClick={() => setStyle(opt.id)}
                   className={`relative aspect-[3/4] rounded-[32px] overflow-hidden border-2 transition-all ${style === opt.id ? 'border-primary ring-4 ring-primary/5 shadow-xl' : 'border-transparent'}`}
@@ -164,7 +194,7 @@ const AestheticProfile: React.FC = () => {
                   { id: 'D', label: 'D-CURL', sub: 'Marcado', icon: 'all_inclusive' },
                   { id: 'L', label: 'L-CURL', sub: 'Elevado', icon: 'trending_up' }
                 ].map((c) => (
-                  <button 
+                  <button
                     key={c.id}
                     onClick={() => setCurvature(c.id)}
                     className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${curvature === c.id ? 'border-primary bg-primary text-white' : 'border-gray-50 bg-white text-gray-400'}`}
@@ -185,12 +215,12 @@ const AestheticProfile: React.FC = () => {
                 <span className="bg-gray-100 px-4 py-1.5 rounded-full text-[10px] font-black text-primary">11-13mm (Médio)</span>
               </div>
               <div className="px-4">
-                <input 
-                  type="range" 
-                  min="0" max="100" 
+                <input
+                  type="range"
+                  min="0" max="100"
                   value={length}
                   onChange={(e) => setLength(parseInt(e.target.value))}
-                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" 
+                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="flex justify-between mt-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
                   <span>Discreto</span>
@@ -217,7 +247,7 @@ const AestheticProfile: React.FC = () => {
                   { id: 'fino', label: 'ULTRA FINO', desc: 'Leveza máxima, aspecto imperceptível.' },
                   { id: 'intenso', label: 'INTENSO', desc: 'Fios mais espessos para maior destaque.' }
                 ].map((opt) => (
-                  <button 
+                  <button
                     key={opt.id}
                     onClick={() => setThickness(opt.id)}
                     className={`w-full p-6 rounded-2xl border-2 text-left flex items-center justify-between transition-all ${thickness === opt.id ? 'border-primary bg-primary text-white' : 'border-gray-50 bg-white'}`}
@@ -238,12 +268,12 @@ const AestheticProfile: React.FC = () => {
                 <span className="bg-gray-100 px-4 py-1.5 rounded-full text-[10px] font-black text-primary">Médio</span>
               </div>
               <div className="px-4">
-                <input 
-                  type="range" 
-                  min="0" max="100" 
+                <input
+                  type="range"
+                  min="0" max="100"
                   value={pigment}
                   onChange={(e) => setPigment(parseInt(e.target.value))}
-                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary" 
+                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
                 />
                 <div className="flex justify-between mt-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
                   <span>Discreto</span>
@@ -272,7 +302,7 @@ const AestheticProfile: React.FC = () => {
                 { id: '3', label: 'A cada 3 semanas', desc: 'Equilíbrio perfeito entre durabilidade e estética.', recommended: true },
                 { id: '4', label: 'A cada 4 semanas', desc: 'Para quem busca praticidade e um ciclo longo.' }
               ].map((opt) => (
-                <button 
+                <button
                   key={opt.id}
                   onClick={() => setMaintenance(opt.id)}
                   className={`w-full p-6 rounded-[32px] border-2 text-left transition-all relative ${maintenance === opt.id ? 'border-primary bg-primary/5 shadow-md' : 'border-gray-50 bg-white'}`}
@@ -292,19 +322,19 @@ const AestheticProfile: React.FC = () => {
             </div>
 
             <section className="space-y-4 pt-4">
-               <div className="flex items-center gap-3 px-1 text-primary">
-                  <span className="material-symbols-outlined !text-2xl">medical_services</span>
-                  <h3 className="font-display font-bold text-xl">Alergias ou Observações</h3>
-               </div>
-               <textarea 
-                  placeholder="Ex: Tenho sensibilidade a colas específicas ou rinite..."
-                  className="w-full bg-white border border-gray-100 rounded-[32px] p-8 text-sm focus:ring-primary h-40 italic placeholder:text-gray-300 shadow-sm"
-                  value={allergies}
-                  onChange={(e) => setAllergies(e.target.value)}
-               />
-               <p className="text-right text-[9px] font-black text-gray-300 uppercase tracking-widest">Opcional</p>
+              <div className="flex items-center gap-3 px-1 text-primary">
+                <span className="material-symbols-outlined !text-2xl">medical_services</span>
+                <h3 className="font-display font-bold text-xl">Alergias ou Observações</h3>
+              </div>
+              <textarea
+                placeholder="Ex: Tenho sensibilidade a colas específicas ou rinite..."
+                className="w-full bg-white border border-gray-100 rounded-[32px] p-8 text-sm focus:ring-primary h-40 italic placeholder:text-gray-300 shadow-sm"
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+              />
+              <p className="text-right text-[9px] font-black text-gray-300 uppercase tracking-widest">Opcional</p>
             </section>
-            
+
             <p className="text-center font-display italic text-primary/40 text-lg pt-4 animate-pulse">Estamos quase lá ✨</p>
           </div>
         )}
@@ -330,9 +360,9 @@ const AestheticProfile: React.FC = () => {
                     { id: 'refri', label: 'Refrigerante' },
                     { id: 'cha', label: 'Chá Gelado' }
                   ].map(opt => (
-                    <button 
+                    <button
                       key={opt.id}
-                      onClick={() => setHospitality({...hospitality, drink: opt.id})}
+                      onClick={() => setHospitality({ ...hospitality, drink: opt.id })}
                       className={`h-14 rounded-2xl border-2 text-xs font-bold uppercase transition-all ${hospitality.drink === opt.id ? 'border-primary bg-primary text-white shadow-md' : 'border-gray-50 bg-white text-gray-400'}`}
                     >
                       {opt.label}
@@ -354,9 +384,9 @@ const AestheticProfile: React.FC = () => {
                     { id: 'lofi', label: 'Lofi & Relax' },
                     { id: 'silencio', label: 'Silêncio (Deep)' }
                   ].map(opt => (
-                    <button 
+                    <button
                       key={opt.id}
-                      onClick={() => setHospitality({...hospitality, music: opt.id})}
+                      onClick={() => setHospitality({ ...hospitality, music: opt.id })}
                       className={`h-14 rounded-2xl border-2 text-xs font-bold uppercase transition-all ${hospitality.music === opt.id ? 'border-primary bg-primary text-white shadow-md' : 'border-gray-50 bg-white text-gray-400'}`}
                     >
                       {opt.label}
@@ -378,9 +408,9 @@ const AestheticProfile: React.FC = () => {
                     { id: 'chocolate', label: 'Chocolate 70%' },
                     { id: 'nenhum', label: 'Apenas a bebida' }
                   ].map(opt => (
-                    <button 
+                    <button
                       key={opt.id}
-                      onClick={() => setHospitality({...hospitality, snack: opt.id})}
+                      onClick={() => setHospitality({ ...hospitality, snack: opt.id })}
                       className={`h-14 rounded-2xl border-2 text-xs font-bold uppercase transition-all ${hospitality.snack === opt.id ? 'border-primary bg-primary text-white shadow-md' : 'border-gray-50 bg-white text-gray-400'}`}
                     >
                       {opt.label}
@@ -401,7 +431,7 @@ const AestheticProfile: React.FC = () => {
 
       {/* Botão de Ação Inferior */}
       <div className="fixed bottom-0 inset-x-0 p-8 glass-nav border-t border-gray-100 rounded-t-[40px] shadow-[0_-15px_40px_rgba(0,0,0,0.05)] z-50">
-        <button 
+        <button
           onClick={handleNext}
           disabled={loading}
           className="w-full h-18 bg-primary text-white rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"

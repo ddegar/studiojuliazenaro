@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
+import { useNavigate } from 'react-router-dom';
 
 const FinancialControl: React.FC = () => {
    const [transactions, setTransactions] = useState<any[]>([]);
@@ -13,13 +14,23 @@ const FinancialControl: React.FC = () => {
    const [amount, setAmount] = useState('');
    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
+   const [user, setUser] = useState<any>(null);
+
    const fetchTransactions = async () => {
       setLoading(true);
-      const { data } = await supabase
-         .from('transactions')
-         .select('*')
-         .order('date', { ascending: false })
-         .limit(50);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const { data: profile } = await supabase.from('profiles').select('role, id').eq('id', authUser.id).single();
+      setUser(profile);
+
+      let query = supabase.from('transactions').select('*');
+
+      if (profile?.role !== 'MASTER_ADMIN') {
+         query = query.eq('user_id', authUser.id);
+      }
+
+      const { data } = await query.order('date', { ascending: false }).limit(50);
       if (data) setTransactions(data);
       setLoading(false);
    };
@@ -31,8 +42,6 @@ const FinancialControl: React.FC = () => {
    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!amount || !category) return;
-
-      const { data: { user } } = await supabase.auth.getUser();
 
       const { error } = await supabase.from('transactions').insert({
          type,
@@ -59,12 +68,17 @@ const FinancialControl: React.FC = () => {
       return curr.type === 'INCOME' ? acc + curr.amount : acc - curr.amount;
    }, 0);
 
+   const navigate = useNavigate();
+
    return (
       <div className="flex flex-col h-full bg-background-dark text-white pb-24 overflow-y-auto">
          {/* Header */}
-         <header className="px-6 pt-12 pb-6">
-            <h1 className="text-2xl font-bold font-display">Controle Financeiro</h1>
-            <p className="text-xs text-gray-400">Receitas e Despesas</p>
+         <header className="px-6 pt-12 pb-6 flex items-center gap-4">
+            <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back</button>
+            <div>
+               <h1 className="text-2xl font-bold font-display">Controle Financeiro</h1>
+               <p className="text-xs text-gray-400">Receitas e Despesas ({user?.role === 'MASTER_ADMIN' ? 'Geral' : 'Pessoal'})</p>
+            </div>
          </header>
 
          {/* Balance Card */}

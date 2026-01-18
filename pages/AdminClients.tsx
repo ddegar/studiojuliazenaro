@@ -16,16 +16,16 @@ const AdminClients: React.FC = () => {
 
    const fetchClients = async () => {
       setLoading(true);
-      // Fetch profiles with appointments to determine last visit
       const { data, error } = await supabase
          .from('profiles')
          .select(`
             *,
+            preferences,
             appointments (
                 date,
                 professional_name
             )
-        `)
+         `)
          .order('name');
 
       if (error) {
@@ -34,14 +34,11 @@ const AdminClients: React.FC = () => {
          return;
       }
 
-      // Process data
       const formatted = data.map((p: any) => {
-         // Sort appointments desc
          const appts = p.appointments?.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()) || [];
          const lastAppt = appts[0];
          const points = p.lash_points || 0;
 
-         // Determine status based on points (Mock Logic for MVP)
          let status = 'Silver';
          if (points > 500) status = 'Ouro';
          if (points > 1000) status = 'Diamante';
@@ -55,7 +52,8 @@ const AdminClients: React.FC = () => {
             pro: lastAppt?.professional_name || '-',
             phone: p.phone || '-',
             img: p.avatar_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
-            active: true // Could be based on last visit < 30 days
+            active: lastAppt ? (new Date().getTime() - new Date(lastAppt.date).getTime()) < 30 * 24 * 60 * 60 * 1000 : false,
+            preferences: p.preferences
          };
       });
 
@@ -64,7 +62,8 @@ const AdminClients: React.FC = () => {
    };
 
    const filteredClients = clients.filter(c => {
-      const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
+         c.phone.toLowerCase().includes(search.toLowerCase());
       if (filter === 'ACTIVE') return matchesSearch && c.active;
       if (filter === 'VIPS') return matchesSearch && c.status === 'Diamante';
       return matchesSearch;
@@ -110,8 +109,8 @@ const AdminClients: React.FC = () => {
             {loading ? <p className="text-center text-gray-500 py-10">Carregando...</p> : filteredClients.map(client => (
                <div
                   key={client.id}
-                  onClick={() => navigate(`/admin/client/${client.id}`)} // This page might need updates too, but list is priority
-                  className="bg-card-dark p-5 rounded-[32px] border border-white/5 flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-white/5"
+                  onClick={() => navigate(`/admin/client/${client.id}`)}
+                  className="bg-card-dark p-5 rounded-[32px] border border-white/5 flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-white/5 cursor-pointer"
                >
                   <div className="flex items-center gap-4">
                      <div className={`size-14 rounded-2xl overflow-hidden border-2 p-0.5 transition-all ${client.status === 'Diamante' ? 'border-accent-gold' : 'border-primary/20'}`}>
@@ -119,12 +118,19 @@ const AdminClients: React.FC = () => {
                      </div>
                      <div className="space-y-1">
                         <h4 className="font-bold text-sm leading-tight text-white group-hover:text-accent-gold transition-colors">{client.name}</h4>
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-1">
                            <div className="flex items-center gap-2">
                               <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${client.status === 'Diamante' ? 'bg-accent-gold text-primary shadow-lg shadow-accent-gold/20' : 'bg-white/10 text-gray-400'}`}>{client.status}</span>
                               <span className="text-[9px] text-gray-500 font-bold uppercase">{client.points} pts</span>
                            </div>
-                           <p className="text-[9px] text-gray-600 font-medium">Último: {client.last} com {client.pro}</p>
+                           {client.preferences && (
+                              <div className="flex flex-wrap gap-1">
+                                 {Object.entries(client.preferences).slice(0, 3).map(([k, v]) => (
+                                    <span key={k} className="text-[7px] text-accent-gold/50 font-bold uppercase border border-accent-gold/20 px-1 rounded-sm">{String(v)}</span>
+                                 ))}
+                              </div>
+                           )}
+                           <p className="text-[9px] text-gray-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">Último: {client.last} com {client.pro}</p>
                         </div>
                      </div>
                   </div>
