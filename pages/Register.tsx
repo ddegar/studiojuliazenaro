@@ -28,6 +28,7 @@ const Register: React.FC = () => {
             name,
             phone,
             birthdate,
+            referred_by: referralCode,
           }
         }
       });
