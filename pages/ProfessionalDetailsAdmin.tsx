@@ -19,7 +19,7 @@ const ProfessionalDetailsAdmin: React.FC = () => {
    const [services, setServices] = useState<any[]>([]);
    const [content, setContent] = useState<any[]>([]);
    const [isEditing, setIsEditing] = useState(false);
-   const [editData, setEditData] = useState({ name: '', role: '', avatar_url: '' });
+   const [editData, setEditData] = useState({ name: '', role: '', avatar_url: '', email: '', phone: '' });
 
    const fetchData = async () => {
       if (!id) return;
@@ -29,15 +29,25 @@ const ProfessionalDetailsAdmin: React.FC = () => {
          const { data: proBase, error: proBaseErr } = await supabase.from('professionals').select('*').eq('id', id).single();
          if (proBaseErr || !proBase) throw new Error('Profissional não encontrado');
 
-         // 2. Try to fetch profile, but don't fail if it doesn't exist yet
-         const profileId = proBase.profile_id || id;
-         const { data: profileData } = await supabase.from('profiles').select('*').eq('id', profileId).single();
+         // 2. Try to fetch profile by id OR email
+         let profileId = proBase.profile_id;
+         let { data: profileData } = profileId
+            ? await supabase.from('profiles').select('*').eq('id', profileId).single()
+            : await supabase.from('profiles').select('*').eq('email', proBase.email).single();
+
+         // 3. Auto-link if we found it by email but it wasn't linked
+         if (profileData && !proBase.profile_id) {
+            await supabase.from('professionals').update({ profile_id: profileData.id }).eq('id', id);
+            profileId = profileData.id;
+         }
 
          // Use proBase as fallback for profile data
          const displayProfile = {
-            id: profileId,
+            id: profileId || id, // Fallback to pro ID if no profile yet
+            hasProfile: !!profileData,
             name: profileData?.name || proBase.name,
             email: profileData?.email || proBase.email,
+            phone: (profileData as any)?.phone || proBase.phone,
             avatar_url: profileData?.avatar_url || proBase.image_url,
             role: profileData?.role || 'PROFESSIONAL',
             permissions: profileData?.permissions || proBase.permissions || {},
@@ -48,16 +58,18 @@ const ProfessionalDetailsAdmin: React.FC = () => {
          setEditData({
             name: displayProfile.name || '',
             role: displayProfile.role_title || '',
-            avatar_url: displayProfile.avatar_url || ''
+            avatar_url: displayProfile.avatar_url || '',
+            email: displayProfile.email || '',
+            phone: (displayProfile as any).phone || ''
          });
 
          // 3. Fetch sub-data in parallel
          const [apptsRes, transRes, servsRes, storiesRes, postsRes] = await Promise.all([
             supabase.from('appointments').select('*').eq('professional_id', id).is('deleted_at', null),
-            supabase.from('transactions').select('*').eq('user_id', profileId),
-            supabase.from('services').select('*'), // Filter manually to avoid schema error with .contains if no professional_ids column exists in simple setups
-            supabase.from('stories').select('*').eq('user_id', profileId),
-            supabase.from('posts').select('*').eq('user_id', profileId)
+            supabase.from('transactions').select('*').eq('user_id', profileId || id),
+            supabase.from('services').select('*'), // Filter manually to avoid schema error
+            supabase.from('stories').select('*').eq('user_id', profileId || id),
+            supabase.from('posts').select('*').eq('user_id', profileId || id)
          ]);
 
          if (apptsRes.data) {
@@ -99,29 +111,43 @@ const ProfessionalDetailsAdmin: React.FC = () => {
       const currentPerms = profile.permissions || {};
       const newPermissions = { ...currentPerms, [key]: !currentPerms[key] };
 
+      if (!profile.hasProfile) {
+         alert('⚠️ Esta profissional ainda não se cadastrou no aplicativo. Você só poderá gerenciar as permissões dela após o primeiro acesso.');
+         return;
+      }
+
       // Update the correct profile record
-      const { error } = await supabase.from('profiles').update({ permissions: newPermissions }).eq('id', profile.id);
+      const { data, error } = await supabase.from('profiles')
+         .update({ permissions: newPermissions })
+         .eq('id', profile.id)
+         .select();
 
-      // Also update the professional record for sync redundancy
-      await supabase.from('professionals').update({ permissions: newPermissions }).eq('id', id);
-
-      if (!error) {
-         setProfile({ ...profile, permissions: newPermissions });
+      if (error) {
+         alert('Erro ao salvar permissão: ' + error.message);
+      } else if (!data || data.length === 0) {
+         alert('⚠️ Erro ao salvar: Perfil não encontrado no banco de dados.');
       } else {
-         alert('Erro ao atualizar permissão: ' + error.message);
+         setProfile({ ...profile, permissions: newPermissions });
       }
    };
 
    const handleSaveEdit = async () => {
       try {
-         const { error } = await supabase.from('profiles').update({
+         const updateData: any = {
             name: editData.name,
-            avatar_url: editData.avatar_url
-         }).eq('id', id);
+            phone: editData.phone,
+            email: editData.email
+         };
+         // Only include avatar_url if we are sure it exists (or just exclude it for now to fix the blockage)
+         // updateData.avatar_url = editData.avatar_url; 
+
+         const { error } = await supabase.from('profiles').update(updateData).eq('id', id);
 
          const { error: proError } = await supabase.from('professionals').update({
             name: editData.name,
             role: editData.role,
+            email: editData.email,
+            phone: editData.phone,
             image_url: editData.avatar_url
          }).eq('id', id);
 
@@ -229,6 +255,16 @@ const ProfessionalDetailsAdmin: React.FC = () => {
                      <div className="space-y-2">
                         <label className="text-[10px] uppercase font-black text-gray-500 tracking-widest pl-1">Cargo / Especialidade</label>
                         <input className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary outline-none italic text-accent-gold" value={editData.role} onChange={e => setEditData({ ...editData, role: e.target.value })} />
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                           <label className="text-[10px] uppercase font-black text-gray-500 tracking-widest pl-1">E-mail</label>
+                           <input className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary outline-none" value={editData.email} onChange={e => setEditData({ ...editData, email: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] uppercase font-black text-gray-500 tracking-widest pl-1">Telefone</label>
+                           <input className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary outline-none" value={editData.phone} onChange={e => setEditData({ ...editData, phone: e.target.value })} />
+                        </div>
                      </div>
                      <div className="space-y-2">
                         <label className="text-[10px] uppercase font-black text-gray-500 tracking-widest pl-1">Foto (URL)</label>

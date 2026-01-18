@@ -50,7 +50,7 @@ const Register: React.FC = () => {
             .from('profiles')
             .update({
               role: 'PROFESSIONAL',
-              permissions: pro.permissions || { canManageAgenda: true }
+              permissions: (pro as any)?.permissions || { canManageAgenda: true }
             })
             .eq('id', data.user.id);
 

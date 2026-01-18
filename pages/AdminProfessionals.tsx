@@ -68,8 +68,7 @@ const AdminProfessionals: React.FC = () => {
             phone: newPro.phone,
             image_url: finalImageUrl,
             active: true,
-            rating: 5.0,
-            permissions: newPro.permissions // Store permissions in professionals table for sync
+            rating: 5.0
          }).select().single();
 
          if (proError) throw proError;

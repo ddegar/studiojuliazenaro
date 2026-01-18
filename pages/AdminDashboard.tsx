@@ -20,7 +20,12 @@ const AdminDashboard: React.FC = () => {
   });
   const [chartData, setChartData] = useState<any[]>([]);
 
-  const isMaster = stats.user.role === 'MASTER_ADMIN';
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  // Master access includes explicit roles or the owner's email as a safety fallback
+  const isMaster = ['MASTER_ADMIN', 'PROFESSIONAL_ADMIN', 'ADMIN'].includes(stats.user.role) ||
+    stats.user.email?.toLowerCase() === 'admin@juliazenaro.com' ||
+    userEmail?.toLowerCase() === 'admin@juliazenaro.com';
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     try {
@@ -49,11 +54,12 @@ const AdminDashboard: React.FC = () => {
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, name, role, avatar_url')
+          .select('id, name, role') // REMOVED avatar_url as it's causing schema cache errors
           .eq('id', user.id)
           .single();
 
-        if (profile) {
+        if (user) {
+          setUserEmail(user.email || null);
           const today = new Date().toISOString().split('T')[0];
 
           // 1. Fetch unread notifications & pending appointments
@@ -113,10 +119,11 @@ const AdminDashboard: React.FC = () => {
             revenue: totalRevenue,
             professionals: prosRes.count || 0,
             user: {
-              name: profile.name || 'Admin',
-              role: profile.role as UserRole,
-              avatar: profile.avatar_url || '',
-              id: profile.id
+              name: profile?.name || 'Admin',
+              role: (profile?.role as UserRole) || 'PROFESSIONAL',
+              avatar: (profile as any)?.avatar_url || (profile as any)?.image_url || '',
+              id: user.id,
+              email: user.email
             }
           });
         }
@@ -204,7 +211,7 @@ const AdminDashboard: React.FC = () => {
             <img src={stats.user.avatar || `https://ui-avatars.com/api/?name=${stats.user.name}`} className="size-10 rounded-full border border-white/10" alt="Admin" />
             <div className="flex-1">
               <p className="text-xs font-bold text-white max-w-[120px] truncate">{stats.user.name}</p>
-              <p className="text-[9px] text-accent-gold uppercase font-bold tracking-wider">{isMaster ? 'Master' : 'Pro'}</p>
+              <p className="text-[9px] text-accent-gold uppercase font-bold tracking-wider">{stats.user.role === 'MASTER_ADMIN' ? 'Master' : stats.user.role === 'PROFESSIONAL_ADMIN' ? 'Admin' : 'Pro'}</p>
             </div>
             <button onClick={() => navigate('/login')} className="size-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500/20">
               <span className="material-symbols-outlined !text-sm">logout</span>
