@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { UserRole } from '../types';
 
-type ProfTab = 'PERFORMANCE' | 'PERMISSIONS' | 'AGENDA';
+type ProfTab = 'PERFORMANCE' | 'PERMISSIONS' | 'AGENDA' | 'FINANCE' | 'SERVICES' | 'CONTENT';
 
 const ProfessionalDetailsAdmin: React.FC = () => {
    const navigate = useNavigate();
@@ -15,6 +15,9 @@ const ProfessionalDetailsAdmin: React.FC = () => {
    const [profile, setProfile] = useState<any>(null);
    const [stats, setStats] = useState({ appointments: 0, revenue: 0, rating: 5.0, tips: 0 });
    const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
+   const [transactions, setTransactions] = useState<any[]>([]);
+   const [services, setServices] = useState<any[]>([]);
+   const [content, setContent] = useState<any[]>([]);
    const [isEditing, setIsEditing] = useState(false);
    const [editData, setEditData] = useState({ name: '', role: '', avatar_url: '' });
 
@@ -22,19 +25,40 @@ const ProfessionalDetailsAdmin: React.FC = () => {
       if (!id) return;
       setLoading(true);
       try {
-         const [profileRes, apptsRes] = await Promise.all([
-            supabase.from('profiles').select('*').eq('id', id).single(),
-            supabase.from('appointments').select('*').eq('professional_id', id).is('deleted_at', null)
-         ]);
+         // 1. First fetch the professional record
+         const { data: proBase, error: proBaseErr } = await supabase.from('professionals').select('*').eq('id', id).single();
+         if (proBaseErr || !proBase) throw new Error('Profissional não encontrado');
 
-         if (profileRes.data) {
-            setProfile(profileRes.data);
-            setEditData({
-               name: profileRes.data.name || '',
-               role: profileRes.data.role_title || '', // Assuming role_title for display
-               avatar_url: profileRes.data.avatar_url || ''
-            });
-         }
+         // 2. Try to fetch profile, but don't fail if it doesn't exist yet
+         const profileId = proBase.profile_id || id;
+         const { data: profileData } = await supabase.from('profiles').select('*').eq('id', profileId).single();
+
+         // Use proBase as fallback for profile data
+         const displayProfile = {
+            id: profileId,
+            name: profileData?.name || proBase.name,
+            email: profileData?.email || proBase.email,
+            avatar_url: profileData?.avatar_url || proBase.image_url,
+            role: profileData?.role || 'PROFESSIONAL',
+            permissions: profileData?.permissions || proBase.permissions || {},
+            role_title: profileData?.role_title || proBase.role
+         };
+
+         setProfile(displayProfile);
+         setEditData({
+            name: displayProfile.name || '',
+            role: displayProfile.role_title || '',
+            avatar_url: displayProfile.avatar_url || ''
+         });
+
+         // 3. Fetch sub-data in parallel
+         const [apptsRes, transRes, servsRes, storiesRes, postsRes] = await Promise.all([
+            supabase.from('appointments').select('*').eq('professional_id', id).is('deleted_at', null),
+            supabase.from('transactions').select('*').eq('user_id', profileId),
+            supabase.from('services').select('*'), // Filter manually to avoid schema error with .contains if no professional_ids column exists in simple setups
+            supabase.from('stories').select('*').eq('user_id', profileId),
+            supabase.from('posts').select('*').eq('user_id', profileId)
+         ]);
 
          if (apptsRes.data) {
             const finished = apptsRes.data.filter(a => a.status === 'completed' || a.status === 'COMPLETED');
@@ -47,6 +71,19 @@ const ProfessionalDetailsAdmin: React.FC = () => {
             });
             setRecentAppointments(apptsRes.data.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10));
          }
+
+         if (transRes.data) setTransactions(transRes.data);
+
+         // Manual filter for services if needed
+         if (servsRes.data) {
+            const linkedServices = servsRes.data.filter(s =>
+               Array.isArray(s.professional_ids) && s.professional_ids.includes(id)
+            );
+            setServices(linkedServices);
+         }
+
+         setContent([...(storiesRes.data || []), ...(postsRes.data || [])]);
+
       } catch (err) {
          console.error('Error fetching pro details:', err);
       } finally {
@@ -61,9 +98,17 @@ const ProfessionalDetailsAdmin: React.FC = () => {
    const togglePermission = async (key: string) => {
       const currentPerms = profile.permissions || {};
       const newPermissions = { ...currentPerms, [key]: !currentPerms[key] };
-      const { error } = await supabase.from('profiles').update({ permissions: newPermissions }).eq('id', id);
+
+      // Update the correct profile record
+      const { error } = await supabase.from('profiles').update({ permissions: newPermissions }).eq('id', profile.id);
+
+      // Also update the professional record for sync redundancy
+      await supabase.from('professionals').update({ permissions: newPermissions }).eq('id', id);
+
       if (!error) {
          setProfile({ ...profile, permissions: newPermissions });
+      } else {
+         alert('Erro ao atualizar permissão: ' + error.message);
       }
    };
 
@@ -155,7 +200,10 @@ const ProfessionalDetailsAdmin: React.FC = () => {
                {[
                   { id: 'PERFORMANCE', label: 'Desempenho', icon: 'analytics' },
                   { id: 'PERMISSIONS', label: 'Controles', icon: 'rule' },
-                  { id: 'AGENDA', label: 'Agendamentos', icon: 'history' }
+                  { id: 'AGENDA', label: 'Agenda', icon: 'calendar_month' },
+                  { id: 'FINANCE', label: 'Financeiro', icon: 'payments' },
+                  { id: 'SERVICES', label: 'Serviços', icon: 'category' },
+                  { id: 'CONTENT', label: 'Conteúdo', icon: 'history_toggle_off' }
                ].map(tab => (
                   <button
                      key={tab.id}
@@ -239,10 +287,12 @@ const ProfessionalDetailsAdmin: React.FC = () => {
 
                      <div className="space-y-6">
                         {[
-                           { key: 'canManageAgenda', label: 'Gerenciar Própria Agenda', desc: 'Permite confirmar, reagendar e finalizar seus horários.' },
-                           { key: 'canEditServices', label: 'Gerenciar Catálogo', desc: 'Permite editar preços e detalhes de seus serviços.' },
-                           { key: 'canViewGlobalFinances', label: 'Ver Financeiro Global', desc: 'ACESSO SENSÍVEL: Ver faturamento total do estúdio.' },
-                           { key: 'canCreateContent', label: 'Publicar Conteúdo', desc: 'Permite criar Posts e Stories no aplicativo.' }
+                           { key: 'canManageOwnAgenda', label: 'Ver própria agenda', desc: 'Acesso restrito aos seus agendamentos.' },
+                           { key: 'canViewOwnFinance', label: 'Ver próprio financeiro', desc: 'Acesso aos seus dados de faturamento pessoal.' },
+                           { key: 'canPostStories', label: 'Postar stories', desc: 'Permite criar stories e posts no Feed.' },
+                           { key: 'canManageOwnServices', label: 'Gerenciar serviços próprios', desc: 'Permitir editar catálogo pessoal.' },
+                           { key: 'canFinalizeAppointments', label: 'Finalizar atendimentos', desc: 'Concluir sessões e processar pagamentos.' },
+                           { key: 'canViewGlobalFinances', label: 'VER FINANCEIRO GERAL', desc: 'ACESSO MASTER: Ver faturamento total do estúdio.' }
                         ].map((perm) => (
                            <div key={perm.key} className="flex items-center justify-between gap-6 pb-6 border-b border-white/5 last:border-0 last:pb-0">
                               <div className="space-y-1 flex-1">
@@ -267,7 +317,7 @@ const ProfessionalDetailsAdmin: React.FC = () => {
                   <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6 shadow-2xl">
                      <div className="flex justify-between items-center">
                         <h3 className="text-sm font-bold">Histórico de Atendimentos</h3>
-                        <button onClick={() => navigate(`/admin/agenda`)} className="text-[10px] font-black text-accent-gold uppercase tracking-widest underline">Ver Timeline</button>
+                        <button onClick={() => navigate(`/admin/agenda?proId=${id}`)} className="text-[10px] font-black text-accent-gold uppercase tracking-widest underline">Ver Timeline</button>
                      </div>
                      <div className="space-y-4">
                         {recentAppointments.length > 0 ? recentAppointments.map((apt, i) => (
@@ -287,6 +337,81 @@ const ProfessionalDetailsAdmin: React.FC = () => {
                            <div className="text-center py-20 opacity-20">
                               <span className="material-symbols-outlined !text-6xl">event_busy</span>
                               <p className="text-xs font-bold uppercase tracking-widest mt-4">Nenhum atendimento registrado.</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+               </div>
+            )}
+
+            {activeTab === 'FINANCE' && (
+               <div className="space-y-6 animate-fade-in">
+                  <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6 shadow-2xl">
+                     <h3 className="text-sm font-bold">Lançamentos Financeiros</h3>
+                     <div className="space-y-4">
+                        {transactions.length > 0 ? transactions.map((t, i) => (
+                           <div key={i} className="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
+                              <div className="flex items-center gap-3">
+                                 <div className={`size-8 rounded-full flex items-center justify-center ${t.type === 'INCOME' ? 'bg-green-500/10 text-green-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                                    <span className="material-symbols-outlined !text-sm">{t.type === 'INCOME' ? 'arrow_upward' : 'arrow_downward'}</span>
+                                 </div>
+                                 <div>
+                                    <p className="font-bold text-xs">{t.category}</p>
+                                    <p className="text-[10px] text-gray-500">{new Date(t.date).toLocaleDateString()}</p>
+                                 </div>
+                              </div>
+                              <span className={`font-bold text-xs ${t.type === 'INCOME' ? 'text-green-400' : 'text-rose-400'}`}>
+                                 {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount}
+                              </span>
+                           </div>
+                        )) : (
+                           <div className="text-center py-20 opacity-20">
+                              <span className="material-symbols-outlined !text-6xl">payments</span>
+                              <p className="text-xs font-bold uppercase tracking-widest mt-4">Nenhum lançamento.</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+               </div>
+            )}
+
+            {activeTab === 'SERVICES' && (
+               <div className="space-y-6 animate-fade-in">
+                  <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6 shadow-2xl">
+                     <h3 className="text-sm font-bold">Serviços Vinculados</h3>
+                     <div className="grid grid-cols-1 gap-4">
+                        {services.length > 0 ? services.map((s, i) => (
+                           <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-4">
+                              <img src={s.image_url} className="size-12 rounded-xl object-cover" alt="" />
+                              <div>
+                                 <p className="text-sm font-bold text-white">{s.name}</p>
+                                 <p className="text-[10px] text-accent-gold font-bold uppercase">R$ {s.price} • {s.duration} min</p>
+                              </div>
+                           </div>
+                        )) : (
+                           <div className="text-center py-20 opacity-20">
+                              <span className="material-symbols-outlined !text-6xl">category</span>
+                              <p className="text-xs font-bold uppercase tracking-widest mt-4">Sem serviços.</p>
+                           </div>
+                        )}
+                     </div>
+                  </div>
+               </div>
+            )}
+
+            {activeTab === 'CONTENT' && (
+               <div className="space-y-6 animate-fade-in">
+                  <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6 shadow-2xl">
+                     <h3 className="text-sm font-bold">Publicações & Stories</h3>
+                     <div className="grid grid-cols-3 gap-2">
+                        {content.length > 0 ? content.map((c, i) => (
+                           <div key={i} className="aspect-square bg-white/5 rounded-xl overflow-hidden border border-white/5">
+                              <img src={c.image_url || c.media_url} className="w-full h-full object-cover" alt="" />
+                           </div>
+                        )) : (
+                           <div className="col-span-3 text-center py-20 opacity-20">
+                              <span className="material-symbols-outlined !text-6xl">history_toggle_off</span>
+                              <p className="text-xs font-bold uppercase tracking-widest mt-4">Nenhum conteúdo.</p>
                            </div>
                         )}
                      </div>

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import AdminBottomNav from '../components/AdminBottomNav';
 
 const AdminClients: React.FC = () => {
    const navigate = useNavigate();
@@ -143,29 +144,7 @@ const AdminClients: React.FC = () => {
             )}
          </main>
 
-         <nav className="fixed bottom-0 inset-x-0 bg-background-dark/95 backdrop-blur-xl border-t border-white/10 px-6 py-4 flex justify-between items-center z-50 rounded-t-[32px] max-w-[430px] left-1/2 -translate-x-1/2">
-            <button onClick={() => navigate('/admin')} className="flex flex-col items-center gap-1.5 text-gray-500">
-               <span className="material-symbols-outlined !text-3xl">grid_view</span>
-               <span className="text-[8px] font-black uppercase tracking-widest">Painel</span>
-            </button>
-            <button className="flex flex-col items-center gap-1.5 text-accent-gold">
-               <span className="material-symbols-outlined !text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>groups</span>
-               <span className="text-[8px] font-black uppercase tracking-widest">Clientes</span>
-            </button>
-            <div className="relative -top-8">
-               <button onClick={() => navigate('/admin/content')} className="size-16 rounded-full bg-primary flex items-center justify-center shadow-2xl shadow-primary/40 border-4 border-background-dark">
-                  <span className="material-symbols-outlined text-white !text-4xl">add</span>
-               </button>
-            </div>
-            <button onClick={() => navigate('/admin/agenda')} className="flex flex-col items-center gap-1.5 text-gray-500">
-               <span className="material-symbols-outlined !text-3xl">calendar_month</span>
-               <span className="text-[8px] font-black uppercase tracking-widest">Agenda</span>
-            </button>
-            <button onClick={() => navigate('/admin/finance')} className="flex flex-col items-center gap-1.5 text-gray-500">
-               <span className="material-symbols-outlined !text-3xl">payments</span>
-               <span className="text-[8px] font-black uppercase tracking-widest">Caixa</span>
-            </button>
-         </nav>
+         <AdminBottomNav />
       </div>
    );
 };

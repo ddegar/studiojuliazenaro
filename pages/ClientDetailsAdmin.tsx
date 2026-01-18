@@ -63,7 +63,7 @@ const ClientDetailsAdmin: React.FC = () => {
    }
 
    const preferences = clientData.preferences || {};
-   const loyaltyLevel = clientData.lash_points >= 1000 ? 'DIAMANTE ✨' : (clientData.lash_points >= 500 ? 'OURO ⭐️' : 'BRONZE 🔘');
+   const loyaltyLevel = clientData.lash_points >= 1000 ? 'DIAMANTE ✨' : (clientData.lash_points >= 500 ? 'OURO ⭐️' : 'PRATA 🔘');
 
    return (
       <div className="flex flex-col h-full bg-background-dark text-white">

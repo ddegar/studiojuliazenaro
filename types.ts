@@ -8,7 +8,7 @@ export interface User {
   phone: string;
   role: UserRole;
   professionalId?: string;
-  loyaltyPoints: number;
+  lashPoints: number;
   tierId: string;
   referralCode: string;
   referredBy?: string;
@@ -88,8 +88,8 @@ export interface FinancialTransaction {
   amount: number;
   title: string;
   date: string;
-  professionalId?: string; 
-  appointmentId?: string; 
+  professionalId?: string;
+  appointmentId?: string;
   isStudioWide: boolean;
 }
 

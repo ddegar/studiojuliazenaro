@@ -22,16 +22,43 @@ const Login: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
 
       if (error || !user) throw error;
 
-      // Check role
-      const { data: profile } = await supabase
+      // Initial check for profile
+      let { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
 
+      // Sync with Professionals table (Profile Sync)
+      const { data: pro } = await supabase
+        .from('professionals')
+        .select('*')
+        .eq('email', email)
+        .single();
+
+      if (pro && (!profile || profile.role === 'CLIENT')) {
+        // Link and upgrade role if they were previously a client or had no profile
+        await Promise.all([
+          supabase.from('profiles').update({
+            role: 'PROFESSIONAL',
+            permissions: pro.permissions || { canManageAgenda: true }
+          }).eq('id', user.id),
+          supabase.from('professionals').update({ profile_id: user.id }).eq('id', pro.id)
+        ]);
+
+        // Refresh local profile data for redirection logic
+        const { data: updatedProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (updatedProfile) profile = updatedProfile;
+      }
+
       onAuth();
 
-      if (profile && ['MASTER_ADMIN', 'PROFESSIONAL_ADMIN', 'ADMIN'].includes(profile.role)) {
+      if (profile && ['MASTER_ADMIN', 'PROFESSIONAL_ADMIN', 'ADMIN', 'PROFESSIONAL'].includes(profile.role)) {
         navigate('/admin');
       } else {
         navigate('/home');

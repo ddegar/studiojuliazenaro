@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import AdminBottomNav from '../components/AdminBottomNav';
 import { Professional, UserRole } from '../types';
 
 const AdminAgenda: React.FC = () => {
@@ -11,6 +11,7 @@ const AdminAgenda: React.FC = () => {
    const [currentUser, setCurrentUser] = useState<{ id: string, role: UserRole } | null>(null);
    const [selectedProId, setSelectedProId] = useState<string>('');
    const [appointments, setAppointments] = useState<any[]>([]);
+   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
    const now = new Date();
    const [viewMonth, setViewMonth] = useState(now.getMonth());
@@ -19,79 +20,116 @@ const AdminAgenda: React.FC = () => {
    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
    const monthName = new Date(viewYear, viewMonth).toLocaleDateString('pt-BR', { month: 'long' });
 
-   useEffect(() => {
-      const initAgenda = async () => {
-         setLoading(true);
-         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-               navigate('/login');
-               return;
-            }
+   const fetchPendingRequests = async (role: UserRole, userId: string) => {
+      let query = supabase
+         .from('appointments')
+         .select(`
+   *,
+   profiles(name, avatar_url),
+   services(name)
+      `)
+         .eq('status', 'pending')
+         .order('date', { ascending: true })
+         .order('time', { ascending: true });
 
-            const { data: profile } = await supabase
-               .from('profiles')
-               .select('id, role')
-               .eq('id', user.id)
-               .single();
+      if (role !== 'MASTER_ADMIN') {
+         query = query.eq('professional_id', userId);
+      }
 
-            if (profile) {
-               setCurrentUser(profile as { id: string, role: UserRole });
+      const { data } = await query;
+      setPendingRequests(data || []);
+   };
 
-               // Fetch real professionals from professionals table
-               const { data: pros } = await supabase
-                  .from('professionals')
-                  .select('*')
-                  .eq('active', true);
-
-               const formattedPros: Professional[] = (pros || []).map(p => ({
-                  id: p.id,
-                  name: p.name || 'Sem nome',
-                  role: p.role || 'Designer',
-                  avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}`,
-                  active: p.active,
-                  specialties: [],
-                  rating: p.rating || 5
-               }));
-
-               setProfessionals(formattedPros);
-
-               // Initial selection: If professional, select self. If master, select self if pro or first pro.
-               if (profile.role === 'MASTER_ADMIN') {
-                  const selfPro = formattedPros.find(p => p.id === profile.id);
-                  setSelectedProId(selfPro?.id || formattedPros[0]?.id || profile.id);
-               } else {
-                  setSelectedProId(profile.id);
-               }
-            }
-         } catch (err) {
-            console.error('Error initializing agenda:', err);
-         } finally {
-            setLoading(false);
+   const initAgenda = async () => {
+      setLoading(true);
+      try {
+         const { data: { user } } = await supabase.auth.getUser();
+         if (!user) {
+            navigate('/login');
+            return;
          }
-      };
 
+         const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, role')
+            .eq('id', user.id)
+            .single();
+
+         if (profile) {
+            setCurrentUser(profile as { id: string, role: UserRole });
+
+            // Fetch real professionals from professionals table
+            const { data: pros } = await supabase
+               .from('professionals')
+               .select('*')
+               .eq('active', true);
+
+            const formattedPros: Professional[] = (pros || []).map(p => ({
+               id: p.id,
+               name: p.name || 'Sem nome',
+               role: p.role || 'Designer',
+               avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}`,
+               active: p.active,
+               specialties: [],
+               rating: p.rating || 5
+            }));
+
+            setProfessionals(formattedPros);
+
+            // Initial selection
+            if (profile.role === 'MASTER_ADMIN') {
+               const selfPro = formattedPros.find(p => p.id === profile.id);
+               setSelectedProId(selfPro?.id || formattedPros[0]?.id || profile.id);
+            } else {
+               setSelectedProId(profile.id);
+            }
+
+            fetchPendingRequests(profile.role as UserRole, profile.id);
+         }
+      } catch (err) {
+         console.error('Error initializing agenda:', err);
+      } finally {
+         setLoading(false);
+      }
+   };
+
+   useEffect(() => {
       initAgenda();
    }, [navigate]);
 
+   const fetchMonthAppts = async () => {
+      if (!selectedProId) return;
+      const firstDay = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-01`;
+      const lastDay = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-${daysInMonth}`;
+
+      const { data } = await supabase
+         .from('appointments')
+         .select('date, status')
+         .eq('professional_id', selectedProId)
+         .gte('date', firstDay)
+         .lte('date', lastDay);
+
+      setAppointments(data || []);
+   };
+
    useEffect(() => {
-      if (selectedProId) {
-         const fetchMonthAppts = async () => {
-            const firstDay = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-01`;
-            const lastDay = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-${daysInMonth}`;
-
-            const { data } = await supabase
-               .from('appointments')
-               .select('date, status')
-               .eq('professional_id', selectedProId)
-               .gte('date', firstDay)
-               .lte('date', lastDay);
-
-            setAppointments(data || []);
-         };
-         fetchMonthAppts();
-      }
+      fetchMonthAppts();
    }, [selectedProId, viewMonth, viewYear, daysInMonth]);
+
+   const handleStatusUpdate = async (id: string, newStatus: string) => {
+      try {
+         const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
+         if (error) throw error;
+
+         // Refresh both views
+         if (currentUser) fetchPendingRequests(currentUser.role, currentUser.id);
+         fetchMonthAppts();
+
+         alert(`Agendamento ${newStatus === 'confirmed' ? 'confirmado' : 'cancelado'} com sucesso.`);
+      } catch (err: any) {
+         alert('Erro ao atualizar: ' + err.message);
+      }
+   };
 
    const isMaster = currentUser?.role === 'MASTER_ADMIN';
 
@@ -138,9 +176,14 @@ const AdminAgenda: React.FC = () => {
                      <p className="text-[10px] text-gray-500 uppercase font-bold tracking-[0.2em]">Sincronizada em Tempo Real</p>
                   </div>
                </div>
-               <button onClick={() => navigate('/admin/agenda/new')} className="size-12 rounded-full bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20 ring-4 ring-primary/10">
-                  <span className="material-symbols-outlined">add</span>
-               </button>
+               <div className="flex gap-3">
+                  <button onClick={() => initAgenda()} className="size-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
+                     <span className="material-symbols-outlined !text-xl">refresh</span>
+                  </button>
+                  <button onClick={() => navigate('/admin/agenda/new')} className="size-10 rounded-full bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20">
+                     <span className="material-symbols-outlined">add</span>
+                  </button>
+               </div>
             </div>
 
             {isMaster && visibleProfessionals.length > 1 && (
@@ -156,7 +199,71 @@ const AdminAgenda: React.FC = () => {
             )}
          </header>
 
-         <main className="flex-1 p-6 space-y-8 overflow-y-auto no-scrollbar">
+         <main className="flex-1 p-6 space-y-10 overflow-y-auto no-scrollbar">
+            {/* Seção Fixa de Solicitações */}
+            {pendingRequests.length > 0 && (
+               <section className="space-y-4 animate-fade-in">
+                  <div className="flex items-center justify-between px-2">
+                     <h2 className="text-xs font-black uppercase tracking-[0.3em] text-accent-gold flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-gold opacity-75"></span>
+                           <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-gold"></span>
+                        </span>
+                        Solicitações de Agendamento
+                     </h2>
+                     <span className="text-[10px] font-bold text-gray-500">{pendingRequests.length} pendente(s)</span>
+                  </div>
+
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-2 px-2">
+                     {pendingRequests.map(req => (
+                        <div key={req.id} className="min-w-[300px] bg-card-dark p-6 rounded-[32px] border border-accent-gold/20 shadow-2xl space-y-4">
+                           <div className="flex items-center gap-4">
+                              <img src={req.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${req.profiles?.name || 'C'}`} className="size-10 rounded-full border border-white/10" alt="" />
+                              <div className="flex-1">
+                                 <h4 className="font-bold text-sm leading-tight text-white">{req.profiles?.name || 'Cliente'}</h4>
+                                 <p className="text-[10px] text-accent-gold font-bold uppercase tracking-widest">{req.services?.name}</p>
+                              </div>
+                           </div>
+
+                           <div className="grid grid-cols-2 gap-3 pb-2 border-b border-white/5">
+                              <div className="flex items-center gap-2">
+                                 <span className="material-symbols-outlined !text-xs text-gray-500">calendar_today</span>
+                                 <span className="text-[10px] font-bold">{new Date(req.date).toLocaleDateString('pt-BR')}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                 <span className="material-symbols-outlined !text-xs text-gray-500">schedule</span>
+                                 <span className="text-[10px] font-bold">{req.time.slice(0, 5)}</span>
+                              </div>
+                              {isMaster && (
+                                 <div className="flex items-center gap-2 col-span-2">
+                                    <span className="material-symbols-outlined !text-xs text-gray-500">person</span>
+                                    <span className="text-[10px] font-bold italic text-gray-400">Profissional: {req.professional_name || 'Alocando...'}</span>
+                                 </div>
+                              )}
+                           </div>
+
+                           <div className="flex gap-2 pt-1">
+                              <button
+                                 onClick={() => handleStatusUpdate(req.id, 'confirmed')}
+                                 className="flex-1 h-10 bg-emerald-500 text-black rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all"
+                              >Aceitar</button>
+                              <button
+                                 onClick={() => navigate(`/admin/agenda/day/${req.date}?proId=${req.professional_id}`)}
+                                 className="flex-1 h-10 bg-white/5 border border-white/10 text-gray-400 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                              >Reagendar</button>
+                              <button
+                                 onClick={() => handleStatusUpdate(req.id, 'cancelled')}
+                                 className="size-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl flex items-center justify-center active:scale-95 transition-all"
+                              >
+                                 <span className="material-symbols-outlined !text-xl">close</span>
+                              </button>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </section>
+            )}
+
             <div className="flex justify-between items-center px-4">
                <h2 className="text-2xl font-display font-bold capitalize">{monthName} <span className="text-gray-600">{viewYear}</span></h2>
                <div className="flex gap-4">
@@ -219,6 +326,7 @@ const AdminAgenda: React.FC = () => {
                </div>
             </div>
          </main>
+         <AdminBottomNav />
       </div>
    );
 };

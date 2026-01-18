@@ -36,6 +36,31 @@ const Register: React.FC = () => {
       if (error) throw error;
 
       if (data.user) {
+        // Sync with Professionals table
+        const { data: pro } = await supabase
+          .from('professionals')
+          .select('*')
+          .eq('email', email)
+          .single();
+
+        if (pro) {
+          // 1. Update Profile Role and Permissions
+          // Note: the trigger to create profile might take a ms, so we retry or update auth metadata
+          await supabase
+            .from('profiles')
+            .update({
+              role: 'PROFESSIONAL',
+              permissions: pro.permissions || { canManageAgenda: true }
+            })
+            .eq('id', data.user.id);
+
+          // 2. Link professional record
+          await supabase
+            .from('professionals')
+            .update({ profile_id: data.user.id })
+            .eq('id', pro.id);
+        }
+
         setShowWelcomeModal(true);
       }
     } catch (error: any) {

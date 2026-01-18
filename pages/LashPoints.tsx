@@ -13,8 +13,8 @@ const LashPoints: React.FC = () => {
       const fetchPoints = async () => {
          const { data: { user } } = await supabase.auth.getUser();
          if (user) {
-            const { data } = await supabase.from('profiles').select('loyalty_points').eq('id', user.id).single();
-            if (data) setPoints(data.loyalty_points || 0);
+            const { data } = await supabase.from('profiles').select('lash_points').eq('id', user.id).single();
+            if (data) setPoints(data.lash_points || 0);
          }
       };
       fetchPoints();
@@ -34,7 +34,7 @@ const LashPoints: React.FC = () => {
             if (!user) throw new Error('Usuário não autenticado');
 
             const newPoints = points - reward.points;
-            const { error } = await supabase.from('profiles').update({ loyalty_points: newPoints }).eq('id', user.id);
+            const { error } = await supabase.from('profiles').update({ lash_points: newPoints }).eq('id', user.id);
 
             if (error) throw error;
 

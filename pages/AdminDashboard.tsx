@@ -9,15 +9,33 @@ const AdminDashboard: React.FC = () => {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [stats, setStats] = useState({
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>({
     clients: 0,
     appointmentsToday: 0,
     revenue: 0,
-    user: { name: 'Admin', role: 'MASTER_ADMIN' as UserRole, avatar: '', id: '' }
+    professionals: 0,
+    user: { name: '', role: 'PROFESSIONAL' as UserRole, avatar: '', id: '' }
   });
   const [chartData, setChartData] = useState<any[]>([]);
 
   const isMaster = stats.user.role === 'MASTER_ADMIN';
+
+  const handleStatusUpdate = async (id: string, newStatus: string) => {
+    try {
+      const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
+      if (error) throw error;
+
+      // Refresh data
+      setPendingRequests(prev => prev.filter(r => r.id !== id));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+
+      alert(`Agendamento ${newStatus === 'confirmed' ? 'confirmado' : 'cancelado'} com sucesso.`);
+    } catch (err: any) {
+      alert('Erro ao atualizar: ' + err.message);
+    }
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -38,32 +56,41 @@ const AdminDashboard: React.FC = () => {
         if (profile) {
           const today = new Date().toISOString().split('T')[0];
 
-          // Corrected filtering logic
-          const apptsQuery = supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today);
+          // 1. Fetch unread notifications & pending appointments
+          const pendingCountQuery = supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+          const pendingDataQuery = supabase.from('appointments').select(`
+            *,
+            profiles (name, avatar_url),
+            services (name)
+          `).eq('status', 'pending').order('date').order('time').limit(5);
+
           if (profile.role !== 'MASTER_ADMIN') {
-            apptsQuery.eq('professional_id', profile.id);
+            pendingCountQuery.eq('professional_id', profile.id);
+            pendingDataQuery.eq('professional_id', profile.id);
           }
 
-          const transQuery = supabase
-            .from('transactions')
-            .select('amount, type, date')
-            .gte('date', last7Days[0]);
-          if (profile.role !== 'MASTER_ADMIN') {
-            transQuery.eq('user_id', profile.id);
-          }
-
-          const [clientsRes, apptsRes, transRes] = await Promise.all([
+          const results = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'CLIENT'),
-            apptsQuery,
-            transQuery
+            supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today).neq('status', 'cancelled'),
+            supabase.from('professionals').select('*', { count: 'exact', head: true }),
+            supabase.from('transactions').select('amount, type, date').gte('date',
+              new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            ),
+            pendingCountQuery,
+            pendingDataQuery
           ]);
+
+          const [clientsRes, apptsRes, prosRes, transRes, pendingCountRes, pendingDataRes] = results;
+
+          setUnreadCount(pendingCountRes.count || 0);
+          setPendingRequests(pendingDataRes.data || []);
 
           // Calculate revenue
           const totalRevenue = transRes.data?.reduce((acc, curr) => {
             return curr.type === 'INCOME' ? acc + curr.amount : acc - curr.amount;
           }, 0) || 0;
 
-          // Process chart data (last 7 days)
+          // Process chart data
           const last7Days = Array.from({ length: 7 }).map((_, i) => {
             const d = new Date();
             d.setDate(d.getDate() - (6 - i));
@@ -75,7 +102,7 @@ const AdminDashboard: React.FC = () => {
             const dayTotal = dayTrans.reduce((acc, curr) => curr.type === 'INCOME' ? acc + curr.amount : acc - curr.amount, 0);
             return {
               date: new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-              value: Math.max(0, dayTotal) // Avoid negative in chart for aesthetics
+              value: Math.max(0, dayTotal)
             };
           });
 
@@ -84,6 +111,7 @@ const AdminDashboard: React.FC = () => {
             clients: clientsRes.count || 0,
             appointmentsToday: apptsRes.count || 0,
             revenue: totalRevenue,
+            professionals: prosRes.count || 0,
             user: {
               name: profile.name || 'Admin',
               role: profile.role as UserRole,
@@ -102,14 +130,16 @@ const AdminDashboard: React.FC = () => {
   }, [navigate]);
 
   const MENU_ITEMS = [
-    { label: 'Painel', icon: 'grid_view', path: '/admin' },
+    { label: 'Dashboard', icon: 'grid_view', path: '/admin' },
     { label: 'Agenda', icon: 'calendar_month', path: '/admin/agenda' },
     { label: 'Clientes', icon: 'groups', path: '/admin/clients' },
-    { label: 'Catálogo', icon: 'category', path: '/admin/services' },
-    { label: 'Profissionais', icon: 'badge', path: '/admin/professionals', masterOnly: true },
+    { label: 'Profissionais / Equipe', icon: 'badge', path: '/admin/professionals', masterOnly: true },
+    { label: 'Serviços / Catálogo', icon: 'category', path: '/admin/services' },
     { label: 'Financeiro', icon: 'payments', path: '/admin/finance' },
-    { label: 'Conteúdo', subheader: true },
-    { label: 'Stories / Posts', icon: 'history_toggle_off', path: '/admin/content' },
+    { label: 'Conteúdo (Feed / Stories)', icon: 'history_toggle_off', path: '/admin/content' },
+    { label: 'Notificações', icon: 'notifications', path: '/admin/notifications' },
+    { label: 'Ajustes do Estúdio', icon: 'settings', path: '/admin/settings', masterOnly: true },
+    { label: 'Recursos Extra', subheader: true },
     { label: 'Dicas (Pré/Pós)', icon: 'lightbulb', path: '/admin/tips' },
     { label: 'FAQ (Dúvidas)', icon: 'help', path: '/admin/faq' },
     { label: 'Depoimentos', icon: 'reviews', path: '/admin/testimonials' },
@@ -155,10 +185,15 @@ const AdminDashboard: React.FC = () => {
                   navigate(item.path!);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all ${location.pathname === item.path ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'hover:bg-white/5 text-gray-400 hover:text-white'}`}
+                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all relative ${location.pathname === item.path ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'hover:bg-white/5 text-gray-400 hover:text-white'}`}
               >
                 <span className={`material-symbols-outlined ${location.pathname === item.path ? '' : 'text-gray-500'}`}>{item.icon}</span>
                 <span className="text-sm font-bold tracking-wide">{item.label}</span>
+                {item.path === '/admin/agenda' && unreadCount > 0 && (
+                  <span className="absolute right-4 size-5 rounded-full bg-accent-gold text-primary text-[10px] font-black flex items-center justify-center shadow-lg animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -227,6 +262,20 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
+            {isMaster && (
+              <div onClick={() => navigate('/admin/professionals')} className="bg-card-dark p-6 rounded-[24px] border border-white/5 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="size-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <span className="material-symbols-outlined !text-2xl">badge</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Equipe / Staff</p>
+                  <h3 className="text-4xl font-display font-bold text-white">{stats.professionals} Ativos</h3>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div onClick={() => navigate('/admin/agenda')} className="bg-card-dark p-5 rounded-[24px] border border-white/5 active:scale-[0.98] transition-all cursor-pointer">
                 <div className="flex justify-between items-start mb-3">
@@ -255,6 +304,38 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-6">
+            {pendingRequests.length > 0 && (
+              <div className="bg-card-dark p-6 rounded-[24px] border border-accent-gold/20 shadow-2xl space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-accent-gold">notification_important</span>
+                    Solicitações Pendentes
+                  </h3>
+                  <button onClick={() => navigate('/admin/agenda')} className="text-[10px] font-black uppercase text-accent-gold hover:underline">Ver Todas</button>
+                </div>
+                <div className="space-y-4">
+                  {pendingRequests.map(req => (
+                    <div key={req.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                      <img src={req.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${req.profiles?.name || 'C'}`} className="size-10 rounded-full" alt="" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{req.profiles?.name || 'Cliente'}</p>
+                        <p className="text-[9px] text-accent-gold uppercase font-bold tracking-widest truncate">{req.services?.name}</p>
+                        <p className="text-[9px] text-gray-500 font-medium">{new Date(req.date).toLocaleDateString('pt-BR')} às {req.time.slice(0, 5)}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleStatusUpdate(req.id, 'confirmed')} className="size-8 rounded-full bg-emerald-500 text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+                          <span className="material-symbols-outlined !text-base">done</span>
+                        </button>
+                        <button onClick={() => handleStatusUpdate(req.id, 'cancelled')} className="size-8 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white active:scale-95 transition-all">
+                          <span className="material-symbols-outlined !text-base">close</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="bg-card-dark p-6 rounded-[24px] border border-white/5 h-[300px] flex flex-col">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">

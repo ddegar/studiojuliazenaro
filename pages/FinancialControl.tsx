@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useNavigate } from 'react-router-dom';
+import AdminBottomNav from '../components/AdminBottomNav';
 
 const FinancialControl: React.FC = () => {
    const [transactions, setTransactions] = useState<any[]>([]);
@@ -21,8 +22,13 @@ const FinancialControl: React.FC = () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
 
-      const { data: profile } = await supabase.from('profiles').select('role, id').eq('id', authUser.id).single();
+      const { data: profile } = await supabase.from('profiles').select('role, id, permissions').eq('id', authUser.id).single();
       setUser(profile);
+
+      if (profile?.role !== 'MASTER_ADMIN' && !profile?.permissions?.canViewOwnFinance) {
+         setLoading(false);
+         return;
+      }
 
       let query = supabase.from('transactions').select('*');
 
@@ -176,6 +182,7 @@ const FinancialControl: React.FC = () => {
             </div>
          )}
 
+         <AdminBottomNav />
       </div>
    );
 };

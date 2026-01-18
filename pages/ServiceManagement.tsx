@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Service, Professional, UserRole } from '../types';
 import { supabase } from '../services/supabase';
+import AdminBottomNav from '../components/AdminBottomNav';
 
 const ServiceManagement: React.FC = () => {
    const navigate = useNavigate();
@@ -19,9 +20,13 @@ const ServiceManagement: React.FC = () => {
       const init = async () => {
          const { data: { user } } = await supabase.auth.getUser();
          if (user) {
-            const { data: profile } = await supabase.from('profiles').select('id, role').eq('id', user.id).single();
+            const { data: profile } = await supabase.from('profiles').select('id, role, permissions').eq('id', user.id).single();
             if (profile) {
-               setCurrentUser({ role: profile.role as UserRole, id: profile.id });
+               setCurrentUser({
+                  role: profile.role as UserRole,
+                  id: profile.id,
+                  permissions: profile.permissions
+               } as any);
             }
          }
          fetchData();
@@ -137,8 +142,8 @@ const ServiceManagement: React.FC = () => {
                      <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{filteredServices.length} Procedimentos Ativos</p>
                   </div>
                </div>
-               {isMaster && (
-                  <button onClick={() => { setEditingService({ professionalIds: [], category: 'Procedimento', pointsReward: 50 }); setShowModal(true); }} className="size-11 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/20 ring-4 ring-primary/5 active:scale-95 transition-transform">
+               {(isMaster || (currentUser as any)?.permissions?.canManageOwnServices) && (
+                  <button onClick={() => { setEditingService({ professionalIds: isMaster ? [] : [currentUser!.id], category: 'Procedimento', pointsReward: 50 }); setShowModal(true); }} className="size-11 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/20 ring-4 ring-primary/5 active:scale-95 transition-transform">
                      <span className="material-symbols-outlined">add</span>
                   </button>
                )}
@@ -268,6 +273,7 @@ const ServiceManagement: React.FC = () => {
                </form>
             </div>
          )}
+         <AdminBottomNav />
       </div>
    );
 };

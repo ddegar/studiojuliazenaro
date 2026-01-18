@@ -74,10 +74,34 @@ const AdminTimeline: React.FC = () => {
       setSearchParams({ proId: id });
    };
 
+   const createNotification = async (userId: string, title: string, message: string, type: string) => {
+      try {
+         await supabase.from('notifications').insert({
+            user_id: userId,
+            title,
+            message,
+            type
+         });
+      } catch (err) {
+         console.error('Error creating notification:', err);
+      }
+   };
+
    const handleStatusUpdate = async (apt: any, newStatus: string) => {
       try {
          const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', apt.id);
          if (error) throw error;
+
+         // Notifications
+         if (apt.user_id) {
+            const statusLabel = newStatus === 'confirmed' ? 'Confirmado' : newStatus === 'cancelled' ? 'Cancelado' : 'Finalizado';
+            await createNotification(
+               apt.user_id,
+               `Agendamento ${statusLabel}`,
+               `Seu agendamento de ${apt.service_name || apt.services?.name} para ${new Date(apt.date).toLocaleDateString('pt-BR')} às ${apt.time} foi ${statusLabel.toLowerCase()}.`,
+               newStatus
+            );
+         }
 
          // Automation for COMPLETION
          if (newStatus === 'completed') {
@@ -135,6 +159,11 @@ const AdminTimeline: React.FC = () => {
                   </div>
                </div>
                <div className="flex gap-2">
+                  {date !== new Date().toISOString().split('T')[0] && (
+                     <button onClick={() => navigate(`/admin/agenda/day/${new Date().toISOString().split('T')[0]}${selectedProId ? `?proId=${selectedProId}` : ''}`)} className="size-10 rounded-xl bg-accent-gold/10 border border-accent-gold/20 flex items-center justify-center text-accent-gold active:scale-95" title="Hoje">
+                        <span className="material-symbols-outlined !text-xl">today</span>
+                     </button>
+                  )}
                   <button onClick={() => fetchAppointments()} className="size-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 active:scale-95">
                      <span className="material-symbols-outlined !text-xl">refresh</span>
                   </button>
@@ -197,7 +226,12 @@ const AdminTimeline: React.FC = () => {
                                     <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${isBlocked ? 'text-gray-500' : 'text-accent-gold'}`}>
                                        {isBlocked ? 'Intervalo' : apt.service_name || apt.services?.name}
                                     </p>
-                                    {isPending && <span className="text-[8px] bg-accent-gold text-black px-2 py-0.5 rounded-full font-black animate-pulse">NOVO AGENDAMENTO</span>}
+                                    {isPending && (
+                                       <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-gold text-primary text-[8px] font-black animate-pulse border border-accent-gold/50 shadow-lg shadow-accent-gold/20">
+                                          <span className="material-symbols-outlined !text-[10px]">notification_important</span>
+                                          SOLICITAÇÃO PENDENTE
+                                       </span>
+                                    )}
                                     {isCompleted && <span className="text-[8px] bg-green-500/20 text-green-500 px-2.5 py-1 rounded-full font-black border border-green-500/20 uppercase tracking-widest">Concluído</span>}
                                  </div>
                                  <div className="flex items-center gap-3">
