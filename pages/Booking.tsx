@@ -319,33 +319,65 @@ const Booking: React.FC = () => {
                     return;
                   }
 
+                  if (!selection.professional?.id || !selection.service?.id || !selection.date || !selection.time) {
+                    alert('Por favor, preencha todos os campos obrigatórios (Profissional, Serviço, Data e Hora).');
+                    return;
+                  }
+
                   const isRescheduling = location.state?.isRescheduling;
                   const oldApptId = location.state?.oldApptId;
 
                   const payload = {
                     user_id: user.id,
-                    service_id: selection.service!.id,
-                    professional_id: selection.professional!.id,
+                    service_id: selection.service.id,
+                    professional_id: selection.professional.id,
                     date: selection.date,
                     time: selection.time,
-                    price: selection.service!.price,
+                    price: selection.service.price,
                     status: 'pending_approval',
-                    service_name: selection.service!.name,
-                    professional_name: selection.professional!.name
+                    service_name: selection.service.name,
+                    professional_name: selection.professional.name
                   };
 
+                  let appointmentId: string | null = null;
+
                   if (isRescheduling && oldApptId) {
-                    const { error } = await supabase.from('appointments')
+                    const { data, error } = await supabase.from('appointments')
                       .update({
                         ...payload,
-                        status: 'pending_approval' // Resets to pending for new confirmation
+                        status: 'pending_approval'
                       })
-                      .eq('id', oldApptId);
+                      .eq('id', oldApptId)
+                      .select()
+                      .single();
                     if (error) throw error;
+                    appointmentId = data.id;
                   } else {
-                    const { error } = await supabase.from('appointments').insert(payload);
+                    const { data, error } = await supabase.from('appointments').insert(payload).select().single();
                     if (error) throw error;
+                    appointmentId = data.id;
                   }
+
+                  // Notificar Admin e Profissional
+                  try {
+                    await supabase.from('notifications').insert([
+                      {
+                        user_id: 'JULIA_ZENARO_ID', // Idealmente buscar ID do MASTER_ADMIN dinamicamente
+                        title: 'Novo Pedido de Agendamento',
+                        message: `${selection.service.name} solicitado para ${selection.date} às ${selection.time}`,
+                        type: 'pending_approval'
+                      },
+                      {
+                        user_id: selection.professional.id,
+                        title: 'Novo Pedido na sua Agenda',
+                        message: `Um novo agendamento de ${selection.service.name} aguarda sua aprovação.`,
+                        type: 'pending_approval'
+                      }
+                    ]);
+                  } catch (notifyErr) {
+                    console.error('Erro ao enviar notificações:', notifyErr);
+                  }
+
                   navigate('/booking/confirmed', { state: { selection } });
                 } catch (e: any) {
                   alert('Erro ao confirmar: ' + e.message);

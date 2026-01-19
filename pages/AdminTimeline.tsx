@@ -18,10 +18,10 @@ const AdminTimeline: React.FC = () => {
       if (!user) return;
 
       const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-      const isMaster = profile?.role === 'MASTER_ADMIN';
+      const isPrivileged = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile?.role || '');
 
       let query = supabase.from('professionals').select('*').eq('active', true);
-      if (!isMaster) {
+      if (!isPrivileged) {
          query = query.eq('id', user.id);
       }
 
@@ -78,6 +78,25 @@ const AdminTimeline: React.FC = () => {
 
    useEffect(() => {
       fetchAppointments();
+
+      const channel = supabase
+         .channel('timeline-changes')
+         .on(
+            'postgres_changes',
+            {
+               event: '*',
+               schema: 'public',
+               table: 'appointments'
+            },
+            () => {
+               fetchAppointments();
+            }
+         )
+         .subscribe();
+
+      return () => {
+         supabase.removeChannel(channel);
+      };
    }, [selectedProId, date]);
 
    const handleProChange = (id: string) => {

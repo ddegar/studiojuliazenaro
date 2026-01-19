@@ -71,6 +71,29 @@ const AppointmentDetails: React.FC = () => {
             .eq('id', id);
 
          if (error) throw error;
+
+         // Notificar Admin e Profissional sobre cancelamento
+         if (newStatus === 'cancelled_by_user') {
+            try {
+               await supabase.from('notifications').insert([
+                  {
+                     user_id: 'JULIA_ZENARO_ID',
+                     title: 'Agendamento Cancelado pelo Cliente',
+                     message: `${appointment?.service_name || 'Serviço'} que seria em ${new Date(appointment?.date).toLocaleDateString('pt-BR')} às ${appointment?.time}`,
+                     type: 'cancelled_by_user'
+                  },
+                  {
+                     user_id: appointment?.professional_id,
+                     title: 'Cancelamento na sua Agenda',
+                     message: `O cliente cancelou o agendamento de ${appointment?.service_name || 'Serviço'}.`,
+                     type: 'cancelled_by_user'
+                  }
+               ]);
+            } catch (notifyErr) {
+               console.error('Error sending cancellation notifications:', notifyErr);
+            }
+         }
+
          alert(`Agendamento ${newStatus === 'cancelled_by_user' ? 'cancelado' : 'atualizado'} com sucesso.`);
          navigate('/history');
       } catch (e: any) {

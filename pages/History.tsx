@@ -60,6 +60,25 @@ const History: React.FC = () => {
 
    useEffect(() => {
       fetchHistory();
+
+      const channel = supabase
+         .channel('history-changes')
+         .on(
+            'postgres_changes',
+            {
+               event: '*',
+               schema: 'public',
+               table: 'appointments'
+            },
+            () => {
+               fetchHistory();
+            }
+         )
+         .subscribe();
+
+      return () => {
+         supabase.removeChannel(channel);
+      };
    }, []);
 
    const renderAppointmentCard = (item: any, isPast: boolean) => {

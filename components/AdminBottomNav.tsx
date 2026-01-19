@@ -11,7 +11,14 @@ const AdminBottomNav: React.FC = () => {
         const checkRole = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const isMasterUser = ['MASTER_ADMIN', 'PROFESSIONAL_ADMIN', 'ADMIN'].includes(data?.role) || user.email?.toLowerCase() === 'admin@juliazenaro.com';
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+
+                const isMasterUser = ['MASTER_ADMIN', 'PROFESSIONAL_ADMIN', 'ADMIN'].includes(profile?.role) ||
+                    user.email?.toLowerCase() === 'admin@juliazenaro.com';
                 setIsMaster(isMasterUser);
             }
         };

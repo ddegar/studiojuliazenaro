@@ -33,7 +33,8 @@ const AdminAgenda: React.FC = () => {
          .order('date', { ascending: true })
          .order('time', { ascending: true });
 
-      if (role !== 'MASTER_ADMIN') {
+      const isPrivilegedRole = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(role);
+      if (!isPrivilegedRole) {
          query = query.eq('professional_id', userId);
       }
 
@@ -77,15 +78,28 @@ const AdminAgenda: React.FC = () => {
 
             setProfessionals(formattedPros);
 
+            // Find the professional record that matches the logged-in user by name
+            const { data: profileData } = await supabase
+               .from('profiles')
+               .select('name')
+               .eq('id', profile.id)
+               .single();
+
+            const matchingPro = formattedPros.find(p =>
+               p.name.toLowerCase().includes(profileData?.name?.split(' ')[0]?.toLowerCase() || '')
+            );
+
             // Initial selection
-            if (profile.role === 'MASTER_ADMIN') {
-               const selfPro = formattedPros.find(p => p.id === profile.id);
-               setSelectedProId(selfPro?.id || formattedPros[0]?.id || profile.id);
+            const isPrivileged = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile.role);
+            if (isPrivileged) {
+               setSelectedProId(matchingPro?.id || formattedPros[0]?.id || '');
             } else {
-               setSelectedProId(profile.id);
+               setSelectedProId(matchingPro?.id || '');
             }
 
-            fetchPendingRequests(profile.role as UserRole, profile.id);
+            // Use the professional's ID for filtering, not the profile ID
+            const professionalIdForFilter = matchingPro?.id || profile.id;
+            fetchPendingRequests(profile.role as UserRole, professionalIdForFilter);
          }
       } catch (err) {
          console.error('Error initializing agenda:', err);
@@ -96,6 +110,33 @@ const AdminAgenda: React.FC = () => {
 
    useEffect(() => {
       initAgenda();
+
+      // Real-time synchronization
+      const channel = supabase
+         .channel('schema-db-changes')
+         .on(
+            'postgres_changes',
+            {
+               event: '*',
+               schema: 'public',
+               table: 'appointments'
+            },
+            () => {
+               // Reload data on any change
+               if (currentUser) {
+                  fetchPendingRequests(currentUser.role, currentUser.id);
+                  fetchMonthAppts();
+               } else {
+                  // Fallback if currentUser is not yet set
+                  initAgenda();
+               }
+            }
+         )
+         .subscribe();
+
+      return () => {
+         supabase.removeChannel(channel);
+      };
    }, [navigate]);
 
    const fetchMonthAppts = async () => {
@@ -127,13 +168,26 @@ const AdminAgenda: React.FC = () => {
          if (currentUser) fetchPendingRequests(currentUser.role, currentUser.id);
          fetchMonthAppts();
 
+         // Notificar Cliente
+         const { data: apt } = await supabase.from('appointments').select('user_id, service_name, date, time').eq('id', id).single();
+         if (apt?.user_id) {
+            const statusLabel = newStatus === 'approved' ? 'Aprovado' : 'Recusado';
+            await supabase.from('notifications').insert({
+               user_id: apt.user_id,
+               title: `Agendamento ${statusLabel}`,
+               message: `Seu agendamento de ${apt.service_name} para ${new Date(apt.date).toLocaleDateString('pt-BR')} às ${apt.time.slice(0, 5)} foi ${statusLabel.toLowerCase()}.`,
+               type: newStatus
+            });
+         }
+
          alert(`Agendamento ${newStatus === 'approved' ? 'aprovado' : newStatus === 'rejected' ? 'recusado' : 'atualizado'} com sucesso.`);
       } catch (err: any) {
          alert('Erro ao atualizar: ' + err.message);
       }
    };
 
-   const isMaster = currentUser?.role === 'MASTER_ADMIN';
+   const isPrivileged = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(currentUser?.role || '');
+   const isMaster = isPrivileged; // Standardize for the UI logic that uses isMaster
 
    const visibleProfessionals = useMemo(() => {
       if (isMaster) return professionals;

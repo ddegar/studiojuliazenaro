@@ -32,11 +32,27 @@ const AdminDashboard: React.FC = () => {
       const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
       if (error) throw error;
 
-      // Refresh data
+      // Refresh data locally immediately
       setPendingRequests(prev => prev.filter(r => r.id !== id));
       setUnreadCount(prev => Math.max(0, prev - 1));
 
-      alert(`Agendamento ${newStatus === 'approved' ? 'confirmado' : 'recusado'} com sucesso.`);
+      // Notificar Cliente
+      try {
+        const { data: apt } = await supabase.from('appointments').select('user_id, service_name, date, time').eq('id', id).single();
+        if (apt?.user_id) {
+          const statusLabel = newStatus === 'approved' ? 'Aprovado' : 'Recusado';
+          await supabase.from('notifications').insert({
+            user_id: apt.user_id,
+            title: `Agendamento ${statusLabel}`,
+            message: `Seu agendamento de ${apt.service_name} para ${new Date(apt.date).toLocaleDateString('pt-BR')} às ${apt.time.slice(0, 5)} foi ${statusLabel.toLowerCase()}.`,
+            type: newStatus
+          });
+        }
+      } catch (notifyErr) {
+        console.error('Error sending notification from dashboard:', notifyErr);
+      }
+
+      alert(`Agendamento ${newStatus === 'approved' ? 'aprovado' : 'recusado'} com sucesso.`);
     } catch (err: any) {
       alert('Erro ao atualizar: ' + err.message);
     }
@@ -70,9 +86,24 @@ const AdminDashboard: React.FC = () => {
             services (name)
           `).eq('status', 'pending_approval').order('date').order('time').limit(5);
 
-          if (profile.role !== 'MASTER_ADMIN') {
-            pendingCountQuery.eq('professional_id', profile.id);
-            pendingDataQuery.eq('professional_id', profile.id);
+          // Find the professional record that matches the logged-in user by name
+          let professionalIdForFilter = profile.id; // default fallback
+
+          const isPrivileged = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile.role);
+          if (!isPrivileged) {
+            // For non-privileged users, find their professional record
+            const { data: matchingPro } = await supabase
+              .from('professionals')
+              .select('id')
+              .ilike('name', `%${profile.name?.split(' ')[0] || ''}%`)
+              .single();
+
+            if (matchingPro) {
+              professionalIdForFilter = matchingPro.id;
+            }
+
+            pendingCountQuery.eq('professional_id', professionalIdForFilter);
+            pendingDataQuery.eq('professional_id', professionalIdForFilter);
           }
 
           const results = await Promise.all([
@@ -134,6 +165,26 @@ const AdminDashboard: React.FC = () => {
       }
     };
     fetchDashboardData();
+
+    // Real-time synchronization for dashboard counters
+    const channel = supabase
+      .channel('dashboard-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments'
+        },
+        () => {
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [navigate]);
 
   const MENU_ITEMS = [
@@ -231,7 +282,7 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="hidden md:flex flex-col items-end">
               <span className="text-xs font-bold text-white max-w-[150px] truncate leading-none">{stats.user.name}</span>
-              <span className="text-[9px] text-accent-gold uppercase font-bold tracking-wider mt-1">{isMaster ? 'Master Admin' : 'Profissional'}</span>
+              <span className="text-[9px] text-accent-gold uppercase font-bold tracking-wider mt-1">{isMaster ? 'Master Admin' : stats.user.role === 'PROFESSIONAL_ADMIN' || stats.user.role === 'ADMIN' ? 'Administrador' : 'Profissional'}</span>
             </div>
             <div className="size-10 rounded-full bg-accent-gold p-0.5">
               <img src={stats.user.avatar || `https://ui-avatars.com/api/?name=${stats.user.name}`} className="w-full h-full rounded-full object-cover" alt="Profile" />
@@ -330,10 +381,10 @@ const AdminDashboard: React.FC = () => {
                         <p className="text-[9px] text-gray-500 font-medium">{new Date(req.date).toLocaleDateString('pt-BR')} às {req.time.slice(0, 5)}</p>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => handleStatusUpdate(req.id, 'confirmed')} className="size-8 rounded-full bg-emerald-500 text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+                        <button onClick={() => handleStatusUpdate(req.id, 'approved')} className="size-8 rounded-full bg-emerald-500 text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
                           <span className="material-symbols-outlined !text-base">done</span>
                         </button>
-                        <button onClick={() => handleStatusUpdate(req.id, 'cancelled')} className="size-8 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white active:scale-95 transition-all">
+                        <button onClick={() => handleStatusUpdate(req.id, 'rejected')} className="size-8 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white active:scale-95 transition-all">
                           <span className="material-symbols-outlined !text-base">close</span>
                         </button>
                       </div>
