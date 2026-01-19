@@ -13,7 +13,7 @@ const Booking: React.FC = () => {
 
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [bookedAppointments, setBookedAppointments] = useState<Partial<Appointment>[]>([]);
+  const [bookedAppointments, setBookedAppointments] = useState<(Partial<Appointment> & { duration?: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<BookingStep>(
     preSelected?.service ? 'DATE' : (preSelected?.professional ? 'SERVICE' : 'PROFESSIONAL')
@@ -71,18 +71,26 @@ const Booking: React.FC = () => {
   useEffect(() => {
     if (selection.date && selection.professional) {
       const fetchAppts = async () => {
+        // Fetch appointments AND their service duration to block distinct slots
         const { data } = await supabase.from('appointments')
-          .select('date, time, professional_id, status')
+          .select(`
+            date, 
+            time, 
+            professional_id, 
+            status,
+            services ( duration ) 
+          `)
           .eq('date', selection.date)
           .eq('professional_id', selection.professional!.id)
-          .not('status', 'in', '("rejected","cancelled_by_user")');
+          .not('status', 'in', '("rejected","cancelled_by_user","cancelled")');
 
         if (data) {
           setBookedAppointments(data.map((a: any) => ({
             date: a.date,
-            time: a.time,
+            time: a.time.slice(0, 5),
             professionalId: a.professional_id,
-            status: a.status
+            status: a.status,
+            duration: a.services?.duration || 30 // Default to 30 if missing
           })));
         } else {
           setBookedAppointments([]);
@@ -93,14 +101,61 @@ const Booking: React.FC = () => {
   }, [selection.date, selection.professional]);
 
   const availableHours = useMemo(() => {
-    if (!selection.date || !selection.professional) return [];
-    // Standard working hours - Could be fetched from a studio_settings table in future
-    const allHours = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-    const occupied = bookedAppointments
-      .filter(a => a.date === selection.date && a.professionalId === selection.professional?.id)
-      .map(a => a.time);
-    return allHours.filter(h => !occupied.includes(h));
-  }, [selection.date, selection.professional, bookedAppointments]);
+    if (!selection.date || !selection.professional || !selection.service) return [];
+
+    // 1. Generate all 30-minute slots from 08:00 to 18:00
+    const allSlots: string[] = [];
+    for (let h = 8; h <= 18; h++) {
+      allSlots.push(`${h.toString().padStart(2, '0')}:00`);
+      if (h !== 18) allSlots.push(`${h.toString().padStart(2, '0')}:30`);
+    }
+
+    // 2. Identify occupied slots
+    const occupiedSlots = new Set<string>();
+
+    bookedAppointments.forEach(appt => {
+      if (appt.date === selection.date && appt.professionalId === selection.professional?.id) {
+        const [hStr, mStr] = appt.time!.split(':');
+        const startMinutes = parseInt(hStr) * 60 + parseInt(mStr);
+        const duration = appt.duration || 30; // Default to 30 to avoid infinite loops or zero blocking
+        const endMinutes = startMinutes + duration;
+
+        // Mark every 30min slot in this range as occupied
+        for (let t = startMinutes; t < endMinutes; t += 30) {
+          const h = Math.floor(t / 60).toString().padStart(2, '0');
+          const m = (t % 60).toString().padStart(2, '0');
+          occupiedSlots.add(`${h}:${m}`);
+        }
+      }
+    });
+
+    // 3. Filter slots that can accommodate the SELECTED service duration
+    const serviceDuration = selection.service.duration || 30;
+    const requiredSlots = Math.ceil(serviceDuration / 30);
+
+    return allSlots.filter(startTime => {
+      // Check if this specific slot is free
+      if (occupiedSlots.has(startTime)) return false;
+
+      // Check if SUBSEQUENT slots required by duration are also free
+      const startMinutes = parseInt(startTime.split(':')[0]) * 60 + parseInt(startTime.split(':')[1]);
+
+      for (let i = 0; i < requiredSlots; i++) {
+        const checkTimeMinutes = startMinutes + (i * 30);
+        // Verify if it goes beyond closing time (18:30 not allowed start/overlap if close is 18:00)
+        // But simpler: just check if the slot exists in our generated day and isn't busy
+        const h = Math.floor(checkTimeMinutes / 60).toString().padStart(2, '0');
+        const m = (checkTimeMinutes % 60).toString().padStart(2, '0');
+        const timeStr = `${h}:${m}`;
+
+        // If the time is out of bounds (e.g. 18:30) or occupied, block it
+        if (!allSlots.includes(timeStr) && timeStr !== '18:30') return false; // Strict end of day
+        if (occupiedSlots.has(timeStr)) return false;
+      }
+
+      return true;
+    });
+  }, [selection.date, selection.professional, bookedAppointments, selection.service]);
 
   // Generate real dates (Next 14 days)
   const availableDates = useMemo(() => {
@@ -109,11 +164,18 @@ const Booking: React.FC = () => {
     for (let i = 1; i <= 14; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
+
+      // Fix: Manually construct YYYY-MM-DD to avoid timezone shifts
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+
       // Skip Sundays (optional studio rule)
       if (d.getDay() !== 0) {
         dates.push({
-          full: d.toISOString().split('T')[0],
-          day: d.getDate().toString().padStart(2, '0'),
+          full: dateString,
+          day: day,
           month: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
           weekday: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
         });
@@ -334,7 +396,7 @@ const Booking: React.FC = () => {
                     date: selection.date,
                     time: selection.time,
                     price: selection.service.price,
-                    status: 'pending_approval',
+                    status: 'scheduled', // Changed from pending_approval to scheduled (Agendado)
                     service_name: selection.service.name,
                     professional_name: selection.professional.name
                   };
@@ -345,7 +407,7 @@ const Booking: React.FC = () => {
                     const { data, error } = await supabase.from('appointments')
                       .update({
                         ...payload,
-                        status: 'pending_approval'
+                        status: 'scheduled'
                       })
                       .eq('id', oldApptId)
                       .select()
@@ -363,15 +425,15 @@ const Booking: React.FC = () => {
                     await supabase.from('notifications').insert([
                       {
                         user_id: 'JULIA_ZENARO_ID', // Idealmente buscar ID do MASTER_ADMIN dinamicamente
-                        title: 'Novo Pedido de Agendamento',
-                        message: `${selection.service.name} solicitado para ${selection.date} às ${selection.time}`,
-                        type: 'pending_approval'
+                        title: 'Novo Agendamento Confirmado',
+                        message: `${selection.service.name} confirmado para ${selection.date} às ${selection.time}`,
+                        type: 'scheduled'
                       },
                       {
                         user_id: selection.professional.id,
-                        title: 'Novo Pedido na sua Agenda',
-                        message: `Um novo agendamento de ${selection.service.name} aguarda sua aprovação.`,
-                        type: 'pending_approval'
+                        title: 'Novo Agendamento na sua Agenda',
+                        message: `Um novo agendamento de ${selection.service.name} foi confirmado.`,
+                        type: 'scheduled'
                       }
                     ]);
                   } catch (notifyErr) {

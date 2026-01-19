@@ -14,6 +14,7 @@ const statusMap: { [key: string]: { label: string, color: string } } = {
    'pending': { label: 'Pendente', color: 'text-accent-gold bg-accent-gold/5 border-accent-gold/10' },
    'confirmed': { label: 'Aprovado', color: 'text-primary bg-primary/5 border-primary/10' },
    'cancelled': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5 border-rose-500/10' },
+   'scheduled': { label: 'Agendado', color: 'text-primary bg-primary/5 border-primary/10' },
 };
 
 const History: React.FC = () => {
@@ -42,7 +43,7 @@ const History: React.FC = () => {
                .order('time', { ascending: true });
 
             if (allAppts) {
-               const upcomingStatuses = ['pending_approval', 'approved', 'rescheduled', 'pending', 'confirmed'];
+               const upcomingStatuses = ['pending_approval', 'approved', 'rescheduled', 'pending', 'confirmed', 'scheduled'];
                const up = allAppts.filter(a => a.date >= today && upcomingStatuses.includes(a.status));
                const ps = allAppts.filter(a => a.date < today || !upcomingStatuses.includes(a.status));
 

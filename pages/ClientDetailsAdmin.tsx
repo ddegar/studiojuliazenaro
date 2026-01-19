@@ -105,7 +105,7 @@ const ClientDetailsAdmin: React.FC = () => {
                      </div>
                      <div className="text-center space-y-1">
                         <h1 className="text-2xl font-bold tracking-tight">{clientData.name}</h1>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Membro desde {new Date(clientData.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}</p>
+                        <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">Membro desde {(!isNaN(new Date(clientData.created_at).getTime())) ? new Date(clientData.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : '-'}</p>
                      </div>
                   </div>
                   <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-8">
@@ -117,7 +117,7 @@ const ClientDetailsAdmin: React.FC = () => {
                      <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
                         <div className="space-y-1">
                            <p className="text-[10px] uppercase font-black text-gray-600 tracking-widest">Nascimento</p>
-                           <p className="text-sm font-bold">{clientData.birthdate ? new Date(clientData.birthdate).toLocaleDateString('pt-BR') : '-'}</p>
+                           <p className="text-sm font-bold">{(clientData.birthdate && !isNaN(new Date(clientData.birthdate).getTime())) ? new Date(clientData.birthdate + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}</p>
                         </div>
                         <div className="space-y-1">
                            <p className="text-[10px] uppercase font-black text-gray-600 tracking-widest">Indicação</p>
@@ -235,7 +235,7 @@ const ClientDetailsAdmin: React.FC = () => {
                                  </div>
                                  <div>
                                     <p className="text-sm font-bold text-white group-hover:text-accent-gold transition-colors">{p.description}</p>
-                                    <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{new Date(p.created_at).toLocaleDateString('pt-BR')} • {p.source || 'Sistema'}</p>
+                                    <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{!isNaN(new Date(p.created_at).getTime()) ? new Date(p.created_at).toLocaleDateString('pt-BR') : '-'} • {p.source || 'Sistema'}</p>
                                  </div>
                               </div>
                               <p className={`text-base font-black ${p.amount > 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{p.amount > 0 ? `+${p.amount}` : p.amount}</p>
@@ -254,7 +254,9 @@ const ClientDetailsAdmin: React.FC = () => {
                      <div key={i} className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-4 relative overflow-hidden group">
                         <div className="flex justify-between items-start">
                            <div className="space-y-1">
-                              <p className="text-[9px] font-black uppercase text-primary tracking-widest">{new Date(h.date).toLocaleDateString('pt-BR')}</p>
+                              <p className="text-[9px] font-black uppercase text-primary tracking-widest">
+                                 {!isNaN(new Date(h.date).getTime()) ? new Date(h.date + 'T00:00:00').toLocaleDateString('pt-BR') : '-'}
+                              </p>
                               <h4 className="font-bold text-base">{h.service_name || 'Procedimento'}</h4>
                               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">com {h.professional_name || 'Especialista'}</p>
                            </div>

@@ -48,9 +48,11 @@ const AdminTimeline: React.FC = () => {
             .from('appointments')
             .select(`
                *,
-               profiles (name, avatar_url),
+               profiles:profiles!user_id (name, avatar_url),
                services (name, points_reward, price)
             `)
+            // Fetch ALL relevant appointments for this pro and date, including PENDING ones.
+            // We do NOT filter by status here to ensure we see blocks, pending, etc.
             .eq('professional_id', selectedProId)
             .eq('date', date)
             .order('time');
@@ -61,7 +63,7 @@ const AdminTimeline: React.FC = () => {
             setAppointments(data.map(d => ({
                ...d,
                time: d.time.slice(0, 5),
-               clientName: d.profiles?.name || 'Cliente Externo',
+               clientName: d.profiles?.name || d.professional_name || 'Cliente',
                clientAvatar: d.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${d.profiles?.name || 'C'}`
             })));
          }
@@ -173,7 +175,12 @@ const AdminTimeline: React.FC = () => {
       }
    };
 
-   const hours = Array.from({ length: 15 }).map((_, i) => `${(i + 8).toString().padStart(2, '0')}:00`);
+   const hours = Array.from({ length: 29 }).map((_, i) => {
+      const totalMinutes = (8 * 60) + (i * 30);
+      const h = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+      const m = (totalMinutes % 60).toString().padStart(2, '0');
+      return `${h}:${m}`;
+   }); // 08:00 to 22:00 in 30 min steps
    const getAppointmentAt = (time: string) => appointments.find(a => a.time === time);
    const currentPro = professionals.find(p => p.id === selectedProId);
 
@@ -233,6 +240,7 @@ const AdminTimeline: React.FC = () => {
                const apt = getAppointmentAt(hour);
                const isBlocked = apt?.status === 'BLOCKED' || apt?.status === 'blocked';
                const isPending = apt?.status === 'pending_approval' || apt?.status === 'pending' || apt?.status === 'PENDING';
+               const isScheduled = apt?.status === 'scheduled' || apt?.status === 'SCHEDULED' || apt?.status === 'approved' || apt?.status === 'confirmed';
                const isCompleted = apt?.status === 'completed' || apt?.status === 'COMPLETED';
                const isCancelled = apt?.status === 'cancelled' || apt?.status === 'CANCELLED' || apt?.status === 'rejected' || apt?.status === 'cancelled_by_user';
 

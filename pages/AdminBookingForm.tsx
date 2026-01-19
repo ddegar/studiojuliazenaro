@@ -81,7 +81,8 @@ const AdminBookingForm: React.FC = () => {
    }, []);
 
    const filteredClients = useMemo(() => {
-      if (!searchClient || form.clientId) return [];
+      if (form.clientId) return [];
+      if (!searchClient) return clients.slice(0, 10); // Show recent clients by default
       return clients.filter(c => c.name.toLowerCase().includes(searchClient.toLowerCase()));
    }, [searchClient, form.clientId, clients]);
 
@@ -110,7 +111,7 @@ const AdminBookingForm: React.FC = () => {
             service_id: form.type === 'BLOCK' ? null : form.serviceId,
             date: form.date,
             time: form.time,
-            status: form.type === 'BLOCK' ? 'BLOCKED' : 'pending',
+            status: form.type === 'BLOCK' ? 'BLOCKED' : 'approved', // Admin bookings are auto-approved
             created_by: 'ADMIN',
             professional_name: selectedPro?.name || 'Profissional',
             service_name: form.type === 'BLOCK' ? 'Bloqueio' : selectedService?.name,

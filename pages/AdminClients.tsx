@@ -46,11 +46,13 @@ const AdminClients: React.FC = () => {
                name: p.name || 'Sem Nome',
                status: tier,
                points,
-               last: lastAppt ? new Date(lastAppt.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) : 'Novo',
+               last: (lastAppt && !isNaN(new Date(lastAppt.date).getTime()))
+                  ? new Date(lastAppt.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                  : 'Novo',
                pro: lastAppt?.professional_name || '-',
                phone: p.phone || '-',
                img: p.avatar_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
-               active: lastAppt ? (new Date().getTime() - new Date(lastAppt.date).getTime()) < 30 * 24 * 60 * 60 * 1000 : false,
+               active: lastAppt ? (new Date().getTime() - new Date(lastAppt.date + 'T00:00:00').getTime()) < 30 * 24 * 60 * 60 * 1000 : false,
                preferences: p.preferences || {}
             };
          });

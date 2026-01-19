@@ -82,7 +82,7 @@ const AdminDashboard: React.FC = () => {
           const pendingCountQuery = supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('status', 'pending_approval');
           const pendingDataQuery = supabase.from('appointments').select(`
             *,
-            profiles (name, avatar_url),
+            profiles:profiles!user_id (name, avatar_url),
             services (name)
           `).eq('status', 'pending_approval').order('date').order('time').limit(5);
 

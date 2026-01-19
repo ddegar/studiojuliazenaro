@@ -21,18 +21,30 @@ const AdminAgenda: React.FC = () => {
    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
    const monthName = new Date(viewYear, viewMonth).toLocaleDateString('pt-BR', { month: 'long' });
 
-   const fetchPendingRequests = async (role: UserRole, userId: string) => {
+   const fetchPendingRequests = async (role: UserRole, userId: string, filterProId?: string) => {
       try {
-         // Simplified query without JOINs to avoid RLS issues
+         // Query with explicit JOIN to get profile data automatically
          let query = supabase
             .from('appointments')
-            .select('*')
+            .select(`
+               *,
+               profiles:profiles!user_id ( name, avatar_url ),
+               services ( name )
+            `)
             .eq('status', 'pending_approval')
             .order('date', { ascending: true })
             .order('time', { ascending: true });
 
+         // Logic: 
+         // 1. If a specific Pro is selected in the UI (filterProId), use that.
+         // 2. If no specific Pro selected but user is NOT privileged, force their own ID.
+         // 3. If Master Admin and no specific Pro selected, show ALL (filterProId will be empty).
+
          const isPrivilegedRole = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(role);
-         if (!isPrivilegedRole) {
+
+         if (filterProId) {
+            query = query.eq('professional_id', filterProId);
+         } else if (!isPrivilegedRole) {
             query = query.eq('professional_id', userId);
          }
 
@@ -44,24 +56,7 @@ const AdminAgenda: React.FC = () => {
             return;
          }
 
-         // Fetch client profiles separately to avoid RLS conflicts
-         if (data && data.length > 0) {
-            const userIds = [...new Set(data.map(apt => apt.user_id))];
-            const { data: profiles } = await supabase
-               .from('profiles')
-               .select('id, name, avatar_url')
-               .in('id', userIds);
-
-            // Merge profile data with appointments
-            const enrichedData = data.map(apt => ({
-               ...apt,
-               profiles: profiles?.find(p => p.id === apt.user_id)
-            }));
-
-            setPendingRequests(enrichedData);
-         } else {
-            setPendingRequests([]);
-         }
+         setPendingRequests(data || []);
       } catch (err) {
          console.error('Exception in fetchPendingRequests:', err);
          setPendingRequests([]);
@@ -124,8 +119,14 @@ const AdminAgenda: React.FC = () => {
             }
 
             // Use the professional's ID for filtering, not the profile ID
-            const professionalIdForFilter = matchingPro?.id || profile.id;
-            fetchPendingRequests(profile.role as UserRole, professionalIdForFilter);
+            // Ideally we default to the first pro if Master, or themselves if Pro.
+            const initialProId = isPrivileged ? (formattedPros[0]?.id || '') : (matchingPro?.id || '');
+
+            // Set state first
+            setSelectedProId(initialProId);
+
+            // Fetch with the initial ID
+            fetchPendingRequests(profile.role as UserRole, profile.id, initialProId);
          }
       } catch (err) {
          console.error('Error initializing agenda:', err);
@@ -150,7 +151,7 @@ const AdminAgenda: React.FC = () => {
             () => {
                // Reload data on any change
                if (currentUser) {
-                  fetchPendingRequests(currentUser.role, currentUser.id);
+                  fetchPendingRequests(currentUser.role, currentUser.id, selectedProId);
                   fetchMonthAppts();
                } else {
                   // Fallback if currentUser is not yet set
@@ -174,7 +175,7 @@ const AdminAgenda: React.FC = () => {
          .from('appointments')
          .select('date, status')
          .eq('professional_id', selectedProId)
-         .in('status', ['approved', 'rescheduled', 'confirmed'])
+         .in('status', ['approved', 'scheduled', 'rescheduled', 'confirmed'])
          .gte('date', firstDay)
          .lte('date', lastDay);
 
@@ -183,7 +184,10 @@ const AdminAgenda: React.FC = () => {
 
    useEffect(() => {
       fetchMonthAppts();
-   }, [selectedProId, viewMonth, viewYear, daysInMonth]);
+      if (currentUser) {
+         fetchPendingRequests(currentUser.role, currentUser.id, selectedProId);
+      }
+   }, [selectedProId, viewMonth, viewYear, daysInMonth, currentUser]);
 
    const handleStatusUpdate = async (id: string, newStatus: string) => {
       try {
@@ -191,7 +195,7 @@ const AdminAgenda: React.FC = () => {
          if (error) throw error;
 
          // Refresh both views
-         if (currentUser) fetchPendingRequests(currentUser.role, currentUser.id);
+         if (currentUser) fetchPendingRequests(currentUser.role, currentUser.id, selectedProId);
          fetchMonthAppts();
 
          // Notificar Cliente
@@ -326,13 +330,16 @@ const AdminAgenda: React.FC = () => {
                                  <div className="flex-1">
                                     <h4 className="font-bold text-base leading-tight text-white">{req.profiles?.name || 'Cliente'}</h4>
                                     <p className="text-[10px] text-accent-gold font-bold uppercase tracking-widest">{req.services?.name}</p>
+                                    <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+                                       Pro: {req.professional_name || 'Profissional'}
+                                    </p>
                                  </div>
                               </div>
 
                               <div className="grid grid-cols-2 gap-3 pb-2 border-b border-white/5">
                                  <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined !text-xs text-gray-500">calendar_today</span>
-                                    <span className="text-[10px] font-bold">{new Date(req.date).toLocaleDateString('pt-BR')}</span>
+                                    <span className="text-[10px] font-bold">{new Date(req.date + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                                  </div>
                                  <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined !text-xs text-gray-500">schedule</span>
@@ -384,6 +391,10 @@ const AdminAgenda: React.FC = () => {
                   <div className="grid grid-cols-7 gap-3 transition-opacity duration-300">
                      {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => (
                         <div key={d} className="text-center text-[9px] font-black uppercase text-gray-700 pb-2">{d}</div>
+                     ))}
+                     {/* Empty cells for offset */}
+                     {Array.from({ length: new Date(viewYear, viewMonth, 1).getDay() }).map((_, i) => (
+                        <div key={`empty-${i}`}></div>
                      ))}
                      {Array.from({ length: daysInMonth }).map((_, i) => {
                         const day = i + 1;
