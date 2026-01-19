@@ -46,7 +46,15 @@ export interface Service {
   pointsReward: number;
 }
 
-export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NOSHOW' | 'BLOCKED';
+export type AppointmentStatus =
+  | 'pending_approval'
+  | 'approved'
+  | 'rejected'
+  | 'rescheduled'
+  | 'cancelled_by_user'
+  | 'completed'
+  | 'noshow'
+  | 'blocked';
 
 export interface Appointment {
   id: string;

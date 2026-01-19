@@ -16,6 +16,7 @@ const AdminAgenda: React.FC = () => {
    const now = new Date();
    const [viewMonth, setViewMonth] = useState(now.getMonth());
    const [viewYear, setViewYear] = useState(now.getFullYear());
+   const [activeTab, setActiveTab] = useState<'requests' | 'agenda'>('requests');
 
    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
    const monthName = new Date(viewYear, viewMonth).toLocaleDateString('pt-BR', { month: 'long' });
@@ -28,7 +29,7 @@ const AdminAgenda: React.FC = () => {
    profiles(name, avatar_url),
    services(name)
       `)
-         .eq('status', 'pending')
+         .eq('status', 'pending_approval')
          .order('date', { ascending: true })
          .order('time', { ascending: true });
 
@@ -106,6 +107,7 @@ const AdminAgenda: React.FC = () => {
          .from('appointments')
          .select('date, status')
          .eq('professional_id', selectedProId)
+         .in('status', ['approved', 'rescheduled', 'confirmed'])
          .gte('date', firstDay)
          .lte('date', lastDay);
 
@@ -125,7 +127,7 @@ const AdminAgenda: React.FC = () => {
          if (currentUser) fetchPendingRequests(currentUser.role, currentUser.id);
          fetchMonthAppts();
 
-         alert(`Agendamento ${newStatus === 'confirmed' ? 'confirmado' : 'cancelado'} com sucesso.`);
+         alert(`Agendamento ${newStatus === 'approved' ? 'aprovado' : newStatus === 'rejected' ? 'recusado' : 'atualizado'} com sucesso.`);
       } catch (err: any) {
          alert('Erro ao atualizar: ' + err.message);
       }
@@ -197,134 +199,150 @@ const AdminAgenda: React.FC = () => {
                   ))}
                </div>
             )}
+
+            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+               <button
+                  onClick={() => setActiveTab('requests')}
+                  className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'requests' ? 'bg-accent-gold text-primary font-black shadow-lg shadow-accent-gold/20' : 'text-gray-500 hover:text-white'}`}
+               >
+                  <span className="material-symbols-outlined !text-lg">notification_important</span>
+                  Pedidos
+                  {pendingRequests.length > 0 && (
+                     <span className={`size-5 rounded-full flex items-center justify-center text-[9px] ${activeTab === 'requests' ? 'bg-primary text-white' : 'bg-accent-gold text-primary'}`}>
+                        {pendingRequests.length}
+                     </span>
+                  )}
+               </button>
+               <button
+                  onClick={() => setActiveTab('agenda')}
+                  className={`flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'agenda' ? 'bg-white text-primary shadow-lg' : 'text-gray-500 hover:text-white'}`}
+               >
+                  <span className="material-symbols-outlined !text-lg">calendar_month</span>
+                  Agenda Geral
+               </button>
+            </div>
          </header>
 
          <main className="flex-1 p-6 space-y-10 overflow-y-auto no-scrollbar">
-            {/* Seção Fixa de Solicitações */}
-            {pendingRequests.length > 0 && (
-               <section className="space-y-4 animate-fade-in">
+            {activeTab === 'requests' ? (
+               <section className="space-y-6 animate-fade-in">
                   <div className="flex items-center justify-between px-2">
-                     <h2 className="text-xs font-black uppercase tracking-[0.3em] text-accent-gold flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-gold opacity-75"></span>
-                           <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-gold"></span>
-                        </span>
-                        Solicitações de Agendamento
+                     <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 flex items-center gap-2">
+                        Solicitações Pendentes
                      </h2>
-                     <span className="text-[10px] font-bold text-gray-500">{pendingRequests.length} pendente(s)</span>
                   </div>
 
-                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-2 px-2">
-                     {pendingRequests.map(req => (
-                        <div key={req.id} className="min-w-[300px] bg-card-dark p-6 rounded-[32px] border border-accent-gold/20 shadow-2xl space-y-4">
-                           <div className="flex items-center gap-4">
-                              <img src={req.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${req.profiles?.name || 'C'}`} className="size-10 rounded-full border border-white/10" alt="" />
-                              <div className="flex-1">
-                                 <h4 className="font-bold text-sm leading-tight text-white">{req.profiles?.name || 'Cliente'}</h4>
-                                 <p className="text-[10px] text-accent-gold font-bold uppercase tracking-widest">{req.services?.name}</p>
-                              </div>
-                           </div>
-
-                           <div className="grid grid-cols-2 gap-3 pb-2 border-b border-white/5">
-                              <div className="flex items-center gap-2">
-                                 <span className="material-symbols-outlined !text-xs text-gray-500">calendar_today</span>
-                                 <span className="text-[10px] font-bold">{new Date(req.date).toLocaleDateString('pt-BR')}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                 <span className="material-symbols-outlined !text-xs text-gray-500">schedule</span>
-                                 <span className="text-[10px] font-bold">{req.time.slice(0, 5)}</span>
-                              </div>
-                              {isMaster && (
-                                 <div className="flex items-center gap-2 col-span-2">
-                                    <span className="material-symbols-outlined !text-xs text-gray-500">person</span>
-                                    <span className="text-[10px] font-bold italic text-gray-400">Profissional: {req.professional_name || 'Alocando...'}</span>
+                  {pendingRequests.length === 0 ? (
+                     <div className="bg-white/5 rounded-[40px] p-12 text-center border border-dashed border-white/10">
+                        <span className="material-symbols-outlined !text-5xl text-gray-700 mb-4">notifications_off</span>
+                        <p className="text-gray-500 text-sm font-medium">Tudo em dia! ✨<br />Nenhuma solicitação pendente.</p>
+                     </div>
+                  ) : (
+                     <div className="space-y-4">
+                        {pendingRequests.map(req => (
+                           <div key={req.id} className="bg-card-dark p-6 rounded-[32px] border border-white/5 shadow-2xl space-y-4">
+                              <div className="flex items-center gap-4">
+                                 <img src={req.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${req.profiles?.name || 'C'}`} className="size-12 rounded-full border border-white/10" alt="" />
+                                 <div className="flex-1">
+                                    <h4 className="font-bold text-base leading-tight text-white">{req.profiles?.name || 'Cliente'}</h4>
+                                    <p className="text-[10px] text-accent-gold font-bold uppercase tracking-widest">{req.services?.name}</p>
                                  </div>
-                              )}
-                           </div>
+                              </div>
 
-                           <div className="flex gap-2 pt-1">
-                              <button
-                                 onClick={() => handleStatusUpdate(req.id, 'confirmed')}
-                                 className="flex-1 h-10 bg-emerald-500 text-black rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all"
-                              >Aceitar</button>
-                              <button
-                                 onClick={() => navigate(`/admin/agenda/day/${req.date}?proId=${req.professional_id}`)}
-                                 className="flex-1 h-10 bg-white/5 border border-white/10 text-gray-400 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-white/10 transition-all"
-                              >Reagendar</button>
-                              <button
-                                 onClick={() => handleStatusUpdate(req.id, 'cancelled')}
-                                 className="size-10 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl flex items-center justify-center active:scale-95 transition-all"
-                              >
-                                 <span className="material-symbols-outlined !text-xl">close</span>
-                              </button>
+                              <div className="grid grid-cols-2 gap-3 pb-2 border-b border-white/5">
+                                 <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined !text-xs text-gray-500">calendar_today</span>
+                                    <span className="text-[10px] font-bold">{new Date(req.date).toLocaleDateString('pt-BR')}</span>
+                                 </div>
+                                 <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined !text-xs text-gray-500">schedule</span>
+                                    <span className="text-[10px] font-bold">{req.time.slice(0, 5)}</span>
+                                 </div>
+                              </div>
+
+                              <div className="flex gap-2 pt-1">
+                                 <button
+                                    onClick={() => handleStatusUpdate(req.id, 'approved')}
+                                    className="flex-1 h-12 bg-emerald-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2"
+                                 >
+                                    <span className="material-symbols-outlined !text-lg">done</span>
+                                    Aprovar
+                                 </button>
+                                 <button
+                                    onClick={() => navigate(`/admin/agenda/day/${req.date}?proId=${req.professional_id}`)}
+                                    className="flex-1 h-12 bg-white/5 border border-white/10 text-gray-300 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                 >
+                                    <span className="material-symbols-outlined !text-lg">schedule</span>
+                                    Alterar
+                                 </button>
+                                 <button
+                                    onClick={() => {
+                                       if (window.confirm('Recusar este agendamento?')) {
+                                          handleStatusUpdate(req.id, 'rejected');
+                                       }
+                                    }}
+                                    className="size-12 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-2xl flex items-center justify-center active:scale-95 transition-all"
+                                 >
+                                    <span className="material-symbols-outlined">close</span>
+                                 </button>
+                              </div>
                            </div>
-                        </div>
-                     ))}
-                  </div>
+                        ))}
+                     </div>
+                  )}
                </section>
-            )}
+            ) : (
+               <>
+                  <div className="flex justify-between items-center px-4">
+                     <h2 className="text-2xl font-display font-bold capitalize">{monthName} <span className="text-gray-600">{viewYear}</span></h2>
+                     <div className="flex gap-4">
+                        <button onClick={() => changeMonth(-1)} className="material-symbols-outlined text-gray-500 hover:text-white transition-colors">chevron_left</button>
+                        <button onClick={() => changeMonth(1)} className="material-symbols-outlined text-gray-500 hover:text-white transition-colors">chevron_right</button>
+                     </div>
+                  </div>
 
-            <div className="flex justify-between items-center px-4">
-               <h2 className="text-2xl font-display font-bold capitalize">{monthName} <span className="text-gray-600">{viewYear}</span></h2>
-               <div className="flex gap-4">
-                  <button onClick={() => changeMonth(-1)} className="material-symbols-outlined text-gray-500 hover:text-white transition-colors">chevron_left</button>
-                  <button onClick={() => changeMonth(1)} className="material-symbols-outlined text-gray-500 hover:text-white transition-colors">chevron_right</button>
-               </div>
-            </div>
+                  <div className="grid grid-cols-7 gap-3 transition-opacity duration-300">
+                     {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => (
+                        <div key={d} className="text-center text-[9px] font-black uppercase text-gray-700 pb-2">{d}</div>
+                     ))}
+                     {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const day = i + 1;
+                        const dayDate = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                        const isToday = dayDate === now.toISOString().split('T')[0];
 
-            <div className="grid grid-cols-7 gap-3 transition-opacity duration-300">
-               {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => (
-                  <div key={d} className="text-center text-[9px] font-black uppercase text-gray-700 pb-2">{d}</div>
-               ))}
-               {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const day = i + 1;
-                  const dayDate = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-                  const isToday = dayDate === now.toISOString().split('T')[0];
+                        const dayAppts = appointments.filter(a => a.date === dayDate);
+                        const confirmedAppts = dayAppts.filter(a => ['approved', 'rescheduled', 'confirmed'].includes(a.status));
+                        const hasAppointments = confirmedAppts.length > 0;
+                        const isFull = confirmedAppts.length >= 8;
 
-                  const dayAppts = appointments.filter(a => a.date === dayDate);
-                  const activeAppts = dayAppts.filter(a => a.status !== 'cancelled' && a.status !== 'CANCELLED');
-                  const pendingAppts = activeAppts.filter(a => a.status === 'pending' || a.status === 'PENDING');
-                  const hasAppointments = activeAppts.length > 0;
-                  const isFull = activeAppts.length >= 8;
+                        return (
+                           <button
+                              key={i}
+                              onClick={() => handleDayClick(day)}
+                              className={`aspect-square rounded-3xl border flex flex-col items-center justify-center gap-1.5 transition-all relative ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}`}
+                           >
+                              <span className={`text-xs font-black ${isToday ? 'text-white' : 'text-gray-400'}`}>{day}</span>
+                              {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-primary'}`}></div>}
+                           </button>
+                        );
+                     })}
+                  </div>
 
-                  return (
-                     <button
-                        key={i}
-                        onClick={() => handleDayClick(day)}
-                        className={`aspect-square rounded-3xl border flex flex-col items-center justify-center gap-1.5 transition-all relative ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}`}
-                     >
-                        <span className={`text-xs font-black ${isToday ? 'text-white' : 'text-gray-400'}`}>{day}</span>
-
-                        <div className="flex gap-1">
-                           {pendingAppts.length > 0 && <div className="absolute top-2 right-2 size-2 bg-accent-gold rounded-full animate-pulse shadow-lg shadow-accent-gold/50"></div>}
-                           {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-primary'}`}></div>}
+                  <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6">
+                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Status dos Dias</h3>
+                     <div className="grid grid-cols-2 gap-6">
+                        <div className="flex items-center gap-3">
+                           <div className="size-3 rounded-full bg-primary shadow-lg shadow-primary/20"></div>
+                           <span className="text-[11px] font-medium text-gray-400">Atendimentos</span>
                         </div>
-                     </button>
-                  );
-               })}
-            </div>
-
-            <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6">
-               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Status dos Dias</h3>
-               <div className="grid grid-cols-2 gap-6">
-                  <div className="flex items-center gap-3">
-                     <div className="size-3 rounded-full bg-primary shadow-lg shadow-primary/20"></div>
-                     <span className="text-[11px] font-medium text-gray-400">Atendimentos</span>
+                        <div className="flex items-center gap-3">
+                           <div className="size-3 rounded-full bg-rose-500"></div>
+                           <span className="text-[11px] font-medium text-gray-400">Dia Cheio</span>
+                        </div>
+                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                     <div className="size-3 rounded-full bg-accent-gold animate-pulse"></div>
-                     <span className="text-[11px] font-medium text-gray-400">Pendentes</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                     <div className="size-3 rounded-full bg-rose-500"></div>
-                     <span className="text-[11px] font-medium text-gray-400">Dia Cheio</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                     <div className="size-3 border border-dashed border-gray-600 rounded-full"></div>
-                     <span className="text-[11px] font-medium text-gray-400">Livre</span>
-                  </div>
-               </div>
-            </div>
+               </>
+            )}
          </main>
          <AdminBottomNav />
       </div>

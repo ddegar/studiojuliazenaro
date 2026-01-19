@@ -14,7 +14,18 @@ const AdminTimeline: React.FC = () => {
    const [loading, setLoading] = useState(true);
 
    const fetchPros = async () => {
-      const { data } = await supabase.from('professionals').select('*').eq('active', true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+      const isMaster = profile?.role === 'MASTER_ADMIN';
+
+      let query = supabase.from('professionals').select('*').eq('active', true);
+      if (!isMaster) {
+         query = query.eq('id', user.id);
+      }
+
+      const { data } = await query;
       if (data && data.length > 0) {
          setProfessionals(data.map(p => ({
             id: p.id,
@@ -94,7 +105,7 @@ const AdminTimeline: React.FC = () => {
 
          // Notifications
          if (apt.user_id) {
-            const statusLabel = newStatus === 'confirmed' ? 'Confirmado' : newStatus === 'cancelled' ? 'Cancelado' : 'Finalizado';
+            const statusLabel = newStatus === 'approved' ? 'Aprovado' : newStatus === 'rejected' ? 'Recusado' : newStatus === 'completed' ? 'Finalizado' : 'Cancelado';
             await createNotification(
                apt.user_id,
                `Agendamento ${statusLabel}`,
@@ -136,7 +147,7 @@ const AdminTimeline: React.FC = () => {
             });
          }
 
-         alert(`Status atualizado para: ${newStatus === 'confirmed' ? 'Confirmado' : newStatus === 'completed' ? 'Finalizado' : 'Cancelado'}`);
+         alert(`Status atualizado para: ${newStatus === 'approved' ? 'Aprovado' : newStatus === 'completed' ? 'Finalizado' : 'Recusado'}`);
          fetchAppointments();
       } catch (err: any) {
          alert('Erro ao atualizar: ' + err.message);
@@ -202,9 +213,9 @@ const AdminTimeline: React.FC = () => {
             ) : hours.map(hour => {
                const apt = getAppointmentAt(hour);
                const isBlocked = apt?.status === 'BLOCKED' || apt?.status === 'blocked';
-               const isPending = apt?.status === 'pending' || apt?.status === 'PENDING';
+               const isPending = apt?.status === 'pending_approval' || apt?.status === 'pending' || apt?.status === 'PENDING';
                const isCompleted = apt?.status === 'completed' || apt?.status === 'COMPLETED';
-               const isCancelled = apt?.status === 'cancelled' || apt?.status === 'CANCELLED';
+               const isCancelled = apt?.status === 'cancelled' || apt?.status === 'CANCELLED' || apt?.status === 'rejected' || apt?.status === 'cancelled_by_user';
 
                if (isCancelled) return null; // We hide cancelled in the timeline for focus
 
@@ -247,10 +258,10 @@ const AdminTimeline: React.FC = () => {
                                  <div className="flex gap-2">
                                     {isPending ? (
                                        <>
-                                          <button onClick={() => handleStatusUpdate(apt, 'confirmed')} className="size-10 rounded-full bg-emerald-500 text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-emerald-500/20" title="Aceitar">
+                                          <button onClick={() => handleStatusUpdate(apt, 'approved')} className="size-10 rounded-full bg-emerald-500 text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-lg shadow-emerald-500/20" title="Aprovar">
                                              <span className="material-symbols-outlined !text-xl">done</span>
                                           </button>
-                                          <button onClick={() => handleStatusUpdate(apt, 'cancelled')} className="size-10 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white active:scale-95 transition-all" title="Recusar">
+                                          <button onClick={() => handleStatusUpdate(apt, 'rejected')} className="size-10 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white active:scale-95 transition-all" title="Recusar">
                                              <span className="material-symbols-outlined !text-xl">close</span>
                                           </button>
                                        </>

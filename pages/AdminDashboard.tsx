@@ -36,7 +36,7 @@ const AdminDashboard: React.FC = () => {
       setPendingRequests(prev => prev.filter(r => r.id !== id));
       setUnreadCount(prev => Math.max(0, prev - 1));
 
-      alert(`Agendamento ${newStatus === 'confirmed' ? 'confirmado' : 'cancelado'} com sucesso.`);
+      alert(`Agendamento ${newStatus === 'approved' ? 'confirmado' : 'recusado'} com sucesso.`);
     } catch (err: any) {
       alert('Erro ao atualizar: ' + err.message);
     }
@@ -63,12 +63,12 @@ const AdminDashboard: React.FC = () => {
           const today = new Date().toISOString().split('T')[0];
 
           // 1. Fetch unread notifications & pending appointments
-          const pendingCountQuery = supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('status', 'pending');
+          const pendingCountQuery = supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('status', 'pending_approval');
           const pendingDataQuery = supabase.from('appointments').select(`
             *,
             profiles (name, avatar_url),
             services (name)
-          `).eq('status', 'pending').order('date').order('time').limit(5);
+          `).eq('status', 'pending_approval').order('date').order('time').limit(5);
 
           if (profile.role !== 'MASTER_ADMIN') {
             pendingCountQuery.eq('professional_id', profile.id);

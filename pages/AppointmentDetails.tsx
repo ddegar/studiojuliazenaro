@@ -4,15 +4,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 
 const statusMap: { [key: string]: { label: string, color: string, isLive: boolean } } = {
-   'pending': { label: 'Pendente de confirmação', color: 'text-accent-gold bg-accent-gold/5', isLive: false },
-   'confirmed': { label: 'Confirmado', color: 'text-primary bg-primary/5', isLive: true },
+   'pending_approval': { label: 'Pendente de aprovação', color: 'text-accent-gold bg-accent-gold/5', isLive: false },
+   'approved': { label: 'Aprovado', color: 'text-primary bg-primary/5', isLive: true },
    'completed': { label: 'Finalizado', color: 'text-emerald-500 bg-emerald-500/5', isLive: false },
-   'cancelled': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5', isLive: false },
+   'rejected': { label: 'Recusado', color: 'text-rose-500 bg-rose-500/5', isLive: false },
+   'cancelled_by_user': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5', isLive: false },
    'rescheduled': { label: 'Reagendado', color: 'text-blue-500 bg-blue-500/5', isLive: false },
-   'PENDING': { label: 'Pendente de confirmação', color: 'text-accent-gold bg-accent-gold/5', isLive: false },
-   'CONFIRMED': { label: 'Confirmado', color: 'text-primary bg-primary/5', isLive: true },
-   'COMPLETED': { label: 'Finalizado', color: 'text-emerald-500 bg-emerald-500/5', isLive: false },
-   'CANCELLED': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5', isLive: false },
+   // Compatibility fallbacks
+   'pending': { label: 'Pendente', color: 'text-accent-gold bg-accent-gold/5', isLive: false },
+   'confirmed': { label: 'Aprovado', color: 'text-primary bg-primary/5', isLive: true },
+   'cancelled': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5', isLive: false },
 };
 
 const AppointmentDetails: React.FC = () => {
@@ -57,7 +58,7 @@ const AppointmentDetails: React.FC = () => {
          setShowCancelPopup(true);
       } else {
          if (window.confirm('Deseja realmente cancelar seu agendamento?')) {
-            updateStatus('cancelled');
+            updateStatus('cancelled_by_user');
          }
       }
    };
@@ -70,7 +71,7 @@ const AppointmentDetails: React.FC = () => {
             .eq('id', id);
 
          if (error) throw error;
-         alert(`Agendamento ${newStatus === 'cancelled' ? 'cancelado' : 'atualizado'} com sucesso.`);
+         alert(`Agendamento ${newStatus === 'cancelled_by_user' ? 'cancelado' : 'atualizado'} com sucesso.`);
          navigate('/history');
       } catch (e: any) {
          alert('Erro ao atualizar: ' + e.message);
@@ -170,7 +171,7 @@ const AppointmentDetails: React.FC = () => {
          </main>
 
          <div className="fixed bottom-0 inset-x-0 p-8 glass-nav border-t border-gray-100 rounded-t-[40px] flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            {(appointment.status === 'pending' || appointment.status === 'confirmed' || appointment.status === 'PENDING' || appointment.status === 'CONFIRMED' || appointment.status === 'rescheduled') ? (
+            {(appointment.status === 'pending_approval' || appointment.status === 'approved' || appointment.status === 'pending' || appointment.status === 'confirmed' || appointment.status === 'rescheduled') ? (
                <>
                   <button
                      onClick={handleCancelClick}
@@ -199,12 +200,12 @@ const AppointmentDetails: React.FC = () => {
                   <div className="space-y-2">
                      <h3 className="text-xl font-display font-bold text-primary">Atenção, maravilhosa! 💕</h3>
                      <p className="text-sm text-gray-500 leading-relaxed font-medium">
-                        Faltam poucas horas para o seu atendimento. Para manter a qualidade do serviço, o cancelamento deve ser feito diretamente com a profissional.
+                        Para cancelar com menos de 12 horas de antecedência, entre em contato diretamente com a profissional pelo WhatsApp.
                      </p>
                   </div>
                   <div className="space-y-3">
                      <a
-                        href={`https://wa.me/5514999999999?text=Olá! Gostaria de falar sobre meu agendamento de ${appointment.service_name} no dia ${new Date(appointment.date).toLocaleDateString('pt-BR')}`}
+                        href={`https://wa.me/55${(appointment.professionals?.phone || '14999999999').replace(/\D/g, '')}?text=Olá! Gostaria de falar sobre meu agendamento de ${appointment.service_name || appointment.services?.name} no dia ${new Date(appointment.date).toLocaleDateString('pt-BR')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full h-14 bg-[#25D366] text-white rounded-2xl flex items-center justify-center gap-3 font-black text-[10px] uppercase tracking-widest shadow-lg shadow-green-500/20"

@@ -75,7 +75,7 @@ const Booking: React.FC = () => {
           .select('date, time, professional_id, status')
           .eq('date', selection.date)
           .eq('professional_id', selection.professional!.id)
-          .neq('status', 'CANCELLED');
+          .not('status', 'in', '("rejected","cancelled_by_user")');
 
         if (data) {
           setBookedAppointments(data.map((a: any) => ({
@@ -329,7 +329,7 @@ const Booking: React.FC = () => {
                     date: selection.date,
                     time: selection.time,
                     price: selection.service!.price,
-                    status: 'pending',
+                    status: 'pending_approval',
                     service_name: selection.service!.name,
                     professional_name: selection.professional!.name
                   };
@@ -338,7 +338,7 @@ const Booking: React.FC = () => {
                     const { error } = await supabase.from('appointments')
                       .update({
                         ...payload,
-                        status: 'pending' // Resets to pending for new confirmation
+                        status: 'pending_approval' // Resets to pending for new confirmation
                       })
                       .eq('id', oldApptId);
                     if (error) throw error;
