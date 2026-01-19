@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
 import { supabase } from '../services/supabase';
 import { UserRole } from '../types';
 
@@ -9,8 +10,10 @@ const AdminDashboard: React.FC = () => {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+
+  // Replaced "unreadCount" (pending) with maybe "today's count" or nothing
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+
   const [stats, setStats] = useState<any>({
     clients: 0,
     appointmentsToday: 0,
@@ -27,37 +30,6 @@ const AdminDashboard: React.FC = () => {
     stats.user.email?.toLowerCase() === 'admin@juliazenaro.com' ||
     userEmail?.toLowerCase() === 'admin@juliazenaro.com';
 
-  const handleStatusUpdate = async (id: string, newStatus: string) => {
-    try {
-      const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
-      if (error) throw error;
-
-      // Refresh data locally immediately
-      setPendingRequests(prev => prev.filter(r => r.id !== id));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-
-      // Notificar Cliente
-      try {
-        const { data: apt } = await supabase.from('appointments').select('user_id, service_name, date, time').eq('id', id).single();
-        if (apt?.user_id) {
-          const statusLabel = newStatus === 'approved' ? 'Aprovado' : 'Recusado';
-          await supabase.from('notifications').insert({
-            user_id: apt.user_id,
-            title: `Agendamento ${statusLabel}`,
-            message: `Seu agendamento de ${apt.service_name} para ${new Date(apt.date).toLocaleDateString('pt-BR')} às ${apt.time.slice(0, 5)} foi ${statusLabel.toLowerCase()}.`,
-            type: newStatus
-          });
-        }
-      } catch (notifyErr) {
-        console.error('Error sending notification from dashboard:', notifyErr);
-      }
-
-      alert(`Agendamento ${newStatus === 'approved' ? 'aprovado' : 'recusado'} com sucesso.`);
-    } catch (err: any) {
-      alert('Erro ao atualizar: ' + err.message);
-    }
-  };
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
@@ -70,7 +42,7 @@ const AdminDashboard: React.FC = () => {
 
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, name, role') // REMOVED avatar_url as it's causing schema cache errors
+          .select('id, name, role')
           .eq('id', user.id)
           .single();
 
@@ -78,13 +50,17 @@ const AdminDashboard: React.FC = () => {
           setUserEmail(user.email || null);
           const today = new Date().toISOString().split('T')[0];
 
-          // 1. Fetch unread notifications & pending appointments
-          const pendingCountQuery = supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('status', 'pending_approval');
-          const pendingDataQuery = supabase.from('appointments').select(`
+          // 1. Fetch Upcoming Appointments (Next 5 Scheduled)
+          const nowISO = new Date().toISOString();
+          const upcomingQuery = supabase.from('appointments').select(`
             *,
-            profiles:profiles!user_id (name, avatar_url),
+            profiles:profiles!user_id (name, profile_pic),
             services (name)
-          `).eq('status', 'pending_approval').order('date').order('time').limit(5);
+          `)
+            .eq('status', 'scheduled')
+            .gte('start_time', nowISO)
+            .order('start_time')
+            .limit(5);
 
           // Find the professional record that matches the logged-in user by name
           let professionalIdForFilter = profile.id; // default fallback
@@ -100,10 +76,8 @@ const AdminDashboard: React.FC = () => {
 
             if (matchingPro) {
               professionalIdForFilter = matchingPro.id;
+              upcomingQuery.eq('professional_id', professionalIdForFilter);
             }
-
-            pendingCountQuery.eq('professional_id', professionalIdForFilter);
-            pendingDataQuery.eq('professional_id', professionalIdForFilter);
           }
 
           const results = await Promise.all([
@@ -113,14 +87,12 @@ const AdminDashboard: React.FC = () => {
             supabase.from('transactions').select('amount, type, date').gte('date',
               new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
             ),
-            pendingCountQuery,
-            pendingDataQuery
+            upcomingQuery
           ]);
 
-          const [clientsRes, apptsRes, prosRes, transRes, pendingCountRes, pendingDataRes] = results;
+          const [clientsRes, apptsRes, prosRes, transRes, upcomingRes] = results;
 
-          setUnreadCount(pendingCountRes.count || 0);
-          setPendingRequests(pendingDataRes.data || []);
+          setUpcomingAppointments(upcomingRes.data || []);
 
           // Calculate revenue
           const totalRevenue = transRes.data?.reduce((acc, curr) => {
@@ -247,11 +219,6 @@ const AdminDashboard: React.FC = () => {
               >
                 <span className={`material-symbols-outlined ${location.pathname === item.path ? '' : 'text-gray-500'}`}>{item.icon}</span>
                 <span className="text-sm font-bold tracking-wide">{item.label}</span>
-                {item.path === '/admin/agenda' && unreadCount > 0 && (
-                  <span className="absolute right-4 size-5 rounded-full bg-accent-gold text-primary text-[10px] font-black flex items-center justify-center shadow-lg animate-pulse">
-                    {unreadCount}
-                  </span>
-                )}
               </button>
             );
           })}
@@ -362,31 +329,23 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-6">
-            {pendingRequests.length > 0 && (
+            {upcomingAppointments.length > 0 && (
               <div className="bg-card-dark p-6 rounded-[24px] border border-accent-gold/20 shadow-2xl space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                    <span className="material-symbols-outlined text-accent-gold">notification_important</span>
-                    Solicitações Pendentes
+                    <span className="material-symbols-outlined text-accent-gold">event_upcoming</span>
+                    Próximos Agendamentos
                   </h3>
-                  <button onClick={() => navigate('/admin/agenda')} className="text-[10px] font-black uppercase text-accent-gold hover:underline">Ver Todas</button>
+                  <button onClick={() => navigate('/admin/agenda')} className="text-[10px] font-black uppercase text-accent-gold hover:underline">Ver Agenda</button>
                 </div>
                 <div className="space-y-4">
-                  {pendingRequests.map(req => (
-                    <div key={req.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                      <img src={req.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${req.profiles?.name || 'C'}`} className="size-10 rounded-full" alt="" />
+                  {upcomingAppointments.map(app => (
+                    <div key={app.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                      <img src={app.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${app.profiles?.name || 'C'}`} className="size-10 rounded-full" alt="" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white truncate">{req.profiles?.name || 'Cliente'}</p>
-                        <p className="text-[9px] text-accent-gold uppercase font-bold tracking-widest truncate">{req.services?.name}</p>
-                        <p className="text-[9px] text-gray-500 font-medium">{new Date(req.date).toLocaleDateString('pt-BR')} às {req.time.slice(0, 5)}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleStatusUpdate(req.id, 'approved')} className="size-8 rounded-full bg-emerald-500 text-black flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
-                          <span className="material-symbols-outlined !text-base">done</span>
-                        </button>
-                        <button onClick={() => handleStatusUpdate(req.id, 'rejected')} className="size-8 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white active:scale-95 transition-all">
-                          <span className="material-symbols-outlined !text-base">close</span>
-                        </button>
+                        <p className="text-xs font-bold text-white truncate">{app.profiles?.name || 'Cliente'}</p>
+                        <p className="text-[9px] text-accent-gold uppercase font-bold tracking-widest truncate">{app.service_name || app.services?.name}</p>
+                        <p className="text-[9px] text-gray-500 font-medium">{new Date(app.date).toLocaleDateString('pt-BR')} às {app.time.slice(0, 5)}</p>
                       </div>
                     </div>
                   ))}

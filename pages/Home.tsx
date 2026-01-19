@@ -26,11 +26,11 @@ const Home: React.FC = () => {
               id,
               image_url,
               type,
-              profiles (name, avatar_url)
+              profiles (name, profile_pic)
             `)
             .gt('expires_at', new Date().toISOString())
             .order('created_at', { ascending: false }),
-          user ? supabase.from('profiles').select('name, avatar_url').eq('id', user.id).single() : Promise.resolve({ data: null })
+          user ? supabase.from('profiles').select('name, profile_pic').eq('id', user.id).single() : Promise.resolve({ data: null })
         ]);
 
         if (storiesRes.data) {
@@ -39,14 +39,14 @@ const Home: React.FC = () => {
             name: s.type === 'PROFESSIONAL' ? (s.profiles?.name?.split(' ')[0] || 'Studio') : (s.profiles?.name?.split(' ')[0] || 'Cliente'),
             img: s.image_url,
             isLive: s.type === 'PROFESSIONAL',
-            avatar: s.profiles?.avatar_url
+            avatar: s.profiles?.profile_pic
           }));
           setStories(formatted);
         }
 
         if (user && profileRes.data) {
           setUserName(profileRes.data.name?.split(' ')[0] || 'Visitante');
-          setProfileImg(profileRes.data.avatar_url || `https://ui-avatars.com/api/?name=${profileRes.data.name}&background=random`);
+          setProfileImg(profileRes.data.profile_pic || `https://ui-avatars.com/api/?name=${profileRes.data.name}&background=random`);
 
           const today = new Date().toISOString().split('T')[0];
           const { data: appts } = await supabase.from('appointments')

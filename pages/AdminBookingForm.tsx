@@ -105,16 +105,23 @@ const AdminBookingForm: React.FC = () => {
          const selectedService = services.find(s => s.id === form.serviceId);
          const selectedPro = professionals.find(p => p.id === form.professionalId);
 
+         const startDate = new Date(`${form.date}T${form.time}:00`);
+         const duration = form.type === 'BLOCK' ? 60 : (selectedService?.duration || 30);
+         const endDate = new Date(startDate.getTime() + duration * 60000);
+
          const { error } = await supabase.from('appointments').insert({
             user_id: form.clientId || null,
             professional_id: form.professionalId,
             service_id: form.type === 'BLOCK' ? null : form.serviceId,
             date: form.date,
             time: form.time,
-            status: form.type === 'BLOCK' ? 'BLOCKED' : 'approved', // Admin bookings are auto-approved
+            start_time: startDate.toISOString(),
+            end_time: endDate.toISOString(),
+            duration: duration,
+            status: form.type === 'BLOCK' ? 'blocked' : 'scheduled',
             created_by: 'ADMIN',
             professional_name: selectedPro?.name || 'Profissional',
-            service_name: form.type === 'BLOCK' ? 'Bloqueio' : selectedService?.name,
+            service_name: form.type === 'BLOCK' ? (form.notes || 'Bloqueio') : selectedService?.name,
             price: form.type === 'BLOCK' ? 0 : selectedService?.price,
             notes: form.notes
          });

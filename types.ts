@@ -47,14 +47,13 @@ export interface Service {
 }
 
 export type AppointmentStatus =
-  | 'pending_approval'
-  | 'approved'
-  | 'rejected'
+  | 'scheduled'
   | 'rescheduled'
   | 'cancelled_by_user'
   | 'completed'
-  | 'noshow'
-  | 'blocked';
+  | 'no_show'
+  | 'blocked'
+  | 'cancelled';
 
 export interface Appointment {
   id: string;

@@ -8,7 +8,7 @@ const Profile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', phone: '', avatar_url: '' });
+  const [editForm, setEditForm] = useState({ name: '', phone: '', profile_pic: '' });
 
   const fetchProfile = async () => {
     try {
@@ -20,7 +20,7 @@ const Profile: React.FC = () => {
           setEditForm({
             name: data.name || '',
             phone: data.phone || '',
-            avatar_url: data.avatar_url || ''
+            profile_pic: data.profile_pic || ''
           });
         }
       } else {
@@ -45,7 +45,7 @@ const Profile: React.FC = () => {
         .update({
           name: editForm.name,
           phone: editForm.phone,
-          avatar_url: editForm.avatar_url
+          profile_pic: editForm.profile_pic
         })
         .eq('id', profile.id);
 
@@ -90,7 +90,7 @@ const Profile: React.FC = () => {
         <div className="flex flex-col items-center py-12 px-6 text-center bg-white/50 border-b border-gray-50">
           <div className="relative mb-6">
             <div className="w-32 h-32 rounded-[40px] border-4 border-white shadow-xl overflow-hidden bg-gray-100 ring-1 ring-primary/5">
-              <img src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.name}&background=random`} alt="avatar" className="w-full h-full object-cover" />
+              <img src={profile?.profile_pic || `https://ui-avatars.com/api/?name=${profile?.name}&background=random`} alt="avatar" className="w-full h-full object-cover" />
             </div>
             <button onClick={() => setIsEditing(true)} className="absolute -bottom-2 -right-2 w-10 h-10 bg-primary text-white rounded-2xl border-4 border-white flex items-center justify-center shadow-lg">
               <span className="material-symbols-outlined !text-xl">edit</span>
@@ -117,7 +117,7 @@ const Profile: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">URL da Foto</label>
-                  <input className="w-full h-14 bg-gray-50 border-transparent rounded-2xl px-6 text-sm" value={editForm.avatar_url} onChange={e => setEditForm({ ...editForm, avatar_url: e.target.value })} />
+                  <input className="w-full h-14 bg-gray-50 border-transparent rounded-2xl px-6 text-sm" value={editForm.profile_pic} onChange={e => setEditForm({ ...editForm, profile_pic: e.target.value })} />
                 </div>
               </div>
               <div className="flex gap-3">

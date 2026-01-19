@@ -4,17 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 
 const statusMap: { [key: string]: { label: string, color: string } } = {
-   'pending_approval': { label: 'Pendente de aprovação', color: 'text-accent-gold bg-accent-gold/5 border-accent-gold/10' },
-   'approved': { label: 'Aprovado', color: 'text-primary bg-primary/5 border-primary/10' },
-   'completed': { label: 'Finalizado', color: 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10' },
-   'rejected': { label: 'Recusado', color: 'text-rose-500 bg-rose-500/5 border-rose-500/10' },
-   'cancelled_by_user': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5 border-rose-500/10' },
-   'rescheduled': { label: 'Reagendado', color: 'text-blue-500 bg-blue-500/5 border-blue-500/10' },
-   // Compatibility fallbacks
-   'pending': { label: 'Pendente', color: 'text-accent-gold bg-accent-gold/5 border-accent-gold/10' },
-   'confirmed': { label: 'Aprovado', color: 'text-primary bg-primary/5 border-primary/10' },
-   'cancelled': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5 border-rose-500/10' },
    'scheduled': { label: 'Agendado', color: 'text-primary bg-primary/5 border-primary/10' },
+   'completed': { label: 'Finalizado', color: 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10' },
+   'no_show': { label: 'Não Compareceu', color: 'text-rose-500 bg-rose-500/5 border-rose-500/10' },
+   'cancelled_by_user': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5 border-rose-500/10' },
+   'cancelled': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5 border-rose-500/10' },
+   'rescheduled': { label: 'Reagendado', color: 'text-blue-500 bg-blue-500/5 border-blue-500/10' },
 };
 
 const History: React.FC = () => {
@@ -43,7 +38,7 @@ const History: React.FC = () => {
                .order('time', { ascending: true });
 
             if (allAppts) {
-               const upcomingStatuses = ['pending_approval', 'approved', 'rescheduled', 'pending', 'confirmed', 'scheduled'];
+               const upcomingStatuses = ['scheduled', 'rescheduled'];
                const up = allAppts.filter(a => a.date >= today && upcomingStatuses.includes(a.status));
                const ps = allAppts.filter(a => a.date < today || !upcomingStatuses.includes(a.status));
 

@@ -4,16 +4,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 
 const statusMap: { [key: string]: { label: string, color: string, isLive: boolean } } = {
-   'pending_approval': { label: 'Pendente de aprovação', color: 'text-accent-gold bg-accent-gold/5', isLive: false },
-   'approved': { label: 'Aprovado', color: 'text-primary bg-primary/5', isLive: true },
+   'scheduled': { label: 'Agendado', color: 'text-primary bg-primary/5', isLive: true },
    'completed': { label: 'Finalizado', color: 'text-emerald-500 bg-emerald-500/5', isLive: false },
-   'rejected': { label: 'Recusado', color: 'text-rose-500 bg-rose-500/5', isLive: false },
+   'no_show': { label: 'Não Compareceu', color: 'text-rose-500 bg-rose-500/5', isLive: false },
    'cancelled_by_user': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5', isLive: false },
-   'rescheduled': { label: 'Reagendado', color: 'text-blue-500 bg-blue-500/5', isLive: false },
-   // Compatibility fallbacks
-   'pending': { label: 'Pendente', color: 'text-accent-gold bg-accent-gold/5', isLive: false },
-   'confirmed': { label: 'Aprovado', color: 'text-primary bg-primary/5', isLive: true },
    'cancelled': { label: 'Cancelado', color: 'text-rose-500 bg-rose-500/5', isLive: false },
+   'rescheduled': { label: 'Reagendado', color: 'text-blue-500 bg-blue-500/5', isLive: true },
 };
 
 const AppointmentDetails: React.FC = () => {
@@ -194,7 +190,7 @@ const AppointmentDetails: React.FC = () => {
          </main>
 
          <div className="fixed bottom-0 inset-x-0 p-8 glass-nav border-t border-gray-100 rounded-t-[40px] flex gap-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            {(appointment.status === 'pending_approval' || appointment.status === 'approved' || appointment.status === 'pending' || appointment.status === 'confirmed' || appointment.status === 'rescheduled') ? (
+            {(appointment.status === 'scheduled' || appointment.status === 'rescheduled') ? (
                <>
                   <button
                      onClick={handleCancelClick}
