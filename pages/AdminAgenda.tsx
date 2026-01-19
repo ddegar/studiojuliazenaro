@@ -22,24 +22,50 @@ const AdminAgenda: React.FC = () => {
    const monthName = new Date(viewYear, viewMonth).toLocaleDateString('pt-BR', { month: 'long' });
 
    const fetchPendingRequests = async (role: UserRole, userId: string) => {
-      let query = supabase
-         .from('appointments')
-         .select(`
-   *,
-   profiles(name, avatar_url),
-   services(name)
-      `)
-         .eq('status', 'pending_approval')
-         .order('date', { ascending: true })
-         .order('time', { ascending: true });
+      try {
+         // Simplified query without JOINs to avoid RLS issues
+         let query = supabase
+            .from('appointments')
+            .select('*')
+            .eq('status', 'pending_approval')
+            .order('date', { ascending: true })
+            .order('time', { ascending: true });
 
-      const isPrivilegedRole = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(role);
-      if (!isPrivilegedRole) {
-         query = query.eq('professional_id', userId);
+         const isPrivilegedRole = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(role);
+         if (!isPrivilegedRole) {
+            query = query.eq('professional_id', userId);
+         }
+
+         const { data, error } = await query;
+
+         if (error) {
+            console.error('Error fetching appointments:', error);
+            setPendingRequests([]);
+            return;
+         }
+
+         // Fetch client profiles separately to avoid RLS conflicts
+         if (data && data.length > 0) {
+            const userIds = [...new Set(data.map(apt => apt.user_id))];
+            const { data: profiles } = await supabase
+               .from('profiles')
+               .select('id, name, avatar_url')
+               .in('id', userIds);
+
+            // Merge profile data with appointments
+            const enrichedData = data.map(apt => ({
+               ...apt,
+               profiles: profiles?.find(p => p.id === apt.user_id)
+            }));
+
+            setPendingRequests(enrichedData);
+         } else {
+            setPendingRequests([]);
+         }
+      } catch (err) {
+         console.error('Exception in fetchPendingRequests:', err);
+         setPendingRequests([]);
       }
-
-      const { data } = await query;
-      setPendingRequests(data || []);
    };
 
    const initAgenda = async () => {
