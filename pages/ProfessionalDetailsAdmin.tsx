@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { UserRole } from '../types';
 
-type ProfTab = 'PERFORMANCE' | 'PERMISSIONS' | 'AGENDA' | 'FINANCE' | 'SERVICES' | 'CONTENT';
+type ProfTab = 'PERFORMANCE' | 'PERMISSIONS' | 'AGENDA' | 'FINANCE' | 'SERVICES' | 'CONTENT' | 'SCHEDULE';
 
 const ProfessionalDetailsAdmin: React.FC = () => {
    const navigate = useNavigate();
@@ -19,7 +19,7 @@ const ProfessionalDetailsAdmin: React.FC = () => {
    const [services, setServices] = useState<any[]>([]);
    const [content, setContent] = useState<any[]>([]);
    const [isEditing, setIsEditing] = useState(false);
-   const [editData, setEditData] = useState({ name: '', role: '', avatar_url: '', email: '', phone: '' });
+   const [editData, setEditData] = useState({ name: '', role: '', avatar_url: '', email: '', phone: '', start_hour: '08:00', end_hour: '22:00', closed_days: '[0]' });
 
    const fetchData = async () => {
       if (!id) return;
@@ -60,7 +60,10 @@ const ProfessionalDetailsAdmin: React.FC = () => {
             role: displayProfile.role_title || '',
             avatar_url: displayProfile.avatar_url || '',
             email: displayProfile.email || '',
-            phone: (displayProfile as any).phone || ''
+            phone: (displayProfile as any).phone || '',
+            start_hour: proBase.start_hour || '08:00',
+            end_hour: proBase.end_hour || '22:00',
+            closed_days: proBase.closed_days || '[0]'
          });
 
          // 3. Fetch sub-data in parallel
@@ -148,7 +151,10 @@ const ProfessionalDetailsAdmin: React.FC = () => {
             role: editData.role,
             email: editData.email,
             phone: editData.phone,
-            image_url: editData.avatar_url
+            image_url: editData.avatar_url,
+            start_hour: editData.start_hour,
+            end_hour: editData.end_hour,
+            closed_days: editData.closed_days
          }).eq('id', id);
 
          if (error || proError) throw error || proError;
@@ -226,6 +232,7 @@ const ProfessionalDetailsAdmin: React.FC = () => {
                {[
                   { id: 'PERFORMANCE', label: 'Desempenho', icon: 'analytics' },
                   { id: 'PERMISSIONS', label: 'Controles', icon: 'rule' },
+                  { id: 'SCHEDULE', label: 'Horários', icon: 'schedule' },
                   { id: 'AGENDA', label: 'Agenda', icon: 'calendar_month' },
                   { id: 'FINANCE', label: 'Financeiro', icon: 'payments' },
                   { id: 'SERVICES', label: 'Serviços', icon: 'category' },
@@ -435,22 +442,79 @@ const ProfessionalDetailsAdmin: React.FC = () => {
                </div>
             )}
 
-            {activeTab === 'CONTENT' && (
+            {activeTab === 'SCHEDULE' && (
                <div className="space-y-6 animate-fade-in">
-                  <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6 shadow-2xl">
-                     <h3 className="text-sm font-bold">Publicações & Stories</h3>
-                     <div className="grid grid-cols-3 gap-2">
-                        {content.length > 0 ? content.map((c, i) => (
-                           <div key={i} className="aspect-square bg-white/5 rounded-xl overflow-hidden border border-white/5">
-                              <img src={c.image_url || c.media_url} className="w-full h-full object-cover" alt="" />
-                           </div>
-                        )) : (
-                           <div className="col-span-3 text-center py-20 opacity-20">
-                              <span className="material-symbols-outlined !text-6xl">history_toggle_off</span>
-                              <p className="text-xs font-bold uppercase tracking-widest mt-4">Nenhum conteúdo.</p>
-                           </div>
-                        )}
+                  <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-8 shadow-2xl">
+                     <div className="flex items-center gap-4 mb-2">
+                        <div className="size-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                           <span className="material-symbols-outlined">schedule</span>
+                        </div>
+                        <div>
+                           <h3 className="font-bold text-base">Horário de Atendimento</h3>
+                           <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">Jornada Individual</p>
+                        </div>
                      </div>
+
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                           <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Início</label>
+                           <input
+                              type="time"
+                              className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm focus:ring-1 focus:ring-accent-gold outline-none font-bold"
+                              value={editData.start_hour}
+                              onChange={e => {
+                                 const newVal = e.target.value;
+                                 setEditData(prev => ({ ...prev, start_hour: newVal }));
+                                 // Auto-save logic if desired, or use a "Save" button. Here we use the general Save button for profile.
+                              }}
+                           />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Fim (Início do Último)</label>
+                           <input
+                              type="time"
+                              className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm focus:ring-1 focus:ring-accent-gold outline-none font-bold"
+                              value={editData.end_hour}
+                              onChange={e => setEditData(prev => ({ ...prev, end_hour: e.target.value }))}
+                           />
+                        </div>
+                     </div>
+
+                     <div className="space-y-3 pt-2">
+                        <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Folgas na Semana</label>
+                        <div className="flex flex-wrap gap-2">
+                           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((day, idx) => {
+                              const closedDays = JSON.parse(typeof editData.closed_days === 'string' ? editData.closed_days : JSON.stringify(editData.closed_days || '[]'));
+                              const isClosed = closedDays.includes(idx);
+                              return (
+                                 <button
+                                    key={day}
+                                    onClick={() => {
+                                       const newClosed = isClosed
+                                          ? closedDays.filter((d: number) => d !== idx)
+                                          : [...closedDays, idx].sort();
+                                       setEditData({ ...editData, closed_days: JSON.stringify(newClosed) });
+                                    }}
+                                    className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isClosed
+                                       ? 'bg-rose-500/20 border-rose-500/30 text-rose-400 shadow-lg shadow-rose-500/5'
+                                       : 'bg-white/5 border-white/10 text-gray-500'
+                                       }`}
+                                 >
+                                    {day}
+                                 </button>
+                              );
+                           })}
+                        </div>
+                     </div>
+
+                     <div className="bg-primary/5 p-6 rounded-[32px] border border-primary/10 flex gap-4">
+                        <span className="material-symbols-outlined text-primary">info</span>
+                        <p className="text-[10px] text-gray-400 leading-relaxed italic">
+                           O horário de "Fim" define o início da última sessão disponível para as clientes.
+                        </p>
+                     </div>
+
+                     <button onClick={handleSaveEdit} className="w-full h-16 bg-primary text-white rounded-3xl font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl shadow-primary/20">SALVAR CONFIGURAÇÃO DE HORÁRIOS</button>
                   </div>
                </div>
             )}

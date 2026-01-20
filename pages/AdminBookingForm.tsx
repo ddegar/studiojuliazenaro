@@ -27,6 +27,7 @@ const AdminBookingForm: React.FC = () => {
    const [searchClient, setSearchClient] = useState('');
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [loading, setLoading] = useState(true);
+   const [configs, setConfigs] = useState<any>({});
 
    useEffect(() => {
       const fetchData = async () => {
@@ -82,8 +83,11 @@ const AdminBookingForm: React.FC = () => {
 
    const filteredClients = useMemo(() => {
       if (form.clientId) return [];
-      if (!searchClient) return clients.slice(0, 10); // Show recent clients by default
-      return clients.filter(c => c.name.toLowerCase().includes(searchClient.toLowerCase()));
+      if (!searchClient || searchClient.length < 1) return []; // Only show after typing
+      return clients.filter(c =>
+         c.name.toLowerCase().includes(searchClient.toLowerCase()) ||
+         c.phone.includes(searchClient)
+      );
    }, [searchClient, form.clientId, clients]);
 
    const filteredServices = useMemo(() => {
@@ -106,7 +110,13 @@ const AdminBookingForm: React.FC = () => {
          const selectedPro = professionals.find(p => p.id === form.professionalId);
 
          const startDate = new Date(`${form.date}T${form.time}:00`);
-         const duration = form.type === 'BLOCK' ? 60 : (selectedService?.duration || 30);
+         let duration = form.type === 'BLOCK' ? parseInt(form.notes.split('|')[1] || '60') : (selectedService?.duration || 30);
+
+         // Special handling for "All Day" block (24 hours to cover everything)
+         if (form.type === 'BLOCK' && form.notes.startsWith('ALDAY')) {
+            duration = 24 * 60;
+         }
+
          const endDate = new Date(startDate.getTime() + duration * 60000);
 
          const { error } = await supabase.from('appointments').insert({
@@ -121,9 +131,9 @@ const AdminBookingForm: React.FC = () => {
             status: form.type === 'BLOCK' ? 'blocked' : 'scheduled',
             created_by: 'ADMIN',
             professional_name: selectedPro?.name || 'Profissional',
-            service_name: form.type === 'BLOCK' ? (form.notes || 'Bloqueio') : selectedService?.name,
+            service_name: form.type === 'BLOCK' ? (form.notes.split('|')[0] || 'Bloqueio') : selectedService?.name,
             price: form.type === 'BLOCK' ? 0 : selectedService?.price,
-            notes: form.notes
+            notes: form.type === 'BLOCK' ? (form.notes.split('|')[0]) : form.notes
          });
 
          if (error) throw error;
@@ -234,13 +244,34 @@ const AdminBookingForm: React.FC = () => {
                ) : (
                   <section className="space-y-6">
                      <div className="space-y-3">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Motivo do Bloqueio</label>
+                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Motivo e Duração</label>
+                        <div className="grid grid-cols-2 gap-3">
+                           {[
+                              { label: 'Almoço (1h)', val: 'Horário de Almoço|60', icon: 'restaurant' },
+                              { label: 'Particular (1h)', val: 'Compromisso Particular|60', icon: 'person' },
+                              { label: 'Manutenção (30m)', val: 'Manutenção/Limpeza|30', icon: 'cleaning_services' },
+                              { label: 'Dia Inteiro', val: 'ALDAY|OFF|1440', icon: 'event_busy' },
+                           ].map(p => (
+                              <button
+                                 key={p.val}
+                                 onClick={() => setForm({
+                                    ...form,
+                                    notes: p.val,
+                                    time: p.val.startsWith('ALDAY') ? '00:00' : (p.val.includes('Almoço') ? '12:00' : form.time)
+                                 })}
+                                 className={`h-15 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${form.notes === p.val ? 'bg-rose-500 border-rose-500 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                              >
+                                 <span className="material-symbols-outlined !text-[18px]">{p.icon}</span>
+                                 <span className="text-[9px] font-bold uppercase">{p.label}</span>
+                              </button>
+                           ))}
+                        </div>
                         <input
                            type="text"
-                           placeholder="Ex: Almoço, Manutenção, Particular..."
+                           placeholder="Ou digite um motivo personalizado..."
                            className="w-full h-15 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-rose-500"
-                           value={form.notes}
-                           onChange={e => setForm({ ...form, notes: e.target.value })}
+                           value={form.notes.includes('|') ? '' : form.notes}
+                           onChange={e => setConfigs({ ...configs, custom_block: e.target.value })}
                         />
                      </div>
                      <div className="space-y-3">

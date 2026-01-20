@@ -50,7 +50,7 @@ const AppointmentDetails: React.FC = () => {
       const now = new Date();
       const diffHours = (apptDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-      if (diffHours < 12) {
+      if (diffHours < 24) {
          setShowCancelPopup(true);
       } else {
          if (window.confirm('Deseja realmente cancelar seu agendamento?')) {
@@ -219,7 +219,7 @@ const AppointmentDetails: React.FC = () => {
                   <div className="space-y-2">
                      <h3 className="text-xl font-display font-bold text-primary">Atenção, maravilhosa! 💕</h3>
                      <p className="text-sm text-gray-500 leading-relaxed font-medium">
-                        Para cancelar com menos de 12 horas de antecedência, entre em contato diretamente com a profissional pelo WhatsApp.
+                        Para cancelar com menos de 24 horas de antecedência, entre em contato diretamente com a profissional pelo WhatsApp.
                      </p>
                   </div>
                   <div className="space-y-3">

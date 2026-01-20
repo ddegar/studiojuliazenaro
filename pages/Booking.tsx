@@ -15,6 +15,11 @@ const Booking: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [bookedIntervals, setBookedIntervals] = useState<{ start: number, end: number }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [configs, setConfigs] = useState<{ [key: string]: any }>({
+    business_hours_start: '08:00',
+    business_hours_end: '22:00',
+    closed_days: '[0]'
+  });
   const [step, setStep] = useState<BookingStep>(
     preSelected?.service ? 'DATE' : (preSelected?.professional ? 'SERVICE' : 'PROFESSIONAL')
   );
@@ -43,7 +48,10 @@ const Booking: React.FC = () => {
             id: p.id,
             name: p.name,
             role: p.role || 'Especialista',
-            avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`
+            avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
+            start_hour: p.start_hour || '08:00',
+            end_hour: p.end_hour || '22:00',
+            closed_days: p.closed_days || '[0]'
           })));
         }
         if (servsRes.data) {
@@ -57,6 +65,15 @@ const Booking: React.FC = () => {
             professionalIds: s.professional_ids || [],
             pointsReward: s.points_reward
           })));
+        }
+
+        const { data: configData } = await supabase.from('studio_config').select('*');
+        if (configData) {
+          const configMap = (configData || []).reduce((acc: any, item: any) => {
+            acc[item.key] = item.value;
+            return acc;
+          }, {});
+          setConfigs(prev => ({ ...prev, ...configMap }));
         }
       } catch (e) {
         console.error('Booking fetch error:', e);
@@ -76,7 +93,7 @@ const Booking: React.FC = () => {
           .select('start_time, end_time')
           .eq('date', selection.date)
           .eq('professional_id', selection.professional!.id)
-          .not('status', 'eq', 'cancelled'); // Ignore cancelled
+          .in('status', ['scheduled', 'blocked', 'rescheduled', 'confirmed', 'BLOCKED']); // Only these occupy time
 
         if (data) {
           // Convert times to minutes from midnight for easy comparison
@@ -103,10 +120,23 @@ const Booking: React.FC = () => {
     const serviceDuration = selection.service.duration || 30;
     const allSlots: string[] = [];
 
-    // Generate slots every 30 mins
-    for (let h = 8; h <= 18; h++) {
-      allSlots.push(`${h.toString().padStart(2, '0')}:00`);
-      if (h !== 18) allSlots.push(`${h.toString().padStart(2, '0')}:30`);
+    // Use professional hours if available, else fallback to global
+    const p = selection.professional as any;
+    const startRange = p.start_hour || configs.business_hours_start || '08:00';
+    const endRange = p.end_hour || configs.business_hours_end || '22:00';
+
+    const [startH] = startRange.split(':').map(Number);
+    const [endH] = endRange.split(':').map(Number);
+
+    // The "End Time" is now the "Last possible start time"
+    const businessEndMinutes = endH * 60 + (endRange.includes(':30') ? 30 : 0);
+    const startMinutesBound = startH * 60 + (startRange.includes(':30') ? 30 : 0);
+
+    // Generate slots every 30 minutes from startBound to endBound
+    for (let m = startMinutesBound; m <= businessEndMinutes; m += 30) {
+      const hStr = Math.floor(m / 60).toString().padStart(2, '0');
+      const mStr = (m % 60).toString().padStart(2, '0');
+      allSlots.push(`${hStr}:${mStr}`);
     }
 
     return allSlots.filter(startTime => {
@@ -114,18 +144,14 @@ const Booking: React.FC = () => {
       const startMinutes = parseInt(hStr) * 60 + parseInt(mStr);
       const endMinutes = startMinutes + serviceDuration;
 
-      // 1. Hard Check: Does it exceed Studio Hours (18:30 close)?
-      if (endMinutes > 18 * 60 + 30) return false;
-
-      // 2. Overlap Check: Does this specific requested interval overlap with ANY booked interval?
-      // Logic: Overlap if (StartA < EndB) and (EndA > StartB)
+      // Overlap Check: Does this specific requested interval overlap with ANY booked interval?
       const hasOverlap = bookedIntervals.some(booked => {
         return startMinutes < booked.end && endMinutes > booked.start;
       });
 
       return !hasOverlap;
     });
-  }, [selection.date, selection.professional, bookedIntervals, selection.service]);
+  }, [selection.date, selection.professional, bookedIntervals, selection.service, configs]);
 
   // Generate real dates (Next 14 days)
   const availableDates = useMemo(() => {
@@ -136,21 +162,25 @@ const Booking: React.FC = () => {
       d.setDate(today.getDate() + i);
 
       const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      const dateString = `${year}-${month}-${day}`;
+      const monthStr = String(d.getMonth() + 1).padStart(2, '0');
+      const dayStr = String(d.getDate()).padStart(2, '0');
+      const dateString = `${year}-${monthStr}-${dayStr}`;
 
-      if (d.getDay() !== 0) { // Closed on Sundays
+      const p = selection.professional as any;
+      const closedDaysStr = p?.closed_days || configs.closed_days || '[0]';
+      const closedDays = JSON.parse(closedDaysStr);
+
+      if (!closedDays.includes(d.getDay())) {
         dates.push({
           full: dateString,
-          day: day,
+          day: dayStr,
           month: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
           weekday: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
         });
       }
     }
     return dates;
-  }, []);
+  }, [configs.closed_days, selection.professional]);
 
   const handleStepBack = () => {
     if (step === 'CONFIRM') setStep('TIME');
