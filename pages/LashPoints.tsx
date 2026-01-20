@@ -59,7 +59,7 @@ const LashPoints: React.FC = () => {
       <div className="flex flex-col h-full bg-background-light">
          <header className="glass-nav p-8 flex items-center justify-between border-b">
             <button onClick={() => navigate(-1)} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
-            <h2 className="font-display font-bold text-xl text-primary">Seus Lash Points ✨</h2>
+            <h2 className="font-display font-bold text-xl text-primary">Seus Zenaro Credits ✨</h2>
             <span className="size-6"></span>
          </header>
 
@@ -70,7 +70,7 @@ const LashPoints: React.FC = () => {
                   <p className="text-[10px] uppercase font-black tracking-[0.3em] opacity-60">Você ganhou pontos ✨</p>
                   <div className="flex items-baseline gap-3">
                      <h3 className="text-7xl font-display font-bold tracking-tighter">{points}</h3>
-                     <span className="text-sm font-black uppercase tracking-[0.2em] opacity-60">Lash Points</span>
+                     <span className="text-sm font-black uppercase tracking-[0.2em] opacity-60">Zenaro Credits</span>
                   </div>
                   <p className="text-sm italic opacity-80">Cada visita te aproxima de benefícios especiais</p>
                </div>

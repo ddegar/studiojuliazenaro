@@ -17,6 +17,65 @@ const FinancialControl: React.FC = () => {
    const [period, setPeriod] = useState<'TODAY' | '7D' | '30D' | 'ALL'>('30D');
 
    const [user, setUser] = useState<any>(null);
+   const [editingTransaction, setEditingTransaction] = useState<any>(null);
+   const [isRecurring, setIsRecurring] = useState(false);
+
+   // Category Management
+   const [incomeCategories, setIncomeCategories] = useState<string[]>(['Serviço', 'Produto', 'Outros']);
+   const [expenseCategories, setExpenseCategories] = useState<string[]>(['Material', 'Aluguel', 'Marketing', 'Salário', 'Outros']);
+   const [showCategoryManager, setShowCategoryManager] = useState(false);
+   const [newCategory, setNewCategory] = useState('');
+
+   useEffect(() => {
+      fetchCategories();
+   }, []);
+
+   const fetchCategories = async () => {
+      try {
+         const { data: incomeConfig } = await supabase.from('studio_config').select('value').eq('key', 'finance_income_categories').single();
+         if (incomeConfig?.value) setIncomeCategories(JSON.parse(incomeConfig.value));
+
+         const { data: expenseConfig } = await supabase.from('studio_config').select('value').eq('key', 'finance_expense_categories').single();
+         if (expenseConfig?.value) setExpenseCategories(JSON.parse(expenseConfig.value));
+      } catch (error) {
+         console.error('Error fetching categories:', error);
+      }
+   };
+
+   const saveCategories = async (newIncome: string[], newExpense: string[]) => {
+      try {
+         await supabase.from('studio_config').upsert({ key: 'finance_income_categories', value: JSON.stringify(newIncome), updated_at: new Date().toISOString() });
+         await supabase.from('studio_config').upsert({ key: 'finance_expense_categories', value: JSON.stringify(newExpense), updated_at: new Date().toISOString() });
+      } catch (error) {
+         console.error('Error saving categories:', error);
+      }
+   };
+
+   const handleAddCategory = () => {
+      if (!newCategory.trim()) return;
+      if (type === 'INCOME') {
+         const updated = [...incomeCategories, newCategory.trim()];
+         setIncomeCategories(updated);
+         saveCategories(updated, expenseCategories);
+      } else {
+         const updated = [...expenseCategories, newCategory.trim()];
+         setExpenseCategories(updated);
+         saveCategories(incomeCategories, updated);
+      }
+      setNewCategory('');
+   };
+
+   const handleDeleteCategory = (cat: string) => {
+      if (type === 'INCOME') {
+         const updated = incomeCategories.filter(c => c !== cat);
+         setIncomeCategories(updated);
+         saveCategories(updated, expenseCategories);
+      } else {
+         const updated = expenseCategories.filter(c => c !== cat);
+         setExpenseCategories(updated);
+         saveCategories(incomeCategories, updated);
+      }
+   };
 
    const fetchTransactions = async () => {
       setLoading(true);
@@ -62,25 +121,60 @@ const FinancialControl: React.FC = () => {
       e.preventDefault();
       if (!amount || !category) return;
 
-      const { error } = await supabase.from('transactions').insert({
+      const payload = {
          type,
          category,
          description,
          amount: parseFloat(amount),
          date,
-         user_id: user?.id
-      });
+         user_id: user?.id,
+         is_recurring: isRecurring
+      };
+
+      let error;
+      if (editingTransaction) {
+         const { error: err } = await supabase.from('transactions').update(payload).eq('id', editingTransaction.id);
+         error = err;
+      } else {
+         const { error: err } = await supabase.from('transactions').insert(payload);
+         error = err;
+      }
 
       if (error) {
          alert('Erro ao salvar: ' + error.message);
       } else {
          alert('Salvo com sucesso!');
-         setShowForm(false);
-         setCategory('');
-         setDescription('');
-         setAmount('');
+         closeModal();
          fetchTransactions();
       }
+   };
+
+   const handleDelete = async (id: string) => {
+      if (!window.confirm('Tem certeza que deseja excluir este lançamento?')) return;
+      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (error) alert('Erro ao excluir: ' + error.message);
+      else fetchTransactions();
+   };
+
+   const openEdit = (t: any) => {
+      setEditingTransaction(t);
+      setType(t.type);
+      setCategory(t.category);
+      setDescription(t.description || '');
+      setAmount(t.amount.toString());
+      setDate(t.date);
+      setIsRecurring(t.is_recurring || false);
+      setShowForm(true);
+   };
+
+   const closeModal = () => {
+      setShowForm(false);
+      setEditingTransaction(null);
+      setCategory('');
+      setDescription('');
+      setAmount('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setIsRecurring(false);
    };
 
    const balance = transactions.reduce((acc, curr) => {
@@ -153,11 +247,17 @@ const FinancialControl: React.FC = () => {
                         <p className="text-[10px] text-gray-500 mt-0.5">{t.description || new Date(t.date).toLocaleDateString()}</p>
                      </div>
                   </div>
-                  <div className="text-right">
-                     <p className={`font-black text-sm ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                     </p>
-                     <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
+                  <div className="flex items-center gap-4">
+                     <div className="text-right">
+                        <p className={`font-black text-sm ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                           {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
+                     </div>
+                     <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEdit(t)} className="size-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">edit</span></button>
+                        <button onClick={() => handleDelete(t.id)} className="size-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">delete</span></button>
+                     </div>
                   </div>
                </div>
             ))}
@@ -171,8 +271,8 @@ const FinancialControl: React.FC = () => {
             <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
                <div className="bg-background-dark border border-white/10 w-full max-w-md rounded-3xl p-6 space-y-6">
                   <div className="flex justify-between items-center">
-                     <h3 className="text-lg font-bold">Nova {type === 'INCOME' ? 'Receita' : 'Despesa'}</h3>
-                     <button onClick={() => setShowForm(false)} className="text-gray-400">
+                     <h3 className="text-lg font-bold">{editingTransaction ? 'Editar' : 'Nova'} {type === 'INCOME' ? 'Receita' : 'Despesa'}</h3>
+                     <button onClick={closeModal} className="text-gray-400 hover:text-white transition-all">
                         <span className="material-symbols-outlined">close</span>
                      </button>
                   </div>
@@ -183,24 +283,17 @@ const FinancialControl: React.FC = () => {
                         <input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold" placeholder="0.00" autoFocus />
                      </div>
                      <div>
-                        <label className="text-gray-500 text-xs font-bold uppercase block mb-2">Categoria</label>
-                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold">
-                           <option value="">Selecione...</option>
-                           {type === 'INCOME' ? (
-                              <>
-                                 <option value="Serviço">Serviço</option>
-                                 <option value="Produto">Venda de Produto</option>
-                                 <option value="Outros">Outros</option>
-                              </>
-                           ) : (
-                              <>
-                                 <option value="Material">Material</option>
-                                 <option value="Aluguel">Aluguel/Contas</option>
-                                 <option value="Marketing">Marketing</option>
-                                 <option value="Salário">Salário/Pró-labore</option>
-                                 <option value="Outros">Outros</option>
-                              </>
-                           )}
+                        <div className="flex justify-between items-center mb-2">
+                           <label className="text-gray-500 text-xs font-bold uppercase">Categoria</label>
+                           <button type="button" onClick={() => setShowCategoryManager(true)} className="text-[10px] text-accent-gold font-bold hover:underline">
+                              GERENCIAR
+                           </button>
+                        </div>
+                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-[#1c1f24] border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold">
+                           <option value="" className="bg-[#1c1f24] text-white">Selecione...</option>
+                           {(type === 'INCOME' ? incomeCategories : expenseCategories).map(cat => (
+                              <option key={cat} value={cat} className="bg-[#1c1f24] text-white">{cat}</option>
+                           ))}
                         </select>
                      </div>
                      <div>
@@ -212,6 +305,18 @@ const FinancialControl: React.FC = () => {
                         <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold" />
                      </div>
 
+                     {type === 'EXPENSE' && (
+                        <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer" onClick={() => setIsRecurring(!isRecurring)}>
+                           <div className={`size-6 rounded-lg border-2 flex items-center justify-center transition-all ${isRecurring ? 'bg-accent-gold border-accent-gold' : 'border-white/20'}`}>
+                              {isRecurring && <span className="material-symbols-outlined !text-sm text-primary">check</span>}
+                           </div>
+                           <div>
+                              <p className="text-xs font-bold uppercase tracking-widest text-gray-200">Despesa Mensal (Fixa)</p>
+                              <p className="text-[9px] text-gray-500 font-medium">Repetir automaticamente todos os meses</p>
+                           </div>
+                        </div>
+                     )}
+
                      <button type="submit" className="w-full bg-accent-gold text-primary font-bold py-4 rounded-xl uppercase tracking-widest mt-4">
                         Salvar
                      </button>
@@ -221,6 +326,42 @@ const FinancialControl: React.FC = () => {
          )}
 
          <AdminBottomNav />
+         {/* Category Manager Modal */}
+         {showCategoryManager && (
+            <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+               <div className="bg-background-dark border border-white/10 w-full max-w-sm rounded-[32px] p-6 space-y-6">
+                  <div className="flex justify-between items-center">
+                     <h3 className="text-lg font-bold">Gerenciar Categorias</h3>
+                     <button onClick={() => setShowCategoryManager(false)} className="text-gray-400 hover:text-white"><span className="material-symbols-outlined">close</span></button>
+                  </div>
+
+                  <div className="flex gap-2 p-1 bg-white/5 rounded-xl">
+                     <button onClick={() => setType('INCOME')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${type === 'INCOME' ? 'bg-primary text-white shadow-lg' : 'text-gray-500'}`}>RECEITAS</button>
+                     <button onClick={() => setType('EXPENSE')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${type === 'EXPENSE' ? 'bg-rose-500 text-white shadow-lg' : 'text-gray-500'}`}>DESPESAS</button>
+                  </div>
+
+                  <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                     {(type === 'INCOME' ? incomeCategories : expenseCategories).map(cat => (
+                        <div key={cat} className="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/5">
+                           <span className="text-sm font-medium">{cat}</span>
+                           <button onClick={() => handleDeleteCategory(cat)} className="text-rose-500 hover:bg-rose-500/10 p-1 rounded-full"><span className="material-symbols-outlined !text-sm">delete</span></button>
+                        </div>
+                     ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                     <input
+                        type="text"
+                        value={newCategory}
+                        onChange={e => setNewCategory(e.target.value)}
+                        placeholder="Nova categoria..."
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent-gold"
+                     />
+                     <button onClick={handleAddCategory} className="bg-accent-gold text-primary p-3 rounded-xl"><span className="material-symbols-outlined">add</span></button>
+                  </div>
+               </div>
+            </div>
+         )}
       </div>
    );
 };

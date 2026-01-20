@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import { uploadImage } from '../services/storage';
 import AdminBottomNav from '../components/AdminBottomNav';
 
 type ProfileTab = 'BASIC' | 'SCHEDULE' | 'TIPS' | 'SECURITY';
@@ -61,8 +62,8 @@ const AdminMyProfile: React.FC = () => {
                 let dbHours = proData?.working_hours;
                 if (!dbHours && proData?.closed_days) {
                     // Migrate from old structure if possible
-                    const closed = JSON.parse(typeof proData.closed_days === 'string' ? proData.closed_days : JSON.stringify(proData.closed_days));
-                    dbHours = { ...defaultHours };
+                    const closed = JSON.parse(typeof proData.closed_days === 'string' ? proData.closed_days : JSON.stringify(proData.closed_days || []));
+                    dbHours = { ...defaultHours } as any;
                     Object.keys(dbHours).forEach(day => {
                         dbHours[day].start = proData.start_hour || '08:00';
                         dbHours[day].end = proData.end_hour || '20:00';
@@ -178,8 +179,25 @@ const AdminMyProfile: React.FC = () => {
                 {activeTab === 'BASIC' && (
                     <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6 animate-fade-in shadow-2xl">
                         <div className="flex flex-col items-center gap-4 mb-4">
-                            <div className="size-24 rounded-[32px] border-2 border-accent-gold p-1 overflow-hidden bg-white/5">
-                                <img src={formData.avatar_url || `https://ui-avatars.com/api/?name=${formData.name}`} className="w-full h-full rounded-[24px] object-cover" />
+                            <div className="relative group/avatar">
+                                <div className="size-24 rounded-[32px] border-2 border-accent-gold p-1 overflow-hidden bg-white/5">
+                                    <img src={formData.avatar_url || `https://ui-avatars.com/api/?name=${formData.name}`} className="w-full h-full rounded-[24px] object-cover" />
+                                </div>
+                                <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-[32px] opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer">
+                                    <span className="material-symbols-outlined text-white">add_a_photo</span>
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const url = await uploadImage(file, 'profiles');
+                                                if (url) setFormData({ ...formData, avatar_url: url });
+                                            }
+                                        }}
+                                    />
+                                </label>
                             </div>
                             <p className="text-[10px] font-black text-accent-gold uppercase tracking-[0.3em]">Arte & Estilo</p>
                         </div>

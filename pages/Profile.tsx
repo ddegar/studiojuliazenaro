@@ -104,7 +104,7 @@ const Profile: React.FC = () => {
     { icon: 'person', label: 'Meus Dados', desc: 'Informações pessoais e contato', path: '#', action: () => setIsEditing(true) },
     { icon: 'auto_awesome', label: 'Perfil do Olhar', desc: 'Lash design e curvaturas favoritas', path: '/profile/aesthetic', hide: isPro },
     { icon: 'dashboard', label: 'Painel Admin', desc: 'Gerenciamento do estúdio', path: '/admin', show: isPro },
-    { icon: 'card_membership', label: 'Lash Points', desc: `Meu saldo: ${profile?.lash_points || 0} pts`, path: '/profile/points', hide: isPro },
+    { icon: 'card_membership', label: 'Zenaro Credits', desc: `Meu saldo: ${profile?.lash_points || 0} pts`, path: '/profile/points', hide: isPro },
     { icon: 'diversity_3', label: 'Indique Amigas', desc: 'Ganhe pontos indicando', path: '/profile/refer', hide: isPro },
     { icon: 'lock', label: 'Segurança', desc: 'Alterar minha senha de acesso', path: '#', action: () => setIsChangingPassword(true) },
     { icon: 'help_center', label: 'Dúvidas e FAQ', desc: 'Tire suas dúvidas agora', path: '/faq' },

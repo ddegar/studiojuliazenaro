@@ -24,7 +24,7 @@ const AdminDashboard: React.FC = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const isMaster = ['MASTER_ADMIN', 'PROFESSIONAL_ADMIN', 'ADMIN'].includes(stats.user.role) ||
+  const isMaster = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(stats.user.role) ||
     stats.user.email?.toLowerCase() === 'admin@juliazenaro.com' ||
     userEmail?.toLowerCase() === 'admin@juliazenaro.com';
 
@@ -173,7 +173,7 @@ const AdminDashboard: React.FC = () => {
     { label: 'Financeiro', icon: 'payments', path: '/admin/finance' },
     { label: 'Conteúdo (Feed)', icon: 'history_toggle_off', path: '/admin/content' },
     { label: 'Notificações', icon: 'notifications', path: '/admin/notifications', masterOnly: true },
-    { label: 'Meu Perfil', icon: 'person', path: '/admin/my-profile' },
+    { label: 'Meu Perfil', icon: 'person', path: '/admin/profile' },
     { label: 'Ajustes do Estúdio', icon: 'settings', path: '/admin/settings', masterOnly: true },
     { label: 'Recursos Extra', subheader: true, masterOnly: true },
     { label: 'Dicas (Pré/Pós)', icon: 'lightbulb', path: '/admin/tips' },
@@ -384,7 +384,7 @@ const AdminDashboard: React.FC = () => {
           { label: 'PAINEL', icon: 'grid_view', path: '/admin', active: location.pathname === '/admin' },
           { label: 'AGENDA', icon: 'calendar_month', path: '/admin/agenda', active: location.pathname.includes('agenda') },
           { label: 'EQUIPE', icon: 'person', path: '/admin/professionals', active: location.pathname.includes('professionals') },
-          { label: 'AJUSTES', icon: 'settings', path: '/admin/my-profile', active: location.pathname.includes('profile') }
+          { label: 'AJUSTES', icon: 'settings', path: isMaster ? '/admin/settings' : '/admin/my-profile', active: location.pathname.includes('profile') || location.pathname.includes('settings') }
         ].map((item, idx) => (
           <button key={idx} onClick={() => navigate(item.path)} className={`flex flex-col items-center gap-1 transition-all ${item.active ? 'text-emerald-400' : 'text-gray-500'}`}>
             <span className={`material-symbols-outlined !text-[24px]`}>{item.icon}</span>

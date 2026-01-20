@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { LoyaltyTier, LoyaltyConfig } from '../types';
 
 const INITIAL_TIERS: LoyaltyTier[] = [
-   { id: '1', name: 'Silver', minPoints: 0, color: 'bg-slate-400', icon: 'shield', perks: ['5% Cashback'] },
-   { id: '2', name: 'Gold', minPoints: 500, color: 'bg-accent-gold', icon: 'workspace_premium', perks: ['10% Cashback', 'Mimo Aniversário'] },
-   { id: '3', name: 'Diamond', minPoints: 1000, color: 'bg-primary', icon: 'diamond', perks: ['15% Cashback', 'VIP Status'] },
+   { id: '1', name: 'Select', minPoints: 0, color: 'bg-slate-400', icon: 'person', perks: ['Acesso ao Clube', '5% Cashback em produtos'] },
+   { id: '2', name: 'Prime', minPoints: 500, color: 'bg-accent-gold', icon: 'star', perks: ['10% Cashback', 'Mimo Aniversário', 'Prioridade na Agenda'] },
+   { id: '3', name: 'Signature', minPoints: 1000, color: 'bg-primary', icon: 'stars', perks: ['15% Cashback', 'VIP Status', 'Coffee Break Exclusivo'] },
+   { id: '4', name: 'Privé', minPoints: 2000, color: 'bg-indigo-500', icon: 'diamond', perks: ['20% Cashback', 'Concierge Pessoal', 'Eventos Exclusivos'] },
 ];
 
 const AdminLoyaltySettings: React.FC = () => {

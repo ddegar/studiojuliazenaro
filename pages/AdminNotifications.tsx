@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import AdminBottomNav from '../components/AdminBottomNav';
 
-type Audience = 'ALL' | 'VIPS' | 'INACTIVE';
+type Audience = 'ALL' | 'PRIVE' | 'SIGNATURE' | 'PRIME' | 'SELECT' | 'INACTIVE';
 type Tab = 'MARKETING' | 'SYSTEM';
 
 const AdminNotifications: React.FC = () => {
@@ -43,12 +44,19 @@ const AdminNotifications: React.FC = () => {
          // 1. Fetch audience
          let query = supabase.from('profiles').select('id').eq('role', 'CLIENT');
 
-         if (audience === 'VIPS') {
-            query = query.gte('lash_points', 1000);
+         // Filter by JZ Privé Club level based on lash_points/zenaro_credits
+         if (audience === 'PRIVE') {
+            query = query.gte('lash_points', 2000);
+         } else if (audience === 'SIGNATURE') {
+            query = query.gte('lash_points', 1000).lt('lash_points', 2000);
+         } else if (audience === 'PRIME') {
+            query = query.gte('lash_points', 500).lt('lash_points', 1000);
+         } else if (audience === 'SELECT') {
+            query = query.lt('lash_points', 500);
          } else if (audience === 'INACTIVE') {
+            // Filter by last appointment date - simplified approach
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            // This is a simplified check, real inactive logic would check last appointment
          }
 
          const { data: targets } = await query;
@@ -121,9 +129,12 @@ const AdminNotifications: React.FC = () => {
                      <label className="text-[10px] uppercase font-bold text-gray-500 tracking-widest pl-1">Público Alvo</label>
                      <div className="grid grid-cols-1 gap-3">
                         {[
-                           { id: 'ALL', label: 'Todas as Clientes', count: 124, icon: 'groups' },
-                           { id: 'VIPS', label: 'Clientes VIP (Diamante)', count: 32, icon: 'stars' },
-                           { id: 'INACTIVE', label: 'Inativas (+30 dias)', count: 18, icon: 'person_off' }
+                           { id: 'ALL', label: 'Todas as Clientes', icon: 'groups' },
+                           { id: 'PRIVE', label: 'JZ Privé Club - Privé', icon: 'diamond' },
+                           { id: 'SIGNATURE', label: 'JZ Privé Club - Signature', icon: 'stars' },
+                           { id: 'PRIME', label: 'JZ Privé Club - Prime', icon: 'star' },
+                           { id: 'SELECT', label: 'JZ Privé Club - Select', icon: 'person' },
+                           { id: 'INACTIVE', label: 'Inativas (+30 dias)', icon: 'person_off' }
                         ].map((item) => (
                            <button
                               key={item.id}

@@ -136,26 +136,64 @@ const AdminTimeline: React.FC = () => {
          const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', apt.id);
          if (error) throw error;
 
-         // 2. If COMPLETED, generate automatic transaction
+         // 2. If COMPLETED, generate automatic transaction and loyalty points
          if (newStatus === 'completed') {
-            // Fetch professional profile_id if needed, but per-day we assume professional_id is the user
-            const { data: pro } = await supabase.from('professionals').select('profile_id').eq('id', apt.professional_id).single();
-            const targetUserId = pro?.profile_id || apt.professional_id;
+            // A. TRANSACTION: Try to get professional's profile_id first
+            let targetProfileId: string | null = null;
 
-            // Check if already exists
+            const { data: pro } = await supabase.from('professionals').select('profile_id').eq('id', apt.professional_id).single();
+            targetProfileId = pro?.profile_id || null;
+
+            // Fallback: if no profile_id, try to get the logged-in user's ID
+            if (!targetProfileId) {
+               const { data: { user: currentUser } } = await supabase.auth.getUser();
+               targetProfileId = currentUser?.id || null;
+            }
+
+            // Check if transaction already exists for this appointment
             const { data: existing } = await supabase.from('transactions').select('id').eq('appointment_id', apt.id).single();
 
             if (!existing) {
-               const servicePrice = apt.services?.price || 0;
-               await supabase.from('transactions').insert({
+               const servicePrice = apt.services?.price || apt.price || 0;
+
+               // Build transaction payload - user_id is optional
+               const txPayload: any = {
                   type: 'INCOME',
                   category: 'Serviço',
-                  description: `Atendimento: ${apt.services?.name || 'Serviço'}`,
+                  description: `Atendimento: ${apt.services?.name || apt.service_name || 'Serviço'}`,
                   amount: servicePrice,
                   date: apt.date,
-                  user_id: targetUserId,
                   appointment_id: apt.id
-               });
+               };
+
+               // Only add user_id if we have a valid profile_id
+               if (targetProfileId) {
+                  txPayload.user_id = targetProfileId;
+               }
+
+               const { error: txError } = await supabase.from('transactions').insert(txPayload);
+               if (txError) {
+                  console.error('Transaction error:', txError);
+                  // Don't throw - let the status update succeed even if transaction fails
+               }
+            }
+
+            // B. LOYALTY POINTS (Zenaro Credits)
+            if (apt.user_id && apt.services?.points_reward) {
+               const { data: clientProfile } = await supabase.from('profiles').select('zenaro_credits, lash_points').eq('id', apt.user_id).single();
+
+               // Use zenaro_credits if exists, fallback to lash_points for backward compatibility
+               const currentPoints = clientProfile?.zenaro_credits ?? clientProfile?.lash_points ?? 0;
+               const newPoints = currentPoints + apt.services.points_reward;
+
+               const updatePayload: any = {};
+               if (clientProfile && 'zenaro_credits' in clientProfile) {
+                  updatePayload.zenaro_credits = newPoints;
+               } else {
+                  updatePayload.lash_points = newPoints;
+               }
+
+               await supabase.from('profiles').update(updatePayload).eq('id', apt.user_id);
             }
          }
 

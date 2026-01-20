@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Service, Professional, UserRole } from '../types';
 import { supabase } from '../services/supabase';
+import { uploadImage } from '../services/storage';
 import AdminBottomNav from '../components/AdminBottomNav';
 
 const ServiceManagement: React.FC = () => {
@@ -122,6 +123,18 @@ const ServiceManagement: React.FC = () => {
       setEditingService({ ...editingService, professionalIds: updated });
    };
 
+   const handleDelete = async (serviceId: string) => {
+      if (!window.confirm('Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita.')) return;
+      try {
+         const { error } = await supabase.from('services').delete().eq('id', serviceId);
+         if (error) throw error;
+         alert('Serviço excluído com sucesso!');
+         fetchData();
+      } catch (e: any) {
+         alert('Erro ao excluir: ' + e.message);
+      }
+   };
+
    if (!currentUser && loading) {
       return (
          <div className="flex h-screen items-center justify-center bg-background-dark">
@@ -177,12 +190,22 @@ const ServiceManagement: React.FC = () => {
                            </div>
                         </div>
                      </div>
-                     <button
-                        onClick={() => { setEditingService(service); setShowModal(true); }}
-                        className="size-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all active:scale-90"
-                     >
-                        <span className="material-symbols-outlined !text-xl">edit</span>
-                     </button>
+                     <div className="flex gap-2">
+                        <button
+                           onClick={() => { setEditingService(service); setShowModal(true); }}
+                           className="size-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all active:scale-90"
+                        >
+                           <span className="material-symbols-outlined !text-xl">edit</span>
+                        </button>
+                        {isMaster && (
+                           <button
+                              onClick={() => handleDelete(service.id)}
+                              className="size-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90"
+                           >
+                              <span className="material-symbols-outlined !text-xl">delete</span>
+                           </button>
+                        )}
+                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4 pt-5 border-t border-white/5">
@@ -219,8 +242,33 @@ const ServiceManagement: React.FC = () => {
 
                   <div className="space-y-8">
                      <div className="space-y-3">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Imagem de Capa (URL)</label>
-                        <input type="text" placeholder="https://..." value={editingService?.imageUrl || ''} onChange={e => setEditingService({ ...editingService, imageUrl: e.target.value })} className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary outline-none italic" />
+                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Imagem do Procedimento</label>
+                        <div className="flex flex-col gap-4">
+                           {editingService?.imageUrl && (
+                              <div className="w-full h-40 rounded-2xl overflow-hidden border border-white/10">
+                                 <img src={editingService.imageUrl} className="w-full h-full object-cover" />
+                              </div>
+                           )}
+                           <div className="relative">
+                              <label className="flex items-center justify-center gap-3 w-full h-14 bg-white/5 border border-dashed border-white/20 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors">
+                                 <span className="material-symbols-outlined text-gray-400">upload</span>
+                                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Fazer Upload de Foto</span>
+                                 <input
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={async (e) => {
+                                       const file = e.target.files?.[0];
+                                       if (file) {
+                                          const url = await uploadImage(file, 'services');
+                                          if (url) setEditingService({ ...editingService, imageUrl: url });
+                                       }
+                                    }}
+                                 />
+                              </label>
+                           </div>
+                           <input type="text" placeholder="Ou cole a URL da imagem aqui..." value={editingService?.imageUrl || ''} onChange={e => setEditingService({ ...editingService, imageUrl: e.target.value })} className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-[10px] focus:ring-primary outline-none italic" />
+                        </div>
                      </div>
 
                      <div className="space-y-2">
@@ -250,7 +298,7 @@ const ServiceManagement: React.FC = () => {
                            <input type="number" required placeholder="90" value={editingService?.duration || ''} onChange={e => setEditingService({ ...editingService, duration: parseInt(e.target.value) })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:ring-primary outline-none" />
                         </div>
                         <div className="space-y-2 bg-accent-gold/5 p-4 rounded-2xl border border-accent-gold/10">
-                           <label className="text-[10px] uppercase font-black text-accent-gold tracking-[0.2em] pl-1">Lash Points ✨</label>
+                           <label className="text-[10px] uppercase font-black text-accent-gold tracking-[0.2em] pl-1">Zenaro Credits ✨</label>
                            <input type="number" placeholder="50" value={editingService?.pointsReward || ''} onChange={e => setEditingService({ ...editingService, pointsReward: parseInt(e.target.value) })} className="w-full h-10 bg-white/20 border border-accent-gold/20 rounded-xl px-4 text-sm font-black text-accent-gold focus:ring-accent-gold outline-none mt-1" />
                         </div>
                      </div>

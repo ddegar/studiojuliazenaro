@@ -228,7 +228,7 @@ const Home: React.FC = () => {
               <span className="material-symbols-outlined !text-xl">stars</span>
             </div>
             <div>
-              <h4 className="font-bold text-xs text-primary">Lash Points</h4>
+              <h4 className="font-bold text-xs text-primary">Zenaro Credits</h4>
               <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest">Seus prêmios</p>
             </div>
           </div>

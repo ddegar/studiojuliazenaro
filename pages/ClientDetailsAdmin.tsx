@@ -63,7 +63,8 @@ const ClientDetailsAdmin: React.FC = () => {
    }
 
    const preferences = clientData.preferences || {};
-   const loyaltyLevel = clientData.lash_points >= 1000 ? 'DIAMANTE ✨' : (clientData.lash_points >= 500 ? 'OURO ⭐️' : 'PRATA 🔘');
+   const points = clientData.lash_points || 0;
+   const loyaltyLevel = points >= 2000 ? 'PRIVÉ 💎' : (points >= 1000 ? 'SIGNATURE ⭐' : (points >= 500 ? 'PRIME 🌟' : 'SELECT'));
 
    return (
       <div className="flex flex-col h-full bg-background-dark text-white">
@@ -215,7 +216,7 @@ const ClientDetailsAdmin: React.FC = () => {
                <div className="space-y-6 animate-fade-in">
                   <div className="bg-accent-gold p-8 rounded-[40px] text-primary flex items-baseline justify-between shadow-2xl shadow-accent-gold/20 relative overflow-hidden">
                      <div className="space-y-1 relative z-10">
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Saldo de Lash Points</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Saldo de Zenaro Credits</p>
                         <h3 className="text-5xl font-display font-bold">{clientData.lash_points || 0}</h3>
                         <p className="text-[9px] font-black uppercase mt-1">Pontos Ativos ✨</p>
                      </div>

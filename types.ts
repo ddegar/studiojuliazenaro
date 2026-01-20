@@ -8,7 +8,7 @@ export interface User {
   phone: string;
   role: UserRole;
   professionalId?: string;
-  lashPoints: number;
+  zenaro_credits: number;
   tierId: string;
   referralCode: string;
   referredBy?: string;
@@ -38,85 +38,62 @@ export interface Service {
   description: string;
   price: number;
   duration: number;
-  category: string;
-  imageUrl: string;
-  isPopular?: boolean;
-  active: boolean;
-  professionalIds: string[];
-  pointsReward: number;
+  points_reward?: number;
 }
-
-export type AppointmentStatus =
-  | 'scheduled'
-  | 'rescheduled'
-  | 'cancelled_by_user'
-  | 'completed'
-  | 'no_show'
-  | 'blocked'
-  | 'cancelled';
 
 export interface Appointment {
   id: string;
-  userId: string;
-  clientName: string;
-  serviceId: string;
-  serviceName: string;
+  user_id: string;
+  professional_id: string;
+  service_id: string;
   date: string;
   time: string;
-  status: AppointmentStatus;
-  professionalId: string;
-  professionalName: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   price: number;
-  pointsAwarded?: boolean;
-  createdBy: 'CLIENT' | 'ADMIN';
-  notes?: string;
+  client_name?: string;
+  service_name?: string;
+  professional_name?: string;
 }
 
-export type PointSource = 'SERVICE' | 'REFERRAL' | 'CHECKIN' | 'SOCIAL_SHARE' | 'ADMIN_ADJUST';
-
-export interface PointTransaction {
+export interface Transaction {
   id: string;
-  clientId: string;
-  serviceId?: string;
-  appointmentId?: string;
-  pointsEarned: number;
-  date: string;
-  source: PointSource;
-  description: string;
-}
-
-export type TransactionType = 'INCOME' | 'EXPENSE' | 'WITHDRAWAL';
-export type TransactionCategory = 'SERVICE' | 'SUPPLY' | 'RENT' | 'MARKETING' | 'PERSONAL' | 'TAXES';
-
-export interface FinancialTransaction {
-  id: string;
-  type: TransactionType;
-  category: TransactionCategory;
+  type: 'INCOME' | 'EXPENSE';
+  category: string;
+  description?: string;
   amount: number;
-  title: string;
   date: string;
-  professionalId?: string;
-  appointmentId?: string;
-  isStudioWide: boolean;
+  user_id: string;
+  appointment_id?: string;
+  status?: string;
+  is_recurring?: boolean;
 }
 
-export interface ProfessionalFinanceSummary {
-  professionalId: string;
-  professionalName: string;
-  grossRevenue: number;
-  expenses: number;
-  withdrawals: number;
-  netBalance: number;
-  appointmentCount: number;
-  marketShare?: string;
-}
-
-export interface FAQ {
+export interface Notification {
   id: string;
-  question: string;
-  answer: string;
-  category: 'GENERAL' | 'BOOKING' | 'AFTERCARE' | 'PRICING';
+  user_id: string;
+  title: string;
+  message: string;
+  type: 'INFO' | 'SUCCESS' | 'WARNING' | 'DANGER';
+  read: boolean;
+  created_at: string;
+}
+
+export interface Story {
+  id: string;
+  url: string;
+  type: 'IMAGE' | 'VIDEO';
+  duration: number;
   active: boolean;
+  created_at: string;
+  expires_at: string;
+}
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  icon: string;
+  path: string;
+  role?: UserRole[];
   order: number;
   linkedSection?: 'BOOKING' | 'PROFILE' | 'HISTORY';
 }
@@ -130,9 +107,11 @@ export interface Tip {
   active: boolean;
 }
 
+export type LoyaltyTierName = 'Select' | 'Prime' | 'Signature' | 'Privé';
+
 export interface LoyaltyTier {
   id: string;
-  name: string;
+  name: LoyaltyTierName;
   minPoints: number;
   color: string;
   icon: string;
@@ -143,3 +122,5 @@ export interface LoyaltyConfig {
   referralPoints: number;
   pointsEnabled: boolean;
 }
+
+export const LOYALTY_PROGRAM_NAME = "JZ Privé Club";
