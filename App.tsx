@@ -38,6 +38,8 @@ import AdminLoyaltySettings from './pages/AdminLoyaltySettings';
 import AdminStudioDetails from './pages/AdminStudioDetails';
 import AdminWorkingHours from './pages/AdminWorkingHours';
 import AdminMyProfile from './pages/AdminMyProfile';
+import AdminLoyaltyClients from './pages/AdminLoyaltyClients';
+import AdminLoyaltyRewards from './pages/AdminLoyaltyRewards';
 
 
 import BookingConfirmed from './pages/BookingConfirmed';
@@ -52,6 +54,12 @@ import CheckIn from './pages/CheckIn';
 import CheckInSuccess from './pages/CheckInSuccess';
 import Evaluation from './pages/Evaluation';
 import AppointmentDetails from './pages/AppointmentDetails';
+import PriveDashboard from './pages/PriveDashboard';
+import PriveJourney from './pages/PriveJourney';
+import PriveRewards from './pages/PriveRewards';
+import PriveRewardDetail from './pages/PriveRewardDetail';
+import PriveHowToEarn from './pages/PriveHowToEarn';
+import PriveHistory from './pages/PriveHistory';
 
 const AppContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex justify-center min-h-screen bg-gray-200 dark:bg-zinc-950">
@@ -86,10 +94,18 @@ const App: React.FC = () => {
           {/* Cliente Perfil & Relacionamento */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/aesthetic" element={<AestheticProfile />} />
-          <Route path="/profile/points" element={<LashPoints />} />
+          {/* <Route path="/profile/points" element={<LashPoints />} />  Deprecated */}
           <Route path="/profile/levels" element={<FidelityLevels />} />
           <Route path="/profile/refer" element={<ReferFriend />} />
           <Route path="/profile/coupons" element={<Coupons />} />
+
+          {/* JZ Privé Club */}
+          <Route path="/prive" element={<PriveDashboard />} />
+          <Route path="/prive/journey" element={<PriveJourney />} />
+          <Route path="/prive/rewards" element={<PriveRewards />} />
+          <Route path="/prive/rewards/:id" element={<PriveRewardDetail />} />
+          <Route path="/prive/earn" element={<PriveHowToEarn />} />
+          <Route path="/prive/history" element={<PriveHistory />} />
 
           {/* Cliente Cuidado & Ajuda */}
           <Route path="/care/pre" element={<PreCare />} />
@@ -125,6 +141,8 @@ const App: React.FC = () => {
           <Route path="/admin/faq" element={<AdminFAQManagement />} />
           <Route path="/admin/tips" element={<AdminTipsManagement />} />
           <Route path="/admin/loyalty" element={<AdminLoyaltySettings />} />
+          <Route path="/admin/loyalty/clients" element={<AdminLoyaltyClients />} />
+          <Route path="/admin/loyalty/rewards" element={<AdminLoyaltyRewards />} />
           <Route path="/admin/working-hours" element={<AdminWorkingHours />} />
 
           <Route path="*" element={<Navigate to="/" />} />

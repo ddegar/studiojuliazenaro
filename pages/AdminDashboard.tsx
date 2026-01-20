@@ -178,6 +178,7 @@ const AdminDashboard: React.FC = () => {
     { label: 'Clientes', icon: 'groups', path: '/admin/clients', masterOnly: true },
     { label: 'Equipe / Staff', icon: 'badge', path: '/admin/professionals', masterOnly: true },
     { label: 'Catálogo / Serviços', icon: 'category', path: '/admin/services' },
+    { label: 'Club JZ Privé', icon: 'diamond', path: '/admin/loyalty', masterOnly: true },
     { label: 'Financeiro', icon: 'payments', path: '/admin/finance' },
     { label: 'Conteúdo (Feed)', icon: 'history_toggle_off', path: '/admin/content' },
     { label: 'Notificações', icon: 'notifications', path: '/admin/notifications', masterOnly: true },
