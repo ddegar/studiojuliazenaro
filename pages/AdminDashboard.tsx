@@ -44,23 +44,25 @@ const AdminDashboard: React.FC = () => {
           .eq('id', user.id)
           .single();
 
+        const isPrivileged = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile.role);
+        const isReallyMaster = isPrivileged || user.email === 'admin@juliazenaro.com';
+
         if (user) {
           setUserEmail(user.email || null);
           const today = new Date().toISOString().split('T')[0];
           const nowISO = new Date().toISOString();
 
           const upcomingQuery = supabase.from('appointments').select(`
-            *,
-            profiles:profiles!user_id (name, profile_pic),
-            services (name)
-          `)
+              *,
+              profiles:profiles!user_id (name, profile_pic),
+              services (name)
+            `)
             .eq('status', 'scheduled')
             .gte('start_time', nowISO)
             .order('start_time')
             .limit(3);
 
-          const isPrivileged = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile.role);
-          if (!isPrivileged) {
+          if (!isReallyMaster) {
             const { data: matchingPro } = await supabase
               .from('professionals')
               .select('id')
@@ -80,17 +82,23 @@ const AdminDashboard: React.FC = () => {
               new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
             ),
             upcomingQuery,
-            isPrivileged ? supabase.from('appointments').select('service_name, status').gte('date',
+            isReallyMaster ? supabase.from('appointments').select('service_name, status').gte('date',
               new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
             ) : Promise.resolve({ data: [] }),
-            isPrivileged ? supabase.from('professionals').select('id, name, profile_id') : Promise.resolve({ data: [] })
+            isReallyMaster ? supabase.from('professionals').select('id, name, profile_id') : Promise.resolve({ data: [] })
           ]);
 
           const [clientsRes, apptsRes, prosRes, transRes, upcomingRes, allApptsRes, allProsRes] = results;
 
           setUpcomingAppointments(upcomingRes.data || []);
 
-          const totalRevenue = transRes.data?.reduce((acc, curr) => curr.type === 'INCOME' ? acc + curr.amount : acc - curr.amount, 0) || 0;
+          // Revenue Logic: If Master -> Total. If Pro -> Only their own transactions
+          let relevantTransactions = transRes.data || [];
+          if (!isReallyMaster) {
+            relevantTransactions = relevantTransactions.filter(t => t.user_id === user.id);
+          }
+
+          const totalRevenue = relevantTransactions.reduce((acc, curr) => curr.type === 'INCOME' ? acc + curr.amount : acc - curr.amount, 0) || 0;
 
           const last30Days = Array.from({ length: 30 }).map((_, i) => {
             const d = new Date();
@@ -99,7 +107,7 @@ const AdminDashboard: React.FC = () => {
           });
 
           const processedChart = last30Days.map(date => {
-            const dayTrans = transRes.data?.filter(t => t.date === date) || [];
+            const dayTrans = relevantTransactions.filter(t => t.date === date);
             const dayTotal = dayTrans.reduce((acc, curr) => curr.type === 'INCOME' ? acc + curr.amount : acc - curr.amount, 0);
             return {
               date: new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
@@ -112,7 +120,7 @@ const AdminDashboard: React.FC = () => {
           let topServices: any[] = [];
           let proRevenue: any[] = [];
 
-          if (isPrivileged) {
+          if (isReallyMaster) {
             const serviceCounts = (allApptsRes.data || []).reduce((acc: any, curr: any) => {
               const name = curr.service_name || 'Outro';
               acc[name] = (acc[name] || 0) + 1;
@@ -272,20 +280,23 @@ const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           {[
             { label: 'Faturamento (30d)', value: `R$ ${stats.revenue.toLocaleString('pt-BR')}`, icon: 'payments', color: 'bg-emerald-400/10 text-emerald-400', path: '/admin/finance' },
-            { label: 'Equipe / Staff', value: `${stats.professionals} Ativos`, icon: 'badge', color: 'bg-orange-400/10 text-orange-400', path: '/admin/professionals' },
+            { label: 'Equipe / Staff', value: `${stats.professionals} Ativos`, icon: 'badge', color: 'bg-orange-400/10 text-orange-400', path: '/admin/professionals', hide: !isMaster },
             { label: 'Agendamentos', value: stats.appointmentsToday, icon: 'calendar_today', color: 'bg-blue-400/10 text-blue-400', path: '/admin/agenda' },
             { label: 'Clientes', value: stats.clients, icon: 'groups', color: 'bg-purple-400/10 text-purple-400', path: '/admin/clients' }
-          ].map((stat, idx) => (
-            <button key={idx} onClick={() => navigate(stat.path)} className="bg-[#1c1f24] p-5 rounded-3xl border border-white/5 flex flex-col gap-4 text-left hover:border-white/10 transition-all shadow-xl">
-              <div className={`size-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                <span className="material-symbols-outlined !text-xl">{stat.icon}</span>
-              </div>
-              <div>
-                <p className="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-1">{stat.label}</p>
-                <p className="text-lg font-bold text-white">{stat.value}</p>
-              </div>
-            </button>
-          ))}
+          ].map((stat, idx) => {
+            if (stat.hide) return null;
+            return (
+              <button key={idx} onClick={() => navigate(stat.path)} className="bg-[#1c1f24] p-5 rounded-3xl border border-white/5 flex flex-col gap-4 text-left hover:border-white/10 transition-all shadow-xl">
+                <div className={`size-10 rounded-xl ${stat.color} flex items-center justify-center`}>
+                  <span className="material-symbols-outlined !text-xl">{stat.icon}</span>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-1">{stat.label}</p>
+                  <p className="text-lg font-bold text-white">{stat.value}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Upcoming Section - MATCHING IMAGE 3 */}

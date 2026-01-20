@@ -44,7 +44,7 @@ const Booking: React.FC = () => {
         ]);
 
         if (prosRes.data) {
-          setProfessionals(prosRes.data.map((p: any) => ({
+          const mappedPros = prosRes.data.map((p: any) => ({
             id: p.id,
             name: p.name,
             role: p.role || 'Especialista',
@@ -52,7 +52,18 @@ const Booking: React.FC = () => {
             start_hour: p.start_hour || '08:00',
             end_hour: p.end_hour || '22:00',
             closed_days: p.closed_days || '[0]'
-          })));
+          }));
+
+          // Sort: Julia First
+          mappedPros.sort((a: any, b: any) => {
+            const isJuliaA = a.name.toLowerCase().includes('julia') || a.name.toLowerCase().includes('júlia');
+            const isJuliaB = b.name.toLowerCase().includes('julia') || b.name.toLowerCase().includes('júlia');
+            if (isJuliaA && !isJuliaB) return -1;
+            if (!isJuliaA && isJuliaB) return 1;
+            return a.name.localeCompare(b.name);
+          });
+
+          setProfessionals(mappedPros);
         }
         if (servsRes.data) {
           setServices(servsRes.data.map((s: any) => ({

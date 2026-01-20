@@ -44,7 +44,7 @@ const AdminTimeline: React.FC = () => {
 
       const { data } = await query;
       if (data && data.length > 0) {
-         setProfessionals(data.map(p => ({
+         const mapped = data.map(p => ({
             id: p.id,
             name: p.name,
             role: p.role,
@@ -52,8 +52,19 @@ const AdminTimeline: React.FC = () => {
             active: p.active,
             specialties: p.specialties || [],
             rating: p.rating || 5
-         })));
-         if (!selectedProId) setSelectedProId(data[0].id);
+         }));
+
+         // Sort: Julia First
+         mapped.sort((a, b) => {
+            const isJuliaA = a.name.toLowerCase().includes('julia') || a.name.toLowerCase().includes('júlia');
+            const isJuliaB = b.name.toLowerCase().includes('julia') || b.name.toLowerCase().includes('júlia');
+            if (isJuliaA && !isJuliaB) return -1;
+            if (!isJuliaA && isJuliaB) return 1;
+            return a.name.localeCompare(b.name);
+         });
+
+         setProfessionals(mapped);
+         if (!selectedProId) setSelectedProId(mapped[0].id);
       }
    };
 
@@ -251,8 +262,7 @@ const AdminTimeline: React.FC = () => {
          console.warn('Timeline calc error, using fallback:', e);
          return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
       }
-   })();
-
+   })(); // End of hours calculation
    const getAppointmentAt = (timeStr: string) => {
       if (!date) return null;
       const [h, m] = timeStr.split(':').map(Number);

@@ -5,6 +5,7 @@ import AdminBottomNav from '../components/AdminBottomNav';
 
 const FinancialControl: React.FC = () => {
    const [transactions, setTransactions] = useState<any[]>([]);
+   const [professionals, setProfessionals] = useState<any[]>([]);
    const [loading, setLoading] = useState(true);
    const [showForm, setShowForm] = useState(false);
 
@@ -26,11 +27,10 @@ const FinancialControl: React.FC = () => {
    const [showCategoryManager, setShowCategoryManager] = useState(false);
    const [newCategory, setNewCategory] = useState('');
 
-   // View Filter for Master
-   const [viewFilter, setViewFilter] = useState<'ALL' | 'ME' | 'TEAM'>('ALL');
+   // Master View Controls
+   const [viewFilter, setViewFilter] = useState<'ALL' | 'ME' | 'TEAM' | string>('ALL'); // 'ALL', 'ME', 'TEAM', or specific Pro ID
+   const [showTeamDetails, setShowTeamDetails] = useState(true);
 
-   // View Filter for Master
-   const [viewFilter, setViewFilter] = useState<'ALL' | 'ME' | 'TEAM'>('ALL');
 
    useEffect(() => {
       fetchCategories();
@@ -88,17 +88,35 @@ const FinancialControl: React.FC = () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
 
-      const { data: profile } = await supabase.from('profiles').select('role, id, permissions').eq('id', authUser.id).single();
+      const { data: profile } = await supabase.from('profiles').select('role, id, permissions, name, email').eq('id', authUser.id).single();
       setUser(profile);
 
-      if (profile?.role !== 'MASTER_ADMIN' && !profile?.permissions?.canViewOwnFinance) {
+      const isMaster = profile?.role === 'MASTER_ADMIN' || profile?.email === 'admin@juliazenaro.com';
+
+      // 1. Fetch Professionals if Master (to map names/photos)
+      if (isMaster) {
+         // Fix: Use profile_id (fk to auth) and avatar (if exists) or just name
+         // Fallback to name-based query if direct columns fail? No, simpler.
+         // Let's try select * to be safe in dev, OR restrict to known good columns.
+         // Based on AdminDashboard, profile_id IS correct.
+         const { data: pros, error } = await supabase.from('professionals').select('*');
+         if (error) console.error('Error fetching professionals:', error);
+         if (pros) {
+            console.log('Professionals loaded:', pros.length);
+            setProfessionals(pros);
+         }
+      }
+
+      if (!isMaster && !profile?.permissions?.canViewOwnFinance) {
          setLoading(false);
          return;
       }
 
       let query = supabase.from('transactions').select('*');
 
-      if (profile?.role !== 'MASTER_ADMIN' && profile?.role !== 'ADMIN' && profile?.role !== 'PROFESSIONAL_ADMIN') {
+      // 2. Permission Check on Transactions
+      // If NOT master, force filter by user_id
+      if (!isMaster) {
          query = query.eq('user_id', authUser.id);
       }
 
@@ -183,34 +201,187 @@ const FinancialControl: React.FC = () => {
       setIsRecurring(false);
    };
 
-   const balance = transactions.reduce((acc, curr) => {
-      return curr.type === 'INCOME' ? acc + curr.amount : acc - curr.amount;
-   }, 0);
+   const isMaster = user?.role === 'MASTER_ADMIN' || user?.email === 'admin@juliazenaro.com';
+
+   // --- CALCULATE AGGREGATED STATS (CLIENT-SIDE) ---
+   const calculateStats = (txs: any[]) => {
+      if (!Array.isArray(txs)) return { income: 0, expense: 0, net: 0 };
+      const income = txs.filter(t => t.type === 'INCOME').reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+      const expense = txs.filter(t => t.type === 'EXPENSE').reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+      return { income, expense, net: income - expense };
+   };
+
+   // 1. Studio Totals (Everything fetched)
+   const studioStats = calculateStats(transactions);
+
+   // 2. Julia Personal (User ID matches logged in master)
+   const juliaStats = calculateStats(transactions.filter(t => t.user_id === user?.id));
+
+   // 3. Team Map
+   const teamStats = Array.isArray(professionals) ? professionals.map(pro => {
+      // Find transactions where user_id matches pro's profile_id
+      const proTxs = Array.isArray(transactions) ? transactions.filter(t => t.user_id === pro.profile_id) : [];
+      const stats = calculateStats(proTxs);
+      return { ...pro, ...stats };
+   }) : [];
+
+   // Resolve Current Balance Display based on View
+   // If Master and View=ALL -> Studio Net
+   // If Master and View=ME -> Julia Net
+   // If Master and View=TEAM -> Studio Net (or nothing?)
+   // If Pro -> Own Net
+   const currentBalance = isMaster
+      ? (viewFilter === 'ME' ? juliaStats.net : studioStats.net)
+      : calculateStats(transactions).net; // Pro only has their own txs anyway
 
    const navigate = useNavigate();
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-24 overflow-y-auto">
-         {/* Header */}
+      <div className="flex flex-col h-full bg-background-dark text-white pb-24 overflow-y-auto custom-scrollbar">
          <header className="px-6 pt-12 pb-6 flex items-center gap-4">
             <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back</button>
             <div>
                <h1 className="text-2xl font-bold font-display">Controle Financeiro</h1>
-               <p className="text-xs text-gray-400">Receitas e Despesas ({user?.role === 'MASTER_ADMIN' ? 'Geral' : 'Pessoal'})</p>
+               <p className="text-xs text-gray-400">
+                  {isMaster ? 'Visão Geral do Studio' : 'Seu Fluxo de Caixa'}
+               </p>
             </div>
          </header>
 
-         {/* Balance Card */}
-         <div className="px-6 mb-8">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-               <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Saldo Atual</p>
-               <h2 className={`text-3xl font-bold ${balance >= 0 ? 'text-green-400' : 'text-rose-400'}`}>
-                  R$ {balance.toFixed(2)}
-               </h2>
-            </div>
-         </div>
+         {/* MASTER DASHBOARD SECTIONS */}
+         {isMaster && (
+            <div className="px-6 mb-8 space-y-8">
 
-         {/* Filters */}
+               {/* 1. STUDIO OVERVIEW */}
+               <div>
+                  <div className="flex items-center gap-2 mb-3">
+                     <span className="material-symbols-outlined text-accent-gold text-lg">domain</span>
+                     <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Studio Geral</h3>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                     <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500/70 mb-1">Receita Total</p>
+                        <p className="text-lg font-bold text-emerald-400">R$ {studioStats.income.toLocaleString('pt-BR', { notation: 'compact' })}</p>
+                     </div>
+                     <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-4">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-rose-500/70 mb-1">Despesa Total</p>
+                        <p className="text-lg font-bold text-rose-400">R$ {studioStats.expense.toLocaleString('pt-BR', { notation: 'compact' })}</p>
+                     </div>
+                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4 relative overflow-hidden">
+                        <div className={`absolute inset-0 opacity-10 ${studioStats.net >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Resultado Líquido</p>
+                        <p className={`text-lg font-bold relative z-10 ${studioStats.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                           R$ {studioStats.net.toLocaleString('pt-BR', { notation: 'compact' })}
+                        </p>
+                     </div>
+                  </div>
+               </div>
+
+               {/* 2. JULIA (PERSONAL) */}
+               <div className="bg-[#1c1f24] rounded-3xl p-5 border border-white/5 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-5">
+                     <span className="material-symbols-outlined text-6xl">person</span>
+                  </div>
+                  <div className="relative z-10">
+                     <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                           <div className="size-10 rounded-full bg-accent-gold/20 flex items-center justify-center text-accent-gold border border-accent-gold/30">
+                              <span className="material-symbols-outlined">diamond</span>
+                           </div>
+                           <div>
+                              <p className="text-sm font-bold text-white">Julia Zenaro</p>
+                              <p className="text-[10px] text-gray-500">Performance Individual</p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-[9px] font-bold uppercase text-gray-500">Líquido</p>
+                           <p className={`text-xl font-bold ${juliaStats.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              R$ {juliaStats.net.toLocaleString('pt-BR')}
+                           </p>
+                        </div>
+                     </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-black/20 rounded-xl p-3 flex justify-between items-center">
+                           <span className="text-[10px] text-gray-400">Entradas</span>
+                           <span className="text-xs font-bold text-emerald-400">+ {juliaStats.income.toLocaleString('pt-BR', { notation: 'compact' })}</span>
+                        </div>
+                        <div className="bg-black/20 rounded-xl p-3 flex justify-between items-center">
+                           <span className="text-[10px] text-gray-400">Saídas</span>
+                           <span className="text-xs font-bold text-rose-400">- {juliaStats.expense.toLocaleString('pt-BR', { notation: 'compact' })}</span>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               {/* 3. TEAM BREAKDOWN */}
+               <div>
+                  <div className="flex items-center justify-between mb-3 cursor-pointer" onClick={() => setShowTeamDetails(!showTeamDetails)}>
+                     <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-gray-400 text-lg">groups</span>
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Equipe</h3>
+                     </div>
+                     <span className={`material-symbols-outlined text-gray-500 transition-transform ${showTeamDetails ? 'rotate-180' : ''}`}>expand_more</span>
+                  </div>
+
+                  {showTeamDetails && (
+                     <div className="space-y-3">
+                        {teamStats
+                           // Exclude Julia from Team View to avoid redundancy if she is also a pro? 
+                           // Usually user wants to see everyone in team view too, or just others. 
+                           // Let's Keep everyone for completeness, user can ignore Julia card here.
+                           .sort((a, b) => b.income - a.income) // Sort by Revenue
+                           .map(pro => {
+                              if (!pro || !pro.name) return null;
+                              return (
+                                 <button
+                                    key={pro.id || Math.random()}
+                                    onClick={() => setViewFilter(viewFilter === pro.profile_id ? 'ALL' : pro.profile_id)}
+                                    className={`w-full text-left bg-card-dark p-4 rounded-2xl border transition-all flex items-center justify-between ${viewFilter === pro.profile_id ? 'border-accent-gold bg-accent-gold/5' : 'border-white/5 hover:border-white/10'}`}
+                                 >
+                                    <div className="flex items-center gap-3">
+                                       <div className="size-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                                          {(pro as any).avatar || (pro as any).image_url || (pro as any).profile_pic ? (
+                                             <img src={(pro as any).avatar || (pro as any).image_url || (pro as any).profile_pic} alt={pro.name} className="w-full h-full object-cover" />
+                                          ) : (
+                                             <span>{(pro.name || '??').substring(0, 2).toUpperCase()}</span>
+                                          )}
+                                       </div>
+                                       <div>
+                                          <p className={`text-sm font-bold ${viewFilter === pro.profile_id ? 'text-accent-gold' : 'text-gray-200'}`}>
+                                             {(pro.name || 'Desconhecido').split(' ')[0]}
+                                          </p>
+                                          <p className="text-[10px] text-gray-500">{0} Lançamentos</p>
+                                       </div>
+                                    </div>
+                                    <div className="text-right">
+                                       <p className="text-xs font-bold text-white">R$ {Number(pro.income || 0).toLocaleString('pt-BR', { notation: 'compact' })}</p>
+                                       <p className={`text-[9px] font-bold ${pro.net >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                          {pro.net >= 0 ? 'Lucro' : 'Preju'} R$ {Math.abs(pro.net || 0).toLocaleString('pt-BR', { notation: 'compact' })}
+                                       </p>
+                                    </div>
+                                 </button>
+                              )
+                           })
+                        }
+                     </div>
+                  )}
+               </div>
+            </div>
+         )}
+
+         {/* REGULAR PRO BALANCE CARD (Only if NOT master) */}
+         {!isMaster && (
+            <div className="px-6 mb-8">
+               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Seu Saldo</p>
+                  <h2 className={`text-3xl font-bold ${currentBalance >= 0 ? 'text-green-400' : 'text-rose-400'}`}>
+                     R$ {currentBalance.toFixed(2)}
+                  </h2>
+               </div>
+            </div>
+         )}
+
+         {/* Common Filters for List */}
          <div className="px-6 mb-6">
             <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
                {(['TODAY', '7D', '30D', 'ALL'] as const).map(p => (
@@ -235,36 +406,35 @@ const FinancialControl: React.FC = () => {
             </button>
          </div>
 
-         {/* Transactions List Header & Filters */}
-         <div className="flex items-center justify-between">
-            <h2 className="text-xl font-display font-bold">Últimos Lançamentos</h2>
-            <div className="flex gap-2">
-               {/* View Filter for Master */}
-               {user?.role === 'MASTER_ADMIN' && (
-                  <select
-                     value={viewFilter}
-                     onChange={(e) => setViewFilter(e.target.value as 'ALL' | 'ME' | 'TEAM')}
-                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
-                  >
-                     <option value="ALL" className="bg-[#1c1f24] text-white">Tudo</option>
-                     <option value="ME" className="bg-[#1c1f24] text-white">Apenas Eu</option>
-                     <option value="TEAM" className="bg-[#1c1f24] text-white">Equipe</option>
-                  </select>
-               )}
-               <button onClick={() => { setEditingTransaction(null); setShowForm(true); }} className="bg-white/5 hover:bg-white/10 text-white p-3 rounded-xl transition-all">
-                  <span className="material-symbols-outlined">add</span>
-               </button>
+         {/* Transactions List */}
+         <div className="flex items-center justify-between px-6 mb-4">
+            <div>
+               <h2 className="text-xl font-display font-bold">Lançamentos</h2>
+               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                  {isMaster && viewFilter !== 'ALL'
+                     ? (viewFilter === 'ME' ? 'Apenas Você' : (transactionUser => transactionUser ? `Filtrando: ${transactionUser.name}` : 'Filtrando Profissional')(professionals.find(p => p.profile_id === viewFilter)))
+                     : 'Todos'
+                  }
+               </p>
             </div>
+            {isMaster && (
+               <button
+                  onClick={() => setViewFilter('ALL')}
+                  className={`text-[10px] font-bold px-3 py-1 rounded-lg border ${viewFilter === 'ALL' ? 'bg-white text-black border-white' : 'border-white/20 text-gray-400'}`}
+               >
+                  VER TUDO
+               </button>
+            )}
          </div>
 
-         {/* Transactions List */}
-         <div className="space-y-3">
+         {/* Transactions List Content */}
+         <div className="space-y-3 px-6">
             {transactions
                .filter(t => {
-                  if (user?.role !== 'MASTER_ADMIN') return true;
-                  if (viewFilter === 'ME') return t.user_id === user?.id;
-                  if (viewFilter === 'TEAM') return t.user_id !== user?.id;
-                  return true;
+                  if (!isMaster) return true; // Already filtered by server
+                  if (viewFilter === 'ALL') return true;
+                  if (viewFilter === 'ME') return t.user_id === user?.id; // Julia
+                  return t.user_id === viewFilter; // Specific ID
                })
                .map((t) => (
                   <div key={t.id} className="bg-card-dark p-5 rounded-3xl border border-white/5 flex justify-between items-center group hover:border-white/10 transition-colors">
@@ -275,9 +445,15 @@ const FinancialControl: React.FC = () => {
                         <div>
                            <div className="flex items-center gap-2">
                               <p className="font-bold text-sm text-gray-200">{t.category}</p>
-                              {t.appointment_id && <span className="text-[8px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded-md uppercase font-black tracking-tighter">Automático</span>}
+                              {t.appointment_id && <span className="text-[8px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded-md uppercase font-black tracking-tighter">Auto</span>}
                            </div>
                            <p className="text-[10px] text-gray-500 mt-0.5">{t.description || new Date(t.date).toLocaleDateString()}</p>
+                           {/* Show who made this transaction if Master Viewing ALL */}
+                           {isMaster && viewFilter === 'ALL' && (
+                              <p className="text-[9px] text-accent-gold mt-1">
+                                 {professionals.find(p => p.profile_id === t.user_id)?.name.split(' ')[0] || 'Desconhecido'}
+                              </p>
+                           )}
                         </div>
                      </div>
                      <div className="flex items-center gap-4">
