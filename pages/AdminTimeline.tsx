@@ -132,20 +132,57 @@ const AdminTimeline: React.FC = () => {
    const handleStatusUpdate = async (apt: any, newStatus: string) => {
       if (!window.confirm(`Tem certeza que deseja marcar como ${newStatus === 'completed' ? 'Finalizado' : 'Não Compareceu'}?`)) return;
       try {
+         // 1. Update Appointment Status
          const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', apt.id);
          if (error) throw error;
+
+         // 2. If COMPLETED, generate automatic transaction
+         if (newStatus === 'completed') {
+            // Fetch professional profile_id if needed, but per-day we assume professional_id is the user
+            const { data: pro } = await supabase.from('professionals').select('profile_id').eq('id', apt.professional_id).single();
+            const targetUserId = pro?.profile_id || apt.professional_id;
+
+            // Check if already exists
+            const { data: existing } = await supabase.from('transactions').select('id').eq('appointment_id', apt.id).single();
+
+            if (!existing) {
+               const servicePrice = apt.services?.price || 0;
+               await supabase.from('transactions').insert({
+                  type: 'INCOME',
+                  category: 'Serviço',
+                  description: `Atendimento: ${apt.services?.name || 'Serviço'}`,
+                  amount: servicePrice,
+                  date: apt.date,
+                  user_id: targetUserId,
+                  appointment_id: apt.id
+               });
+            }
+         }
+
          fetchAppointments();
       } catch (err: any) {
          alert('Erro ao atualizar: ' + err.message);
       }
    };
 
-   const hours = Array.from({ length: 29 }).map((_, i) => {
-      const totalMinutes = (8 * 60) + (i * 30);
-      const h = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
-      const m = (totalMinutes % 60).toString().padStart(2, '0');
-      return `${h}:${m}`;
-   });
+   const hours = (() => {
+      const selectedPro = professionals.find(p => p.id === selectedProId);
+      if (!selectedPro || !date) return [];
+
+      const dayOfWeek = new Date(date + 'T12:00:00').getDay();
+      const dayConfig = (selectedPro as any).working_hours?.[dayOfWeek];
+
+      const startH = parseInt((dayConfig?.start || (selectedPro as any).start_hour || '08:00').split(':')[0]);
+      const endH = parseInt((dayConfig?.end || (selectedPro as any).end_hour || '22:00').split(':')[0]) + 1; // +1 to show the last hour slot
+
+      const range = (endH - startH) * 2 + 1; // slots of 30min
+      return Array.from({ length: range }).map((_, i) => {
+         const totalMinutes = (startH * 60) + (i * 30);
+         const h = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
+         const m = (totalMinutes % 60).toString().padStart(2, '0');
+         return `${h}:${m}`;
+      });
+   })();
 
    const getAppointmentAt = (timeStr: string) => {
       if (!date) return null;
@@ -165,7 +202,12 @@ const AdminTimeline: React.FC = () => {
    const nowStr = currentTime.toLocaleDateString('en-CA');
    const isToday = date === nowStr;
    const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
-   const startOfAgenda = 8 * 60; // 08:00
+
+   const selectedPro = professionals.find(p => p.id === selectedProId);
+   const dayOfWeek = date ? new Date(date + 'T12:00:00').getDay() : 0;
+   const dayConfig = (selectedPro as any)?.working_hours?.[dayOfWeek];
+   const startOfAgenda = parseInt((dayConfig?.start || (selectedPro as any)?.start_hour || '08:00').split(':')[0]) * 60;
+
    const agendaMinutes = currentMinutes - startOfAgenda;
    const indicatorTop = (agendaMinutes / 30) * 105; // 105px is the slot height
 
@@ -226,7 +268,7 @@ const AdminTimeline: React.FC = () => {
 
             <div className="relative">
                {/* CURRENT TIME INDICATOR */}
-               {isToday && agendaMinutes >= 0 && agendaMinutes <= 29 * 30 && (
+               {isToday && agendaMinutes >= 0 && (
                   <div className="absolute left-0 right-0 z-30 flex items-center pointer-events-none transition-all duration-1000" style={{ top: `${indicatorTop}px` }}>
                      <div className="w-14 text-right pr-2 text-[10px] font-bold text-primary">{currentTime.getHours()}:{currentTime.getMinutes().toString().padStart(2, '0')}</div>
                      <div className="flex-1 h-[1.5px] bg-primary relative overflow-visible">

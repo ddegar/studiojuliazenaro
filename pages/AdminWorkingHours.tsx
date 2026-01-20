@@ -72,10 +72,10 @@ const AdminWorkingHours: React.FC = () => {
                                 <h4 className="font-bold text-base group-hover:text-accent-gold transition-colors">{pro.name}</h4>
                                 <div className="flex items-center gap-3 mt-1">
                                     <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                                        {(pro as any).start_hour || '08:00'} - {(pro as any).end_hour || '22:00'}
+                                        {(pro as any).working_hours ? 'Horário Flexível' : `${(pro as any).start_hour || '08:00'} - ${(pro as any).end_hour || '22:00'}`}
                                     </span>
                                     <span className="text-[10px] text-gray-500 font-medium">
-                                        {JSON.parse((pro as any).closed_days || '[0]').length} folgas/sem
+                                        {((pro as any).working_hours ? Object.values((pro as any).working_hours).filter((h: any) => h.closed).length : JSON.parse((pro as any).closed_days || '[0]').length)} folgas/sem
                                     </span>
                                 </div>
                             </div>

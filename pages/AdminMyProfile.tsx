@@ -19,10 +19,9 @@ const AdminMyProfile: React.FC = () => {
         name: '',
         phone: '',
         avatar_url: '',
-        start_hour: '08:00',
-        end_hour: '22:00',
-        closed_days: '[]'
     });
+
+    const [workingHours, setWorkingHours] = useState<any>({});
 
     const [passwordData, setPasswordData] = useState({
         new: '',
@@ -51,18 +50,37 @@ const AdminMyProfile: React.FC = () => {
                     name: profileData.name || '',
                     phone: profileData.phone || '',
                     avatar_url: profileData.avatar_url || proData?.image_url || '',
-                    start_hour: proData?.start_hour || '08:00',
-                    end_hour: proData?.end_hour || '22:00',
-                    closed_days: proData?.closed_days || '[]'
                 });
+
+                // Initialize working hours from DB or defaults
+                const defaultHours = Array.from({ length: 7 }).reduce((acc: any, _, i) => {
+                    acc[i] = { start: '08:00', end: '20:00', closed: i === 0 };
+                    return acc;
+                }, {});
+
+                let dbHours = proData?.working_hours;
+                if (!dbHours && proData?.closed_days) {
+                    // Migrate from old structure if possible
+                    const closed = JSON.parse(typeof proData.closed_days === 'string' ? proData.closed_days : JSON.stringify(proData.closed_days));
+                    dbHours = { ...defaultHours };
+                    Object.keys(dbHours).forEach(day => {
+                        dbHours[day].start = proData.start_hour || '08:00';
+                        dbHours[day].end = proData.end_hour || '20:00';
+                        dbHours[day].closed = closed.includes(Number(day));
+                    });
+                }
+                setWorkingHours(dbHours || defaultHours);
 
                 // Fetch tips linked to her services
                 if (proData) {
-                    const { data: services } = await supabase.from('services').select('id').contains('professional_ids', [proData.id]);
+                    const { data: services } = await supabase.from('services').select('id, category').contains('professional_ids', [proData.id]);
                     const serviceIds = services?.map(s => s.id) || [];
+                    const categories = Array.from(new Set(services?.map(s => s.category).filter(Boolean) || []));
 
-                    if (serviceIds.length > 0) {
-                        const { data: tipsData } = await supabase.from('tips').select('*').contains('service_ids', serviceIds);
+                    if (serviceIds.length > 0 || categories.length > 0) {
+                        const { data: tipsData } = await supabase.from('tips')
+                            .select('*')
+                            .or(`service_ids.cs.{${serviceIds.join(',')}},linked_category.in.(${categories.map(c => `"${c}"`).join(',')})`);
                         setMyTips(tipsData || []);
                     }
                 }
@@ -92,9 +110,11 @@ const AdminMyProfile: React.FC = () => {
                     name: formData.name,
                     phone: formData.phone,
                     image_url: formData.avatar_url,
-                    start_hour: formData.start_hour,
-                    end_hour: formData.end_hour,
-                    closed_days: formData.closed_days
+                    working_hours: workingHours,
+                    // Maintain legacy for backward compatibility if possible
+                    start_hour: workingHours[1]?.start || '08:00',
+                    end_hour: workingHours[1]?.end || '20:00',
+                    closed_days: JSON.stringify(Object.keys(workingHours).filter(d => workingHours[d].closed).map(Number))
                 }).eq('id', professional.id);
             }
             alert('Perfil atualizado com sucesso! ✨');
@@ -192,43 +212,54 @@ const AdminMyProfile: React.FC = () => {
                                 <span className="material-symbols-outlined">schedule</span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-base">Meus Horários</h3>
-                                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">Disponibilidade de Agenda</p>
+                                <h3 className="font-bold text-base">Meus Horários Flexíveis</h3>
+                                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">Disponibilidade por dia da semana</p>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Início do Dia</label>
-                                <input type="time" className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold" value={formData.start_hour} onChange={e => setFormData({ ...formData, start_hour: e.target.value })} />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Fim do Dia</label>
-                                <input type="time" className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm font-bold" value={formData.end_hour} onChange={e => setFormData({ ...formData, end_hour: e.target.value })} />
-                            </div>
+                        <div className="space-y-4">
+                            {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((dayName, idx) => {
+                                const dayData = workingHours[idx] || { start: '08:00', end: '20:00', closed: false };
+                                return (
+                                    <div key={idx} className={`p-4 rounded-3xl border transition-all ${dayData.closed ? 'bg-white/2 border-white/5 opacity-40' : 'bg-white/5 border-white/10'}`}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-xs font-bold text-gray-200">{dayName}</span>
+                                            <button
+                                                onClick={() => setWorkingHours({ ...workingHours, [idx]: { ...dayData, closed: !dayData.closed } })}
+                                                className={`px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest border ${dayData.closed ? 'bg-rose-500/20 border-rose-500/30 text-rose-400' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'}`}
+                                            >
+                                                {dayData.closed ? 'FECHADO' : 'ABERTO'}
+                                            </button>
+                                        </div>
+
+                                        {!dayData.closed && (
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] uppercase font-black text-gray-500 tracking-widest pl-1">Início</label>
+                                                    <input
+                                                        type="time"
+                                                        className="w-full h-10 bg-black/20 border border-white/10 rounded-xl px-3 text-xs font-bold"
+                                                        value={dayData.start}
+                                                        onChange={e => setWorkingHours({ ...workingHours, [idx]: { ...dayData, start: e.target.value } })}
+                                                    />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[8px] uppercase font-black text-gray-500 tracking-widest pl-1">Fim</label>
+                                                    <input
+                                                        type="time"
+                                                        className="w-full h-10 bg-black/20 border border-white/10 rounded-xl px-3 text-xs font-bold"
+                                                        value={dayData.end}
+                                                        onChange={e => setWorkingHours({ ...workingHours, [idx]: { ...dayData, end: e.target.value } })}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
 
-                        <div className="space-y-3">
-                            <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Minhas Folgas Semanais</label>
-                            <div className="flex flex-wrap gap-2">
-                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((day, idx) => {
-                                    const closedDays = JSON.parse(formData.closed_days || '[]');
-                                    const isClosed = closedDays.includes(idx);
-                                    return (
-                                        <button
-                                            key={day}
-                                            onClick={() => {
-                                                const newClosed = isClosed ? closedDays.filter((d: number) => d !== idx) : [...closedDays, idx].sort();
-                                                setFormData({ ...formData, closed_days: JSON.stringify(newClosed) });
-                                            }}
-                                            className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase transition-all border ${isClosed ? 'bg-rose-500/20 border-rose-500/30 text-rose-400 shadow-lg' : 'bg-white/5 border-white/10 text-gray-500'}`}
-                                        >{day}</button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        <button onClick={handleSaveBasic} className="w-full h-16 bg-primary text-white rounded-3xl font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl shadow-primary/20">SALVAR HORÁRIOS DE ATENDIMENTO</button>
+                        <button onClick={handleSaveBasic} className="w-full h-16 bg-primary text-white rounded-3xl font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl shadow-primary/20">SALVAR MINHA DISPONIBILIDADE</button>
                     </div>
                 )}
 
@@ -309,6 +340,11 @@ const AdminMyProfile: React.FC = () => {
                                 <textarea className="w-full h-32 bg-white/5 border border-white/10 rounded-3xl p-6 text-sm italic" value={editingTip.content} onChange={e => setEditingTip({ ...editingTip, content: e.target.value })} />
                             </div>
 
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-black text-gray-600 tracking-widest px-2">Tipo de Serviço Vinculado (Ex: Cílios)</label>
+                                <input className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm" value={editingTip.linked_category || ''} onChange={e => setEditingTip({ ...editingTip, linked_category: e.target.value })} />
+                            </div>
+
                             <div className="flex bg-white/5 p-1 rounded-2xl">
                                 <button onClick={() => setEditingTip({ ...editingTip, type: 'PRE_CARE' })} className={`flex-1 h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${editingTip.type === 'PRE_CARE' ? 'bg-primary text-white shadow-lg' : 'text-gray-500'}`}>Pré-Procedimento</button>
                                 <button onClick={() => setEditingTip({ ...editingTip, type: 'POST_CARE' })} className={`flex-1 h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${editingTip.type === 'POST_CARE' ? 'bg-accent-gold text-primary shadow-lg' : 'text-gray-500'}`}>Pós-Procedimento</button>
@@ -324,7 +360,8 @@ const AdminMyProfile: React.FC = () => {
                                         title: editingTip.title,
                                         content: editingTip.content,
                                         type: editingTip.type,
-                                        service_ids: sIds, // Auto-link to all her services for now
+                                        linked_category: editingTip.linked_category || null,
+                                        service_ids: editingTip.service_ids || [],
                                         active: true
                                     };
 

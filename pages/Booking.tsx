@@ -122,15 +122,18 @@ const Booking: React.FC = () => {
 
     // Use professional hours if available, else fallback to global
     const p = selection.professional as any;
-    const startRange = p.start_hour || configs.business_hours_start || '08:00';
-    const endRange = p.end_hour || configs.business_hours_end || '22:00';
+    const dayOfWeek = new Date(selection.date + 'T00:00:00').getDay();
+    const dayConfig = p.working_hours?.[dayOfWeek];
 
-    const [startH] = startRange.split(':').map(Number);
-    const [endH] = endRange.split(':').map(Number);
+    const startRange = dayConfig?.start || p.start_hour || configs.business_hours_start || '08:00';
+    const endRange = dayConfig?.end || p.end_hour || configs.business_hours_end || '22:00';
+
+    const [startH, startM = 0] = startRange.split(':').map(Number);
+    const [endH, endM = 0] = endRange.split(':').map(Number);
 
     // The "End Time" is now the "Last possible start time"
-    const businessEndMinutes = endH * 60 + (endRange.includes(':30') ? 30 : 0);
-    const startMinutesBound = startH * 60 + (startRange.includes(':30') ? 30 : 0);
+    const businessEndMinutes = endH * 60 + endM;
+    const startMinutesBound = startH * 60 + startM;
 
     // Generate slots every 30 minutes from startBound to endBound
     for (let m = startMinutesBound; m <= businessEndMinutes; m += 30) {
@@ -167,10 +170,19 @@ const Booking: React.FC = () => {
       const dateString = `${year}-${monthStr}-${dayStr}`;
 
       const p = selection.professional as any;
-      const closedDaysStr = p?.closed_days || configs.closed_days || '[0]';
-      const closedDays = JSON.parse(closedDaysStr);
+      const dayOfWeek = d.getDay();
+      const workingHours = p?.working_hours;
 
-      if (!closedDays.includes(d.getDay())) {
+      let isClosed = false;
+      if (workingHours && workingHours[dayOfWeek]) {
+        isClosed = workingHours[dayOfWeek].closed;
+      } else {
+        const closedDaysStr = p?.closed_days || configs.closed_days || '[0]';
+        const closedDays = JSON.parse(typeof closedDaysStr === 'string' ? closedDaysStr : JSON.stringify(closedDaysStr));
+        isClosed = closedDays.includes(dayOfWeek);
+      }
+
+      if (!isClosed) {
         dates.push({
           full: dateString,
           day: dayStr,

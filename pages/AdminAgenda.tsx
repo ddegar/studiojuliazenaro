@@ -267,9 +267,17 @@ const AdminAgenda: React.FC = () => {
                      const blockedAppts = dayAppts.filter(a => ['blocked', 'BLOCKED'].includes(a.status));
 
                      const selectedPro = professionals.find(p => p.id === selectedProId);
-                     const startH = parseInt((selectedPro as any)?.start_hour?.split(':')[0] || '8');
-                     const endH = parseInt((selectedPro as any)?.end_hour?.split(':')[0] || '19');
-                     const totalSlots = (endH - startH) * 2; // Slots de 30 min
+                     const dayOfWeek = new Date(viewYear, viewMonth, day).getDay();
+                     const wHours = (selectedPro as any)?.working_hours;
+                     const dayConfig = wHours?.[dayOfWeek];
+
+                     const startRange = dayConfig?.start || (selectedPro as any)?.start_hour || '08:00';
+                     const endRange = dayConfig?.end || (selectedPro as any)?.end_hour || '19:00';
+                     const isDayClosed = dayConfig ? dayConfig.closed : JSON.parse((selectedPro as any)?.closed_days || '[]').includes(dayOfWeek);
+
+                     const startH = parseInt(startRange.split(':')[0]);
+                     const endH = parseInt(endRange.split(':')[0]);
+                     const totalSlots = isDayClosed ? 0 : (endH - startH) * 2; // Slots de 30 min
 
                      const hasAppointments = busyAppts.length > 0;
                      const isBlocked = blockedAppts.length > 0;
@@ -277,20 +285,22 @@ const AdminAgenda: React.FC = () => {
                      const isFree = busyAppts.length === 0 && !isBlocked;
 
                      // Filter Logic
-                     const isVisible = filter === 'ALL' || (filter === 'FREE' && isFree) || (filter === 'BUSY' && !isFree);
+                     const isVisible = filter === 'ALL' || (filter === 'FREE' && isFree && !isDayClosed) || (filter === 'BUSY' && !isFree);
 
                      return (
                         <button
                            key={i}
                            onClick={() => handleDayClick(day)}
                            className={`aspect-square rounded-3xl border flex flex-col items-center justify-center gap-1.5 transition-all relative 
-                              ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}
-                              ${!isVisible ? 'opacity-20 grayscale' : 'opacity-100'}
-                              ${filter === 'FREE' && isFree && !isToday ? 'ring-1 ring-emerald-500/50 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : ''}
-                           `}
+                               ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}
+                               ${!isVisible ? 'opacity-20 grayscale' : 'opacity-100'}
+                               ${isDayClosed && !isToday ? 'bg-rose-500/5 border-rose-500/10 grayscale-[0.8]' : ''}
+                               ${filter === 'FREE' && isFree && !isToday && !isDayClosed ? 'ring-1 ring-emerald-500/50 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : ''}
+                            `}
                         >
-                           <span className={`text-xs font-black ${isToday ? 'text-white' : (filter === 'FREE' && isFree ? 'text-emerald-400' : 'text-gray-400')}`}>{day}</span>
+                           <span className={`text-xs font-black ${isToday ? 'text-white' : (filter === 'FREE' && isFree && !isDayClosed ? 'text-emerald-400' : (isDayClosed ? 'text-rose-900/40' : 'text-gray-400'))}`}>{day}</span>
                            <div className="flex gap-1 items-center">
+                              {isDayClosed && <span className="text-[8px] font-black text-rose-900/40 uppercase">Folga</span>}
                               {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>}
                               {isBlocked && <span className="material-symbols-outlined !text-[10px] text-rose-500">lock</span>}
                            </div>

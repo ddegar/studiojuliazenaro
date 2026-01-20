@@ -19,7 +19,7 @@ const ProfessionalDetailsAdmin: React.FC = () => {
    const [services, setServices] = useState<any[]>([]);
    const [content, setContent] = useState<any[]>([]);
    const [isEditing, setIsEditing] = useState(false);
-   const [editData, setEditData] = useState({ name: '', role: '', avatar_url: '', email: '', phone: '', start_hour: '08:00', end_hour: '22:00', closed_days: '[0]' });
+   const [editData, setEditData] = useState<any>({ name: '', role: '', avatar_url: '', email: '', phone: '', start_hour: '08:00', end_hour: '22:00', closed_days: '[0]', working_hours: {} });
 
    const fetchData = async () => {
       if (!id) return;
@@ -63,7 +63,8 @@ const ProfessionalDetailsAdmin: React.FC = () => {
             phone: (displayProfile as any).phone || '',
             start_hour: proBase.start_hour || '08:00',
             end_hour: proBase.end_hour || '22:00',
-            closed_days: proBase.closed_days || '[0]'
+            closed_days: proBase.closed_days || '[0]',
+            working_hours: proBase.working_hours || {}
          });
 
          // 3. Fetch sub-data in parallel
@@ -154,7 +155,8 @@ const ProfessionalDetailsAdmin: React.FC = () => {
             image_url: editData.avatar_url,
             start_hour: editData.start_hour,
             end_hour: editData.end_hour,
-            closed_days: editData.closed_days
+            closed_days: editData.closed_days,
+            working_hours: editData.working_hours
          }).eq('id', id);
 
          if (error || proError) throw error || proError;
@@ -450,67 +452,73 @@ const ProfessionalDetailsAdmin: React.FC = () => {
                            <span className="material-symbols-outlined">schedule</span>
                         </div>
                         <div>
-                           <h3 className="font-bold text-base">Horário de Atendimento</h3>
-                           <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">Jornada Individual</p>
+                           <h3 className="font-bold text-base">Horário de Atendimento Flexível</h3>
+                           <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">Jornada Individual Personalizada</p>
                         </div>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                           <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Início</label>
-                           <input
-                              type="time"
-                              className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm focus:ring-1 focus:ring-accent-gold outline-none font-bold"
-                              value={editData.start_hour}
-                              onChange={e => {
-                                 const newVal = e.target.value;
-                                 setEditData(prev => ({ ...prev, start_hour: newVal }));
-                                 // Auto-save logic if desired, or use a "Save" button. Here we use the general Save button for profile.
-                              }}
-                           />
-                        </div>
-                        <div className="space-y-2">
-                           <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Fim (Início do Último)</label>
-                           <input
-                              type="time"
-                              className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-sm focus:ring-1 focus:ring-accent-gold outline-none font-bold"
-                              value={editData.end_hour}
-                              onChange={e => setEditData(prev => ({ ...prev, end_hour: e.target.value }))}
-                           />
-                        </div>
-                     </div>
+                     <div className="space-y-4">
+                        {['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'].map((dayName, idx) => {
+                           // Initialize if empty
+                           const wHours = editData.working_hours || {};
+                           const dayData = wHours[idx] || {
+                              start: editData.start_hour || '08:00',
+                              end: editData.end_hour || '20:00',
+                              closed: (typeof editData.closed_days === 'string' ? JSON.parse(editData.closed_days) : (editData.closed_days || [])).includes(idx)
+                           };
 
-                     <div className="space-y-3 pt-2">
-                        <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Folgas na Semana</label>
-                        <div className="flex flex-wrap gap-2">
-                           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((day, idx) => {
-                              const closedDays = JSON.parse(typeof editData.closed_days === 'string' ? editData.closed_days : JSON.stringify(editData.closed_days || '[]'));
-                              const isClosed = closedDays.includes(idx);
-                              return (
-                                 <button
-                                    key={day}
-                                    onClick={() => {
-                                       const newClosed = isClosed
-                                          ? closedDays.filter((d: number) => d !== idx)
-                                          : [...closedDays, idx].sort();
-                                       setEditData({ ...editData, closed_days: JSON.stringify(newClosed) });
-                                    }}
-                                    className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isClosed
-                                       ? 'bg-rose-500/20 border-rose-500/30 text-rose-400 shadow-lg shadow-rose-500/5'
-                                       : 'bg-white/5 border-white/10 text-gray-500'
-                                       }`}
-                                 >
-                                    {day}
-                                 </button>
-                              );
-                           })}
-                        </div>
+                           return (
+                              <div key={idx} className={`p-4 rounded-3xl border transition-all ${dayData.closed ? 'bg-white/2 border-white/5 opacity-40' : 'bg-white/5 border-white/10'}`}>
+                                 <div className="flex items-center justify-between mb-3">
+                                    <span className="text-[11px] font-bold text-gray-200">{dayName}</span>
+                                    <button
+                                       onClick={() => {
+                                          const newWHours = { ...wHours, [idx]: { ...dayData, closed: !dayData.closed } };
+                                          setEditData({ ...editData, working_hours: newWHours });
+                                       }}
+                                       className={`px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest border ${dayData.closed ? 'bg-rose-500/20 border-rose-500/30 text-rose-400' : 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'}`}
+                                    >
+                                       {dayData.closed ? 'FECHADO' : 'ABERTO'}
+                                    </button>
+                                 </div>
+
+                                 {!dayData.closed && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                       <div className="space-y-1">
+                                          <label className="text-[8px] uppercase font-black text-gray-500 tracking-widest pl-1">Início</label>
+                                          <input
+                                             type="time"
+                                             className="w-full h-10 bg-black/20 border border-white/10 rounded-xl px-3 text-xs font-bold"
+                                             value={dayData.start}
+                                             onChange={e => {
+                                                const newWHours = { ...wHours, [idx]: { ...dayData, start: e.target.value } };
+                                                setEditData({ ...editData, working_hours: newWHours });
+                                             }}
+                                          />
+                                       </div>
+                                       <div className="space-y-1">
+                                          <label className="text-[8px] uppercase font-black text-gray-500 tracking-widest pl-1">Fim</label>
+                                          <input
+                                             type="time"
+                                             className="w-full h-10 bg-black/20 border border-white/10 rounded-xl px-3 text-xs font-bold"
+                                             value={dayData.end}
+                                             onChange={e => {
+                                                const newWHours = { ...wHours, [idx]: { ...dayData, end: e.target.value } };
+                                                setEditData({ ...editData, working_hours: newWHours });
+                                             }}
+                                          />
+                                       </div>
+                                    </div>
+                                 )}
+                              </div>
+                           );
+                        })}
                      </div>
 
                      <div className="bg-primary/5 p-6 rounded-[32px] border border-primary/10 flex gap-4">
                         <span className="material-symbols-outlined text-primary">info</span>
                         <p className="text-[10px] text-gray-400 leading-relaxed italic">
-                           O horário de "Fim" define o início da última sessão disponível para as clientes.
+                           Configurações salvas aqui serão refletidas instantaneamente na disponibilidade para as clientes.
                         </p>
                      </div>
 

@@ -55,6 +55,8 @@ const AdminTipsManagement: React.FC = () => {
             content: editing.content,
             type: editing.type || 'PRE_CARE',
             active: true,
+            linked_category: editing.linked_category || null,
+            service_ids: editing.service_ids || []
             // icon: editing.icon (future implementation)
          };
 
@@ -164,6 +166,17 @@ const AdminTipsManagement: React.FC = () => {
                         value={editing.content || ''}
                         onChange={e => setEditing({ ...editing, content: e.target.value })}
                      />
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Vincular ao Tipo de Serviço</label>
+                        <input
+                           type="text"
+                           placeholder="Ex: Cílios, Sobrancelha..."
+                           className="w-full h-12 bg-white/5 border-white/10 rounded-xl px-4 text-sm focus:ring-1 focus:ring-accent-gold outline-none"
+                           value={editing.linked_category || ''}
+                           onChange={e => setEditing({ ...editing, linked_category: e.target.value })}
+                        />
+                        <p className="text-[9px] text-gray-600 italic">Deixe em branco para dica geral ou preencha o tipo exato do catálogo.</p>
+                     </div>
                      <div className="flex bg-white/5 p-1 rounded-xl">
                         <button
                            onClick={() => setEditing({ ...editing, type: 'PRE_CARE' })}

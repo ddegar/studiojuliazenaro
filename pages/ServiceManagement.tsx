@@ -228,6 +228,17 @@ const ServiceManagement: React.FC = () => {
                         <input type="text" required placeholder="Ex: Extensão Volume Russo" value={editingService?.name || ''} onChange={e => setEditingService({ ...editingService, name: e.target.value })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:ring-primary outline-none" />
                      </div>
 
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Tipo de Serviço (Ex: Cílios)</label>
+                           <input type="text" placeholder="Cílios, Unhas, etc" value={editingService?.category || ''} onChange={e => setEditingService({ ...editingService, category: e.target.value })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:ring-primary outline-none" />
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Valor (R$)</label>
+                           <input type="number" required placeholder="250.00" value={editingService?.price || ''} onChange={e => setEditingService({ ...editingService, price: parseFloat(e.target.value) })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-black text-emerald-500 focus:ring-primary outline-none" />
+                        </div>
+                     </div>
+
                      <div className="space-y-2">
                         <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Descrição para a Cliente</label>
                         <textarea placeholder="Explique os benefícios e o resultado final..." value={editingService?.description || ''} onChange={e => setEditingService({ ...editingService, description: e.target.value })} className="w-full h-32 bg-white/5 border border-white/10 rounded-3xl p-6 text-sm focus:ring-primary outline-none italic" />
@@ -235,19 +246,13 @@ const ServiceManagement: React.FC = () => {
 
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Valor (R$)</label>
-                           <input type="number" required placeholder="250.00" value={editingService?.price || ''} onChange={e => setEditingService({ ...editingService, price: parseFloat(e.target.value) })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-black text-emerald-500 focus:ring-primary outline-none" />
-                        </div>
-                        <div className="space-y-2">
                            <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Duração (Min)</label>
                            <input type="number" required placeholder="90" value={editingService?.duration || ''} onChange={e => setEditingService({ ...editingService, duration: parseInt(e.target.value) })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:ring-primary outline-none" />
                         </div>
-                     </div>
-
-                     <div className="space-y-2 bg-accent-gold/5 p-6 rounded-3xl border border-accent-gold/10">
-                        <label className="text-[10px] uppercase font-black text-accent-gold tracking-[0.2em] pl-1">Recompensa VIP: Lash Points ✨</label>
-                        <input type="number" placeholder="50" value={editingService?.pointsReward || ''} onChange={e => setEditingService({ ...editingService, pointsReward: parseInt(e.target.value) })} className="w-full h-16 bg-white/20 border border-accent-gold/20 rounded-2xl px-6 text-sm font-black text-accent-gold focus:ring-accent-gold outline-none mt-2" />
-                        <p className="text-[9px] text-accent-gold/60 font-medium italic mt-2">Estes pontos serão creditados no perfil da cliente após o pagamento.</p>
+                        <div className="space-y-2 bg-accent-gold/5 p-4 rounded-2xl border border-accent-gold/10">
+                           <label className="text-[10px] uppercase font-black text-accent-gold tracking-[0.2em] pl-1">Lash Points ✨</label>
+                           <input type="number" placeholder="50" value={editingService?.pointsReward || ''} onChange={e => setEditingService({ ...editingService, pointsReward: parseInt(e.target.value) })} className="w-full h-10 bg-white/20 border border-accent-gold/20 rounded-xl px-4 text-sm font-black text-accent-gold focus:ring-accent-gold outline-none mt-1" />
+                        </div>
                      </div>
 
                      <div className="space-y-4">
