@@ -32,7 +32,7 @@ const FinancialControl: React.FC = () => {
 
       let query = supabase.from('transactions').select('*');
 
-      if (profile?.role !== 'MASTER_ADMIN') {
+      if (profile?.role !== 'MASTER_ADMIN' && profile?.role !== 'ADMIN' && profile?.role !== 'PROFESSIONAL_ADMIN') {
          query = query.eq('user_id', authUser.id);
       }
 

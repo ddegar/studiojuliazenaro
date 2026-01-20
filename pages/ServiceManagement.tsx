@@ -69,8 +69,9 @@ const ServiceManagement: React.FC = () => {
    const filteredServices = useMemo(() => {
       if (!currentUser) return [];
       if (isMaster) return services;
-      // Professionals see services ellos are linked to
-      return services.filter(s => s.professionalIds.includes(currentUser.id));
+
+      // Professional visibility isolation
+      return services.filter(s => Array.isArray(s.professionalIds) && s.professionalIds.includes(currentUser.id));
    }, [services, isMaster, currentUser]);
 
    const handleSave = async (e: React.FormEvent) => {

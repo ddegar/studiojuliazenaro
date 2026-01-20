@@ -27,8 +27,8 @@ const AdminBottomNav: React.FC = () => {
 
     const navItems = [
         { label: 'Painel', icon: 'grid_view', path: '/admin' },
-        { label: 'Agenda', icon: 'calendar_today', path: '/admin/agenda' },
-        { label: 'Clientes', icon: 'groups', path: '/admin/clients' },
+        { label: 'Minha Agenda', icon: 'calendar_today', path: '/admin/agenda' },
+        { label: 'Clientes', icon: 'groups', path: '/admin/clients', masterOnly: true },
         { label: 'Equipe', icon: 'badge', path: '/admin/professionals', masterOnly: true },
         { label: 'Caixa', icon: 'payments', path: '/admin/finance' },
     ];

@@ -59,21 +59,37 @@ const AdminProfessionals: React.FC = () => {
       setIsCreating(true);
 
       try {
+         const DEFAULT_PASSWORD = 'Julia@Studio2026';
          const finalImageUrl = newPro.image_url || `https://ui-avatars.com/api/?name=${newPro.name}&background=random&color=fff`;
 
-         const { data: proData, error: proError } = await supabase.from('professionals').insert({
+         // 1. Criar registro na tabela professionals primeiro para obter o ID
+         const { data: proRecord, error: proError } = await supabase.from('professionals').insert({
             name: newPro.name,
             role: newPro.role,
             email: newPro.email,
             phone: newPro.phone,
             image_url: finalImageUrl,
             active: true,
-            rating: 5.0
+            rating: 5.0,
+            permissions: newPro.permissions
          }).select().single();
 
          if (proError) throw proError;
 
-         alert('Profissional cadastrada! ✨\n\nAgora ela deve se cadastrar no aplicativo usando o e-mail: ' + newPro.email);
+         // 2. Chamar a Edge Function para criar o usuário no Supabase Auth e Profile
+         const { data, error: functionError } = await supabase.functions.invoke('create-professional', {
+            body: {
+               email: newPro.email,
+               password: DEFAULT_PASSWORD,
+               name: newPro.name,
+               role: 'PROFESSIONAL_ADMIN', // Role base para acesso ao admin
+               professionalId: proRecord.id
+            }
+         });
+
+         if (functionError) throw functionError;
+
+         alert('Profissional cadastrada com SUCESSO! ✨\n\nLogin: ' + newPro.email + '\nSenha Padrão: ' + DEFAULT_PASSWORD + '\n\nEla já pode logar agora!');
          setShowAdd(false);
          setNewPro({
             name: '', role: '', email: '', phone: '', image_url: '',

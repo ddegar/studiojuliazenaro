@@ -51,8 +51,10 @@ const AdminAgenda: React.FC = () => {
                avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}`,
                active: p.active,
                specialties: [],
-               rating: p.rating || 5
-            }));
+               rating: p.rating || 5,
+               start_hour: p.start_hour || '08:00',
+               end_hour: p.end_hour || '19:00'
+            } as any));
 
             setProfessionals(formattedPros);
 
@@ -76,8 +78,19 @@ const AdminAgenda: React.FC = () => {
             }
 
             // Use the professional's ID for filtering
-            const initialProId = isPrivileged ? (formattedPros[0]?.id || '') : (matchingPro?.id || '');
-            setSelectedProId(initialProId);
+            const initialProId = isPrivileged ? (matchingPro?.id || formattedPros[0]?.id || '') : (matchingPro?.id || '');
+
+            // SECURITY: If not Master, force selectedProId to be the matching professional ID
+            if (!isPrivileged) {
+               if (!matchingPro) {
+                  alert("Perfil profissional não vinculado. Entre em contato com o suporte.");
+                  navigate('/admin');
+                  return;
+               }
+               setSelectedProId(matchingPro.id);
+            } else {
+               setSelectedProId(initialProId);
+            }
          }
       } catch (err) {
          console.error('Error initializing agenda:', err);
@@ -151,6 +164,8 @@ const AdminAgenda: React.FC = () => {
       navigate(`/admin/agenda/day/${dateStr}?proId=${selectedProId}`);
    };
 
+   const [filter, setFilter] = useState<'ALL' | 'FREE' | 'BUSY'>('ALL');
+
    const changeMonth = (delta: number) => {
       let newMonth = viewMonth + delta;
       let newYear = viewYear;
@@ -194,7 +209,7 @@ const AdminAgenda: React.FC = () => {
                </div>
             </div>
 
-            {isMaster && visibleProfessionals.length > 1 && (
+            {(isMaster && visibleProfessionals.length > 1) && (
                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
                   {visibleProfessionals.map(p => (
                      <button
@@ -205,6 +220,23 @@ const AdminAgenda: React.FC = () => {
                   ))}
                </div>
             )}
+
+            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+               {[
+                  { id: 'ALL', label: 'Tudo', icon: 'border_all' },
+                  { id: 'FREE', label: 'Livres', icon: 'event_available' },
+                  { id: 'BUSY', label: 'Ocupados', icon: 'event_busy' }
+               ].map(f => (
+                  <button
+                     key={f.id}
+                     onClick={() => setFilter(f.id as any)}
+                     className={`flex-1 h-9 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${filter === f.id ? 'bg-white/10 text-accent-gold shadow-sm' : 'text-gray-500'}`}
+                  >
+                     <span className="material-symbols-outlined !text-sm">{f.icon}</span>
+                     {f.label}
+                  </button>
+               ))}
+            </div>
          </header>
 
          <main className="flex-1 p-6 space-y-10 overflow-y-auto no-scrollbar">
@@ -231,19 +263,37 @@ const AdminAgenda: React.FC = () => {
                      const isToday = dayDate === now.toISOString().split('T')[0];
 
                      const dayAppts = appointments.filter(a => a.date === dayDate);
-                     // Count anything that keeps a slot 'busy' or meaningful
-                     const busyAppts = dayAppts.filter(a => ['scheduled', 'confirmed', 'completed', 'blocked'].includes(a.status));
+                     const busyAppts = dayAppts.filter(a => ['scheduled', 'confirmed', 'completed'].includes(a.status));
+                     const blockedAppts = dayAppts.filter(a => ['blocked', 'BLOCKED'].includes(a.status));
+
+                     const selectedPro = professionals.find(p => p.id === selectedProId);
+                     const startH = parseInt((selectedPro as any)?.start_hour?.split(':')[0] || '8');
+                     const endH = parseInt((selectedPro as any)?.end_hour?.split(':')[0] || '19');
+                     const totalSlots = (endH - startH) * 2; // Slots de 30 min
+
                      const hasAppointments = busyAppts.length > 0;
-                     const isFull = busyAppts.length >= 8; // Arbitrary visualization rule
+                     const isBlocked = blockedAppts.length > 0;
+                     const isFull = busyAppts.length >= totalSlots && totalSlots > 0;
+                     const isFree = busyAppts.length === 0 && !isBlocked;
+
+                     // Filter Logic
+                     const isVisible = filter === 'ALL' || (filter === 'FREE' && isFree) || (filter === 'BUSY' && !isFree);
 
                      return (
                         <button
                            key={i}
                            onClick={() => handleDayClick(day)}
-                           className={`aspect-square rounded-3xl border flex flex-col items-center justify-center gap-1.5 transition-all relative ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}`}
+                           className={`aspect-square rounded-3xl border flex flex-col items-center justify-center gap-1.5 transition-all relative 
+                              ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}
+                              ${!isVisible ? 'opacity-20 grayscale' : 'opacity-100'}
+                              ${filter === 'FREE' && isFree && !isToday ? 'ring-1 ring-emerald-500/50 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : ''}
+                           `}
                         >
-                           <span className={`text-xs font-black ${isToday ? 'text-white' : 'text-gray-400'}`}>{day}</span>
-                           {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-primary'}`}></div>}
+                           <span className={`text-xs font-black ${isToday ? 'text-white' : (filter === 'FREE' && isFree ? 'text-emerald-400' : 'text-gray-400')}`}>{day}</span>
+                           <div className="flex gap-1 items-center">
+                              {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>}
+                              {isBlocked && <span className="material-symbols-outlined !text-[10px] text-rose-500">lock</span>}
+                           </div>
                         </button>
                      );
                   })}
@@ -251,14 +301,24 @@ const AdminAgenda: React.FC = () => {
 
                <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Status dos Dias</h3>
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                      <div className="flex items-center gap-3">
-                        <div className="size-3 rounded-full bg-primary shadow-lg shadow-primary/20"></div>
-                        <span className="text-[11px] font-medium text-gray-400">Atendimentos</span>
+                        <div className="size-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Atendimentos</span>
                      </div>
                      <div className="flex items-center gap-3">
-                        <div className="size-3 rounded-full bg-rose-500"></div>
-                        <span className="text-[11px] font-medium text-gray-400">Dia Cheio</span>
+                        <div className="size-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20"></div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cheio / Bloqueado</span>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <div className="size-3 rounded-full border border-gray-600"></div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sem Atividade</span>
+                     </div>
+                     <div className="flex items-center gap-3">
+                        <div className="size-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                           <span className="material-symbols-outlined !text-[10px] text-emerald-500">check</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-100 uppercase tracking-widest">Dia Disponível</span>
                      </div>
                   </div>
                </div>

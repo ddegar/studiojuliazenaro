@@ -37,6 +37,7 @@ import AdminTipsManagement from './pages/AdminTipsManagement';
 import AdminLoyaltySettings from './pages/AdminLoyaltySettings';
 import AdminStudioDetails from './pages/AdminStudioDetails';
 import AdminWorkingHours from './pages/AdminWorkingHours';
+import AdminMyProfile from './pages/AdminMyProfile';
 
 
 import BookingConfirmed from './pages/BookingConfirmed';
@@ -118,6 +119,7 @@ const App: React.FC = () => {
           <Route path="/admin/professional/:id" element={<ProfessionalDetailsAdmin />} />
           <Route path="/admin/notifications" element={<AdminNotifications />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/admin/profile" element={<AdminMyProfile />} />
           <Route path="/admin/studio-details" element={<AdminStudioDetails />} />
           <Route path="/admin/professionals" element={<AdminProfessionals />} />
           <Route path="/admin/faq" element={<AdminFAQManagement />} />

@@ -161,18 +161,19 @@ const AdminDashboard: React.FC = () => {
 
   const MENU_ITEMS = [
     { label: 'Dashboard', icon: 'grid_view', path: '/admin' },
-    { label: 'Agenda', icon: 'calendar_month', path: '/admin/agenda' },
-    { label: 'Clientes', icon: 'groups', path: '/admin/clients' },
-    { label: 'Profissionais / Equipe', icon: 'badge', path: '/admin/professionals', masterOnly: true },
-    { label: 'Serviços / Catálogo', icon: 'category', path: '/admin/services' },
+    { label: 'Minha Agenda', icon: 'calendar_month', path: '/admin/agenda' },
+    { label: 'Clientes', icon: 'groups', path: '/admin/clients', masterOnly: true },
+    { label: 'Equipe / Staff', icon: 'badge', path: '/admin/professionals', masterOnly: true },
+    { label: 'Catálogo / Serviços', icon: 'category', path: '/admin/services' },
     { label: 'Financeiro', icon: 'payments', path: '/admin/finance' },
     { label: 'Conteúdo (Feed / Stories)', icon: 'history_toggle_off', path: '/admin/content' },
-    { label: 'Notificações', icon: 'notifications', path: '/admin/notifications' },
+    { label: 'Notificações', icon: 'notifications', path: '/admin/notifications', masterOnly: true },
+    { label: 'Meu Perfil', icon: 'person', path: '/admin/profile', professionalOnly: true },
     { label: 'Ajustes do Estúdio', icon: 'settings', path: '/admin/settings', masterOnly: true },
-    { label: 'Recursos Extra', subheader: true },
+    { label: 'Recursos Extra', subheader: true, masterOnly: true },
     { label: 'Dicas (Pré/Pós)', icon: 'lightbulb', path: '/admin/tips' },
-    { label: 'FAQ (Dúvidas)', icon: 'help', path: '/admin/faq' },
-    { label: 'Depoimentos', icon: 'reviews', path: '/admin/testimonials' },
+    { label: 'FAQ (Dúvidas)', icon: 'help', path: '/admin/faq', masterOnly: true },
+    { label: 'Depoimentos', icon: 'reviews', path: '/admin/testimonials', masterOnly: true },
   ];
 
   if (loading) {
@@ -206,6 +207,7 @@ const AdminDashboard: React.FC = () => {
         <nav className="flex-1 overflow-y-auto no-scrollbar py-6 px-4 space-y-1">
           {MENU_ITEMS.map((item, idx) => {
             if (item.masterOnly && !isMaster) return null;
+            if (item.professionalOnly && isMaster) return null;
             if (item.subheader) return <div key={idx} className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] px-4 py-4 mt-2">{item.label}</div>;
 
             return (

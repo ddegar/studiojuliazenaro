@@ -19,7 +19,7 @@ const AdminRoute: React.FC = () => {
                 .eq('id', user.id)
                 .single();
 
-            if (data && (['MASTER_ADMIN', 'PROFESSIONAL_ADMIN', 'ADMIN'].includes(data.role) || user.email === 'admin@juliazenaro.com')) {
+            if (data && (['MASTER_ADMIN', 'PROFESSIONAL_ADMIN', 'ADMIN', 'PROFESSIONAL'].includes(data.role) || user.email === 'admin@juliazenaro.com')) {
                 setIsAdmin(true);
             } else {
                 setIsAdmin(false);

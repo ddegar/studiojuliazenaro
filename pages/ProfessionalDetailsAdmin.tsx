@@ -144,7 +144,7 @@ const ProfessionalDetailsAdmin: React.FC = () => {
          // Only include avatar_url if we are sure it exists (or just exclude it for now to fix the blockage)
          // updateData.avatar_url = editData.avatar_url; 
 
-         const { error } = await supabase.from('profiles').update(updateData).eq('id', id);
+         const { error } = await supabase.from('profiles').update(updateData).eq('id', profile.id);
 
          const { error: proError } = await supabase.from('professionals').update({
             name: editData.name,

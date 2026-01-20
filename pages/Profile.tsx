@@ -8,7 +8,10 @@ const Profile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', phone: '', profile_pic: '' });
+  const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -36,6 +39,34 @@ const Profile: React.FC = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.new !== passwordForm.confirm) {
+      alert('As senhas não coincidem.');
+      return;
+    }
+    if (passwordForm.new.length < 6) {
+      alert('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
+    try {
+      setIsSubmittingPassword(true);
+      const { error } = await supabase.auth.updateUser({
+        password: passwordForm.new
+      });
+
+      if (error) throw error;
+      alert('Senha alterada com sucesso! ✨');
+      setIsChangingPassword(false);
+      setPasswordForm({ current: '', new: '', confirm: '' });
+    } catch (err: any) {
+      alert('Erro ao alterar senha: ' + err.message);
+    } finally {
+      setIsSubmittingPassword(false);
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -75,6 +106,7 @@ const Profile: React.FC = () => {
     { icon: 'dashboard', label: 'Painel Admin', desc: 'Gerenciamento do estúdio', path: '/admin', show: isPro },
     { icon: 'card_membership', label: 'Lash Points', desc: `Meu saldo: ${profile?.lash_points || 0} pts`, path: '/profile/points', hide: isPro },
     { icon: 'diversity_3', label: 'Indique Amigas', desc: 'Ganhe pontos indicando', path: '/profile/refer', hide: isPro },
+    { icon: 'lock', label: 'Segurança', desc: 'Alterar minha senha de acesso', path: '#', action: () => setIsChangingPassword(true) },
     { icon: 'help_center', label: 'Dúvidas e FAQ', desc: 'Tire suas dúvidas agora', path: '/faq' },
   ];
 
@@ -165,6 +197,35 @@ const Profile: React.FC = () => {
                 </button>
               </div>
             </section>
+          )}
+
+          {isChangingPassword && (
+            <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-6 backdrop-blur-xl animate-fade-in">
+              <div className="absolute inset-0" onClick={() => setIsChangingPassword(false)}></div>
+              <form onSubmit={handlePasswordChange} className="bg-white w-full max-w-sm rounded-[40px] p-8 border border-gray-100 shadow-2xl relative z-10 animate-slide-up space-y-6">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="text-xl font-display font-bold text-primary">Alterar Senha</h3>
+                  <button type="button" onClick={() => setIsChangingPassword(false)} className="size-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400">
+                    <span className="material-symbols-outlined !text-lg">close</span>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Nova Senha</label>
+                    <input type="password" required className="w-full h-14 bg-gray-50 border-transparent rounded-2xl px-6 text-sm" value={passwordForm.new} onChange={e => setPasswordForm({ ...passwordForm, new: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Confirmar Nova Senha</label>
+                    <input type="password" required className="w-full h-14 bg-gray-50 border-transparent rounded-2xl px-6 text-sm" value={passwordForm.confirm} onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })} />
+                  </div>
+                </div>
+
+                <button disabled={isSubmittingPassword} type="submit" className="w-full h-14 bg-primary text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-primary/20 transition-all active:scale-95 disabled:opacity-50">
+                  {isSubmittingPassword ? 'Processando...' : 'ATUALIZAR SENHA ✨'}
+                </button>
+              </form>
+            </div>
           )}
         </div>
       </main>

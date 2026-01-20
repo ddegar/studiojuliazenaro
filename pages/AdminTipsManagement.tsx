@@ -17,8 +17,27 @@ const AdminTipsManagement: React.FC = () => {
    const fetchTips = async () => {
       try {
          setLoading(true);
-         const { data, error } = await supabase.from('tips').select('*').order('created_at', { ascending: false });
+         const { data: { user: authUser } } = await supabase.auth.getUser();
+         const { data: profile } = await supabase.from('profiles').select('id, role').eq('id', authUser?.id).single();
+         const isMaster = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile?.role || '');
+
+         let { data, error } = await supabase.from('tips').select('*').order('created_at', { ascending: false });
          if (error) throw error;
+
+         if (!isMaster) {
+            // Filter tips linked to services of this specific professional
+            const { data: pro } = await supabase.from('professionals').select('id').eq('email', authUser?.email).single();
+            if (pro) {
+               const { data: myServices } = await supabase.from('services').select('id').contains('professional_ids', [pro.id]);
+               const myServIds = myServices?.map(s => s.id) || [];
+               data = (data || []).filter(t =>
+                  Array.isArray(t.service_ids) && t.service_ids.some((id: string) => myServIds.includes(id))
+               );
+            } else {
+               data = [];
+            }
+         }
+
          setTips(data || []);
       } catch (error) {
          console.error('Error fetching tips:', error);
