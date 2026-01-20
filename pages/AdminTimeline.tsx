@@ -180,20 +180,29 @@ const AdminTimeline: React.FC = () => {
 
             // B. LOYALTY POINTS (Zenaro Credits)
             if (apt.user_id && apt.services?.points_reward) {
-               const { data: clientProfile } = await supabase.from('profiles').select('zenaro_credits, lash_points').eq('id', apt.user_id).single();
+               console.log('Updating loyalty points for user:', apt.user_id);
 
-               // Use zenaro_credits if exists, fallback to lash_points for backward compatibility
-               const currentPoints = clientProfile?.zenaro_credits ?? clientProfile?.lash_points ?? 0;
-               const newPoints = currentPoints + apt.services.points_reward;
+               // Always use 'lash_points' column in DB (renamed to Zenaro Credits in UI only)
+               const { data: clientProfile, error: fetchError } = await supabase
+                  .from('profiles')
+                  .select('lash_points')
+                  .eq('id', apt.user_id)
+                  .single();
 
-               const updatePayload: any = {};
-               if (clientProfile && 'zenaro_credits' in clientProfile) {
-                  updatePayload.zenaro_credits = newPoints;
+               if (fetchError) {
+                  console.error('Error fetching client profile for points:', fetchError);
                } else {
-                  updatePayload.lash_points = newPoints;
-               }
+                  const currentPoints = clientProfile?.lash_points || 0;
+                  const newPoints = currentPoints + apt.services.points_reward;
+                  console.log(`Updating points: ${currentPoints} -> ${newPoints}`);
 
-               await supabase.from('profiles').update(updatePayload).eq('id', apt.user_id);
+                  const { error: updateError } = await supabase
+                     .from('profiles')
+                     .update({ lash_points: newPoints })
+                     .eq('id', apt.user_id);
+
+                  if (updateError) console.error('Error updating points:', updateError);
+               }
             }
          }
 

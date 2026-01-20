@@ -26,6 +26,12 @@ const FinancialControl: React.FC = () => {
    const [showCategoryManager, setShowCategoryManager] = useState(false);
    const [newCategory, setNewCategory] = useState('');
 
+   // View Filter for Master
+   const [viewFilter, setViewFilter] = useState<'ALL' | 'ME' | 'TEAM'>('ALL');
+
+   // View Filter for Master
+   const [viewFilter, setViewFilter] = useState<'ALL' | 'ME' | 'TEAM'>('ALL');
+
    useEffect(() => {
       fetchCategories();
    }, []);
@@ -229,38 +235,65 @@ const FinancialControl: React.FC = () => {
             </button>
          </div>
 
-         <div className="flex-1 px-6 space-y-4">
-            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] pl-1">Lançamentos Recentes</h3>
-            {loading ? (
-               <div className="py-10 flex justify-center"><div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div>
-            ) : transactions.map(t => (
-               <div key={t.id} className="bg-card-dark p-5 rounded-3xl border border-white/5 flex justify-between items-center group hover:border-white/10 transition-colors">
-                  <div className="flex items-center gap-4">
-                     <div className={`size-10 rounded-2xl flex items-center justify-center ${t.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                        <span className="material-symbols-outlined !text-xl">{t.type === 'INCOME' ? 'payments' : 'shopping_bag'}</span>
-                     </div>
-                     <div>
-                        <div className="flex items-center gap-2">
-                           <p className="font-bold text-sm text-gray-200">{t.category}</p>
-                           {t.appointment_id && <span className="text-[8px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded-md uppercase font-black tracking-tighter">Automático</span>}
+         {/* Transactions List Header & Filters */}
+         <div className="flex items-center justify-between">
+            <h2 className="text-xl font-display font-bold">Últimos Lançamentos</h2>
+            <div className="flex gap-2">
+               {/* View Filter for Master */}
+               {user?.role === 'MASTER_ADMIN' && (
+                  <select
+                     value={viewFilter}
+                     onChange={(e) => setViewFilter(e.target.value as 'ALL' | 'ME' | 'TEAM')}
+                     className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
+                  >
+                     <option value="ALL" className="bg-[#1c1f24] text-white">Tudo</option>
+                     <option value="ME" className="bg-[#1c1f24] text-white">Apenas Eu</option>
+                     <option value="TEAM" className="bg-[#1c1f24] text-white">Equipe</option>
+                  </select>
+               )}
+               <button onClick={() => { setEditingTransaction(null); setShowForm(true); }} className="bg-white/5 hover:bg-white/10 text-white p-3 rounded-xl transition-all">
+                  <span className="material-symbols-outlined">add</span>
+               </button>
+            </div>
+         </div>
+
+         {/* Transactions List */}
+         <div className="space-y-3">
+            {transactions
+               .filter(t => {
+                  if (user?.role !== 'MASTER_ADMIN') return true;
+                  if (viewFilter === 'ME') return t.user_id === user?.id;
+                  if (viewFilter === 'TEAM') return t.user_id !== user?.id;
+                  return true;
+               })
+               .map((t) => (
+                  <div key={t.id} className="bg-card-dark p-5 rounded-3xl border border-white/5 flex justify-between items-center group hover:border-white/10 transition-colors">
+                     <div className="flex items-center gap-4">
+                        <div className={`size-10 rounded-2xl flex items-center justify-center ${t.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                           <span className="material-symbols-outlined !text-xl">{t.type === 'INCOME' ? 'payments' : 'shopping_bag'}</span>
                         </div>
-                        <p className="text-[10px] text-gray-500 mt-0.5">{t.description || new Date(t.date).toLocaleDateString()}</p>
+                        <div>
+                           <div className="flex items-center gap-2">
+                              <p className="font-bold text-sm text-gray-200">{t.category}</p>
+                              {t.appointment_id && <span className="text-[8px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded-md uppercase font-black tracking-tighter">Automático</span>}
+                           </div>
+                           <p className="text-[10px] text-gray-500 mt-0.5">{t.description || new Date(t.date).toLocaleDateString()}</p>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-4">
+                        <div className="text-right">
+                           <p className={`font-black text-sm ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                           </p>
+                           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
+                        </div>
+                        <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <button onClick={() => openEdit(t)} className="size-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">edit</span></button>
+                           <button onClick={() => handleDelete(t.id)} className="size-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">delete</span></button>
+                        </div>
                      </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                     <div className="text-right">
-                        <p className={`font-black text-sm ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                           {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                        <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
-                     </div>
-                     <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEdit(t)} className="size-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">edit</span></button>
-                        <button onClick={() => handleDelete(t.id)} className="size-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">delete</span></button>
-                     </div>
-                  </div>
-               </div>
-            ))}
+               ))}
             {transactions.length === 0 && !loading && (
                <div className="py-20 text-center opacity-30 italic text-sm">Nenhum lançamento no período</div>
             )}
