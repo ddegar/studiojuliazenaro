@@ -92,9 +92,16 @@ const ProfessionalDetailsAdmin: React.FC = () => {
 
          // Manual filter for services if needed
          if (servsRes.data) {
-            const linkedServices = servsRes.data.filter(s =>
-               Array.isArray(s.professional_ids) && s.professional_ids.includes(id)
-            );
+            console.log('Current Pro ID:', id);
+            console.log('All Services fetched:', servsRes.data);
+            const linkedServices = servsRes.data.filter(s => {
+               const ids = s.professional_ids;
+               // Handle different storage formats (string array, JSON array, or null)
+               if (Array.isArray(ids)) return ids.includes(id);
+               if (typeof ids === 'string') return ids.includes(id); // Basic string check fallback
+               return false;
+            });
+            console.log('Linked Services:', linkedServices);
             setServices(linkedServices);
          }
 
