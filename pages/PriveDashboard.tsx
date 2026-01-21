@@ -18,7 +18,7 @@ const PriveDashboard: React.FC = () => {
             // Parallel fetch
             const [profileRes, levelsRes] = await Promise.all([
                 user ? supabase.from('profiles').select('lash_points, created_at').eq('id', user.id).single() : Promise.resolve({ data: null, error: null }),
-                supabase.from('loyalty_levels').select('*').order('min_points', { ascending: true })
+                supabase.from('loyalty_tiers').select('*').order('min_points', { ascending: true })
             ]);
 
             if (levelsRes.data) {

@@ -29,7 +29,7 @@ const AdminClients: React.FC = () => {
       try {
          const [clientsRes, levelsRes] = await Promise.all([
             supabase.from('profiles').select(`*, appointments (date, professional_name)`).eq('role', 'CLIENT').order('name'),
-            supabase.from('loyalty_levels').select('*').order('min_points', { ascending: true })
+            supabase.from('loyalty_tiers').select('*').order('min_points', { ascending: true })
          ]);
 
          if (clientsRes.error) throw clientsRes.error;

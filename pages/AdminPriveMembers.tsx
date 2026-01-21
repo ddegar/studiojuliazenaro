@@ -39,7 +39,7 @@ const AdminPriveMembers: React.FC = () => {
 
             // Fetch Levels (Non-critical, can fallback to default)
             const { data: levelsData, error: levelsError } = await supabase
-                .from('loyalty_levels')
+                .from('loyalty_tiers')
                 .select('*')
                 .order('min_points', { ascending: true });
 

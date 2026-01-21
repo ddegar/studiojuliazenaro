@@ -11,7 +11,7 @@ const AdminPriveLevels: React.FC = () => {
 
     const fetchLevels = async () => {
         const { data, error } = await supabase
-            .from('loyalty_levels')
+            .from('loyalty_tiers')
             .select('*')
             .order('min_points', { ascending: true });
 
@@ -89,7 +89,9 @@ const AdminPriveLevels: React.FC = () => {
                             </div>
                             <div className="p-5 rounded-3xl bg-black/20 border border-white/5">
                                 <p className="text-[8px] uppercase tracking-widest text-white/30 font-black mb-2 leading-none">Privilégios</p>
-                                <p className="text-sm font-bold italic text-gold-light">{lvl.privileges}</p>
+                                <p className="text-sm font-bold italic text-gold-light">
+                                    {Array.isArray(lvl.benefits) ? lvl.benefits.join(', ') : lvl.benefits || 'Padrão'}
+                                </p>
                             </div>
                         </div>
 
