@@ -26,18 +26,26 @@ const AdminPriveMembers: React.FC = () => {
     }, []);
 
     const fetchData = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
-            const [membersRes, levelsRes] = await Promise.all([
-                supabase.from('profiles').select('*').order('name'),
-                supabase.from('loyalty_levels').select('*').order('min_points', { ascending: true })
-            ]);
+            // Fetch Members (Critical)
+            const { data: membersData, error: membersError } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('name');
 
-            if (membersRes.error) throw membersRes.error;
-            if (levelsRes.error) throw levelsRes.error;
+            if (membersError) throw membersError;
+            setMembers(membersData || []);
 
-            setMembers(membersRes.data || []);
-            setLevels(levelsRes.data || []);
+            // Fetch Levels (Non-critical, can fallback to default)
+            const { data: levelsData, error: levelsError } = await supabase
+                .from('loyalty_levels')
+                .select('*')
+                .order('min_points', { ascending: true });
+
+            if (!levelsError && levelsData) {
+                setLevels(levelsData);
+            }
         } catch (err) {
             console.error(err);
         } finally {

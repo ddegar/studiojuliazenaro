@@ -9,37 +9,39 @@ const AdminClients: React.FC = () => {
    const [search, setSearch] = useState('');
    const [filter, setFilter] = useState<'ALL' | 'ACTIVE' | 'VIPS'>('ALL');
    const [clients, setClients] = useState<any[]>([]);
+   const [levels, setLevels] = useState<any[]>([]);
    const [loading, setLoading] = useState(true);
 
    useEffect(() => {
       fetchClients();
    }, []);
 
+   // Helper to determine tier based on points using dynamic levels
+   const calculateTier = (points: number, currentLevels: any[]) => {
+      if (currentLevels.length === 0) return 'Select';
+      const sortedLevels = [...currentLevels].sort((a, b) => b.min_points - a.min_points);
+      const match = sortedLevels.find(l => points >= l.min_points);
+      return match ? match.name : 'Select';
+   };
+
    const fetchClients = async () => {
       setLoading(true);
       try {
-         const { data, error } = await supabase
-            .from('profiles')
-            .select(`
-              *,
-              appointments (
-                  date,
-                  professional_name
-              )
-           `)
-            .eq('role', 'CLIENT')
-            .order('name');
+         const [clientsRes, levelsRes] = await Promise.all([
+            supabase.from('profiles').select(`*, appointments (date, professional_name)`).eq('role', 'CLIENT').order('name'),
+            supabase.from('loyalty_levels').select('*').order('min_points', { ascending: true })
+         ]);
 
-         if (error) throw error;
+         if (clientsRes.error) throw clientsRes.error;
+         const fetchedLevels = levelsRes.data || [];
+         setLevels(fetchedLevels);
 
-         const formatted = data.map((p: any) => {
+         const formatted = (clientsRes.data || []).map((p: any) => {
             const appts = p.appointments?.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()) || [];
             const lastAppt = appts[0];
             const points = p.lash_points || 0;
 
-            let tier = 'Silver';
-            if (points >= 500) tier = 'Ouro';
-            if (points >= 1000) tier = 'Diamante';
+            const tier = calculateTier(points, fetchedLevels);
 
             return {
                id: p.id,
@@ -69,7 +71,12 @@ const AdminClients: React.FC = () => {
       const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
          c.phone.toLowerCase().includes(search.toLowerCase());
       if (filter === 'ACTIVE') return matchesSearch && c.active;
-      if (filter === 'VIPS') return matchesSearch && c.status === 'Diamante';
+      // Map 'VIPS' filter to high tier members (Privé or Signature) for backward compatibility or strict VIP definition
+      // Assuming VIP here means top tiers. Let's make it broad: Signature or Privé
+      if (filter === 'VIPS') {
+         const tierUpper = c.status.toUpperCase();
+         return matchesSearch && (tierUpper === 'PRIVÉ' || tierUpper === 'SIGNATURE');
+      }
       return matchesSearch;
    });
 
