@@ -60,6 +60,14 @@ import PriveRewards from './pages/PriveRewards';
 import PriveRewardDetail from './pages/PriveRewardDetail';
 import PriveHowToEarn from './pages/PriveHowToEarn';
 import PriveHistory from './pages/PriveHistory';
+import AdminPriveDashboard from './pages/AdminPriveDashboard';
+import AdminPriveMembers from './pages/AdminPriveMembers';
+import AdminPriveLevels from './pages/AdminPriveLevels';
+import AdminPriveRewards from './pages/AdminPriveRewards';
+import AdminPriveCampaigns from './pages/AdminPriveCampaigns';
+import AdminPriveBalanceRules from './pages/AdminPriveBalanceRules';
+import AdminPriveSettings from './pages/AdminPriveSettings';
+import AdminShellPrive from './pages/AdminShellPrive';
 
 const AppContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex justify-center min-h-screen bg-gray-200 dark:bg-zinc-950">
@@ -144,6 +152,19 @@ const App: React.FC = () => {
           <Route path="/admin/loyalty/clients" element={<AdminLoyaltyClients />} />
           <Route path="/admin/loyalty/rewards" element={<AdminLoyaltyRewards />} />
           <Route path="/admin/working-hours" element={<AdminWorkingHours />} />
+
+          {/* Novos Módulos JZ Privé Club Admin */}
+          <Route element={<AdminRoute />}>
+            <Route element={<AdminShellPrive />}>
+              <Route path="/admin/jz-prive" element={<AdminPriveDashboard />} />
+              <Route path="/admin/jz-prive/members" element={<AdminPriveMembers />} />
+              <Route path="/admin/jz-prive/levels" element={<AdminPriveLevels />} />
+              <Route path="/admin/jz-prive/rewards" element={<AdminPriveRewards />} />
+              <Route path="/admin/jz-prive/campaigns" element={<AdminPriveCampaigns />} />
+              <Route path="/admin/jz-prive/balance-rules" element={<AdminPriveBalanceRules />} />
+              <Route path="/admin/jz-prive/settings" element={<AdminPriveSettings />} />
+            </Route>
+          </Route>
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

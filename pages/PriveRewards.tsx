@@ -8,21 +8,29 @@ const PriveRewards: React.FC = () => {
     const [allRewards, setAllRewards] = useState<any[]>([]);
     const [filteredRewards, setFilteredRewards] = useState<any[]>([]);
     const [points, setPoints] = useState(0);
-    const [activeCategory, setActiveCategory] = useState('Tratamentos');
-
-    const categories = [
-        { id: 'Tratamentos', label: 'Tratamentos' },
-        { id: 'Produtos', label: 'Produtos' },
-        { id: 'Experiências', label: 'Experiências' },
-        { id: 'Parceiros', label: 'Parceiros' }
-    ];
+    const [categories, setCategories] = useState<any[]>([]);
+    const [activeCategory, setActiveCategory] = useState('');
 
     useEffect(() => {
         fetchData();
+        fetchCategories();
     }, []);
 
+    const fetchCategories = async () => {
+        const { data } = await supabase
+            .from('loyalty_categories')
+            .select('*')
+            .eq('is_active', true)
+            .order('name');
+
+        if (data && data.length > 0) {
+            setCategories(data);
+            setActiveCategory(data[0].name);
+        }
+    };
+
     useEffect(() => {
-        if (allRewards.length > 0) {
+        if (allRewards.length > 0 && activeCategory) {
             const filtered = allRewards.filter(r => r.category === activeCategory);
             setFilteredRewards(filtered);
         }
@@ -55,7 +63,7 @@ const PriveRewards: React.FC = () => {
                 <h1 className="font-display italic text-xl tracking-tight text-primary dark:text-gold-light">JZ Privé Club</h1>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-card-dark rounded-full shadow-sm border border-slate-100 dark:border-slate-800">
                     <span className="material-symbols-outlined text-accent-gold text-sm">stars</span>
-                    <span className="text-sm font-semibold text-accent-gold">{points.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-accent-gold">{points.toLocaleString()} <span className="text-[10px] uppercase opacity-60">Balance</span></span>
                 </div>
             </header>
 
@@ -70,11 +78,11 @@ const PriveRewards: React.FC = () => {
                     {categories.map((cat) => (
                         <button
                             key={cat.id}
-                            onClick={() => setActiveCategory(cat.id)}
-                            className={`pb-4 text-xs font-black uppercase tracking-widest transition-all relative ${activeCategory === cat.id ? 'text-gold-dark dark:text-gold-light' : 'text-slate-400 dark:text-slate-600'}`}
+                            onClick={() => setActiveCategory(cat.name)}
+                            className={`pb-4 text-xs font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${activeCategory === cat.name ? 'text-gold-dark dark:text-gold-light' : 'text-slate-400 dark:text-slate-600'}`}
                         >
-                            {cat.label}
-                            {activeCategory === cat.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold-dark dark:bg-gold-light"></div>}
+                            {cat.name}
+                            {activeCategory === cat.name && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold-dark dark:bg-gold-light"></div>}
                         </button>
                     ))}
                 </div>
