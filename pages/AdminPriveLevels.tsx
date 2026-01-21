@@ -3,12 +3,29 @@ import React, { useState } from 'react';
 import { supabase } from '../services/supabase';
 
 const AdminPriveLevels: React.FC = () => {
-    const [levels, setLevels] = useState([
-        { name: 'Select', subtitle: 'ACESSO INICIAL', icon: 'shield', minPoints: 0, privileges: '03 Ativos', color: 'bg-slate-500' },
-        { name: 'Prime', subtitle: 'ELITE RECORRENTE', icon: 'star', minPoints: 500, privileges: '05 Ativos', color: 'bg-gold-dark' },
-        { name: 'Signature', subtitle: 'ALTA CURADORIA', icon: 'verified', minPoints: 1500, privileges: '08 Ativos', color: 'bg-emerald-500', isVip: true },
-        { name: 'Privé', subtitle: 'LUXO SUPREMO', icon: 'diamond', minPoints: 3000, privileges: 'UNLIMITED', color: 'bg-gold-light' }
-    ]);
+    const [levels, setLevels] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetchLevels();
+    }, []);
+
+    const fetchLevels = async () => {
+        const { data, error } = await supabase
+            .from('loyalty_levels')
+            .select('*')
+            .order('min_points', { ascending: true });
+
+        if (data) {
+            // Map DB columns to component state structure if needed, or just use raw data
+            // To minimize changes in JSX, ensuring we map correctly
+            const formatted = data.map(l => ({
+                ...l,
+                minPoints: l.min_points,
+                isVip: l.is_vip
+            }));
+            setLevels(formatted);
+        }
+    };
 
     return (
         <div className="animate-fade-in space-y-8">

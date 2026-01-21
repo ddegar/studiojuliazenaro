@@ -14,6 +14,7 @@ const calculateTier = (points: number) => {
 const AdminPriveMembers: React.FC = () => {
     const navigate = useNavigate();
     const [members, setMembers] = useState<any[]>([]);
+    const [levels, setLevels] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [activeFilter, setActiveFilter] = useState('TODOS');
@@ -21,23 +22,36 @@ const AdminPriveMembers: React.FC = () => {
     const [adjustValue, setAdjustValue] = useState(0);
 
     useEffect(() => {
-        fetchMembers();
+        fetchData();
     }, []);
 
-    const fetchMembers = async () => {
+    const fetchData = async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .order('name');
-            if (error) throw error;
-            setMembers(data || []);
+            const [membersRes, levelsRes] = await Promise.all([
+                supabase.from('profiles').select('*').order('name'),
+                supabase.from('loyalty_levels').select('*').order('min_points', { ascending: true })
+            ]);
+
+            if (membersRes.error) throw membersRes.error;
+            if (levelsRes.error) throw levelsRes.error;
+
+            setMembers(membersRes.data || []);
+            setLevels(levelsRes.data || []);
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
+    };
+
+    // Helper to determine tier based on points using dynamic levels
+    const calculateTier = (points: number) => {
+        if (levels.length === 0) return 'SELECT'; // Fallback
+        // Create a copy and sort descending to find the highest matching tier
+        const sortedLevels = [...levels].sort((a, b) => b.min_points - a.min_points);
+        const match = sortedLevels.find(l => points >= l.min_points);
+        return match ? match.name.toUpperCase() : 'SELECT';
     };
 
     const handleAdjustBalance = async () => {
@@ -64,7 +78,7 @@ const AdminPriveMembers: React.FC = () => {
             alert('Saldo atualizado com sucesso!');
             setIsAdjusting(null);
             setAdjustValue(0);
-            fetchMembers();
+            fetchData(); // Refresh both to be safe, though mainly members
         } catch (err: any) {
             alert('Erro ao ajustar: ' + err.message);
         }

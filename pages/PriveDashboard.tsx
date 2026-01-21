@@ -5,9 +5,7 @@ import { supabase } from '../services/supabase';
 
 const PriveDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const [points, setPoints] = useState(0);
-    const [memberSince, setMemberSince] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [levels, setLevels] = useState<any[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -16,16 +14,24 @@ const PriveDashboard: React.FC = () => {
     const fetchData = async () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data } = await supabase.from('profiles').select('lash_points, created_at').eq('id', user.id).single();
-                if (data) {
-                    setPoints(data.lash_points || 0);
-                    if (data.created_at) {
-                        const date = new Date(data.created_at);
-                        const month = date.toLocaleString('pt-BR', { month: 'short' });
-                        const year = date.getFullYear();
-                        setMemberSince(`${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`);
-                    }
+
+            // Parallel fetch
+            const [profileRes, levelsRes] = await Promise.all([
+                user ? supabase.from('profiles').select('lash_points, created_at').eq('id', user.id).single() : Promise.resolve({ data: null, error: null }),
+                supabase.from('loyalty_levels').select('*').order('min_points', { ascending: true })
+            ]);
+
+            if (levelsRes.data) {
+                setLevels(levelsRes.data);
+            }
+
+            if (profileRes.data) {
+                setPoints(profileRes.data.lash_points || 0);
+                if (profileRes.data.created_at) {
+                    const date = new Date(profileRes.data.created_at);
+                    const month = date.toLocaleString('pt-BR', { month: 'short' });
+                    const year = date.getFullYear();
+                    setMemberSince(`${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`);
                 }
             }
         } catch (error) {
@@ -36,26 +42,55 @@ const PriveDashboard: React.FC = () => {
     };
 
     const calculateTier = (pts: number) => {
-        if (pts >= 3000) return { name: 'Privé', color: 'text-white', bg: 'bg-primary' };
-        if (pts >= 1500) return { name: 'Signature', color: 'text-gold-dark', bg: 'bg-white' };
-        if (pts >= 500) return { name: 'Prime', color: 'text-gray-800', bg: 'bg-gray-100' };
-        return { name: 'Select', color: 'text-gray-500', bg: 'bg-gray-50' };
+        if (levels.length === 0) return { name: 'Select', color: 'text-gray-500', bg: 'bg-gray-50' }; // Fallback
+
+        const sortedLevels = [...levels].sort((a, b) => b.min_points - a.min_points);
+        const match = sortedLevels.find(l => pts >= l.min_points);
+
+        if (!match) return { name: 'Select', color: 'text-gray-500', bg: 'bg-gray-50' };
+
+        // Visual mapping based on name content (since DB doesn't store Tailwind objects yet, or we use name map)
+        // Simplification: Using name for Logic, preserving existing visual map logic for now based on name match
+        const nameUpper = match.name.toUpperCase();
+        if (nameUpper.includes('PRIV')) return { name: match.name, color: 'text-white', bg: 'bg-primary' };
+        if (nameUpper.includes('SIGNATURE')) return { name: match.name, color: 'text-gold-dark', bg: 'bg-white' };
+        if (nameUpper.includes('PRIME')) return { name: match.name, color: 'text-gray-800', bg: 'bg-gray-100' };
+        return { name: match.name, color: 'text-gray-500', bg: 'bg-gray-50' };
     };
 
     const currentTier = calculateTier(points);
 
-    const nextTierPoints =
-        points < 500 ? 500 :
-            points < 1500 ? 1500 :
-                points < 3000 ? 3000 : 3000;
+    // Calculate Next Tier
+    const sortedAsc = [...levels].sort((a, b) => a.min_points - b.min_points);
+    const nextLevel = sortedAsc.find(l => l.min_points > points);
 
-    const nextTierName =
-        points < 500 ? 'Prime' :
-            points < 1500 ? 'Signature' :
-                points < 3000 ? 'Privé' : 'Nível Máximo';
+    const nextTierPoints = nextLevel ? nextLevel.min_points : points;
+    const nextTierName = nextLevel ? nextLevel.name : 'Nível Máximo';
+    const isMaxLevel = !nextLevel;
 
-    const pointsToNext = Math.max(0, nextTierPoints - points);
-    const progressPercent = points >= 3000 ? 100 : Math.min(100, (points / nextTierPoints) * 100);
+    const pointsToNext = isMaxLevel ? 0 : Math.max(0, nextTierPoints - points);
+
+    // Calculate Progress % correctly relative to current bracket could be complex, 
+    // but simplify to absolute ratio of max level points for the bar visualization?
+    // The original code was: Math.min(100, (points / nextTierPoints) * 100); which is relative to "reaching next tier" from 0? 
+    // No, it was absolute. let's stick to absolute mapping for the bar if possible, 
+    // OR create a linear progress between levels. 
+    // Let's keep specific logic: 
+    // If Max Level (Privé 3000), 100%. 
+    // Else, points / nextTierPoints * 100.
+    const progressPercent = isMaxLevel ? 100 : Math.min(100, (points / nextTierPoints) * 100);
+
+    // Dynamic Checkpoints for Progress Bar
+    const renderCheckpoints = () => {
+        if (levels.length === 0) return null;
+        return (
+            <div className="flex mb-2 items-center justify-between text-[8px] font-semibold text-gray-400 uppercase tracking-tighter w-full">
+                {levels.map((l, idx) => (
+                    <span key={l.id} className={points >= l.min_points ? 'text-primary font-bold' : ''}>{l.name}</span>
+                ))}
+            </div>
+        );
+    };
 
     if (loading) return (
         <div className="min-h-screen bg-background-light dark:bg-zinc-950 flex flex-col items-center justify-center gap-4">
@@ -66,94 +101,12 @@ const PriveDashboard: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark text-primary dark:text-gray-100 font-sans selection:bg-gold/30 pb-12 relative overflow-hidden">
+            {/* ... Header and Main Card ... */}
+            {/* Re-using context, just need to change the implementation details above the Return logic mostly 
+            wait, replace_file_content needs me to replace the chunk.
+            So I will replace from `const [points` down to the end of `Progress Section` opening.
+        */}
 
-            {/* Header */}
-            <header className="flex justify-between items-center px-6 pt-8 pb-4 z-10 relative">
-                <div className="flex flex-col">
-                    <span className="text-[10px] tracking-[0.2em] uppercase font-display font-semibold text-gold-dark dark:text-gold-light">Dashboard do Clube</span>
-                    <h1 className="text-2xl font-display font-bold tracking-tight">JZ Privé Club</h1>
-                </div>
-                <div className="flex gap-2">
-                    <button onClick={() => navigate('/prive/history')} className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center bg-white dark:bg-zinc-900 shadow-sm text-gold-dark" title="Extrato de Pontos">
-                        <span className="material-symbols-outlined text-xl">history</span>
-                    </button>
-                    <button className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center bg-white dark:bg-zinc-900 shadow-sm">
-                        <span className="material-symbols-outlined text-xl">notifications</span>
-                    </button>
-                    <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-800 flex items-center justify-center bg-white dark:bg-zinc-900 shadow-sm ml-1">
-                        <span className="material-symbols-outlined text-xl">close</span>
-                    </button>
-                </div>
-            </header>
-
-            {/* Main Card */}
-            <section className="px-6 mt-4 relative z-10">
-                <div className="bg-gradient-to-br from-[#D4AF37] via-[#C5A059] to-[#B8860B] p-8 rounded-xl shadow-2xl shadow-gold/20 relative overflow-hidden group text-white">
-                    <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-                    <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-black/10 rounded-full blur-2xl"></div>
-
-                    <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-8">
-                            <div>
-                                <p className="text-[10px] uppercase tracking-widest text-white/80 font-semibold">Saldo Disponível</p>
-                                <h2 className="text-4xl font-display font-bold text-white mt-1">{points.toLocaleString()} <span className="text-lg font-medium opacity-80">pts</span></h2>
-                            </div>
-                            <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30">
-                                <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Nível {currentTier.name}</span>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-end">
-                            <div>
-                                <p className="text-[10px] uppercase tracking-widest text-white/70">Membro desde</p>
-                                <p className="text-white font-medium">{memberSince || '---'}</p>
-                            </div>
-                            <button
-                                onClick={() => navigate('/prive/rewards')}
-                                className="bg-primary text-white text-xs px-5 py-2.5 rounded-full font-semibold hover:bg-opacity-90 transition-all flex items-center gap-2"
-                            >
-                                <span>RESGATAR AGORA</span>
-                                <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Progress Section */}
-            <section className="px-6 mt-10 relative z-10">
-                <div className="flex justify-between items-end mb-4">
-                    <h3 className="text-sm font-display font-bold uppercase tracking-widest">Jornada de Fidelidade</h3>
-                    {pointsToNext > 0 ? (
-                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{nextTierName} em {pointsToNext} pts</span>
-                    ) : (
-                        <span className="text-xs text-gold-dark font-bold animate-pulse">NÍVEL MÁXIMO ATINGIDO</span>
-                    )}
-                </div>
-
-                <div className="relative pt-1">
-                    <div className="flex mb-2 items-center justify-between text-[8px] font-semibold text-gray-400 uppercase tracking-tighter">
-                        <span className={points < 500 ? 'text-primary font-bold' : ''}>Select</span>
-                        <span className={points >= 500 && points < 1500 ? 'text-primary font-bold' : ''}>Prime</span>
-                        <span className={points >= 1500 && points < 3000 ? 'text-gold-dark font-bold' : ''}>Signature</span>
-                        <span className={points >= 3000 ? 'text-purple-600 font-bold' : ''}>Privé</span>
-                    </div>
-
-                    <div className="overflow-hidden h-1.5 mb-4 text-xs flex rounded-full bg-gray-200 dark:bg-zinc-800">
-                        <div
-                            className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary transition-all duration-1000"
-                            style={{ width: `${progressPercent}%` }}
-                        ></div>
-                    </div>
-
-                    <div className="flex justify-between px-1 -mt-[26px] relative z-0">
-                        <div className={`w-2 h-2 rounded-full border border-white dark:border-zinc-900 ${points >= 0 ? 'bg-primary' : 'bg-gray-300'}`}></div>
-                        <div className={`w-2 h-2 rounded-full border border-white dark:border-zinc-900 ${points >= 500 ? 'bg-primary' : 'bg-gray-300'}`}></div>
-                        <div className={`w-4 h-4 rounded-full border-2 border-white dark:border-zinc-900 -mt-1 ${points >= 1500 ? 'bg-gold' : 'bg-gray-300'}`}></div>
-                        <div className={`w-2 h-2 rounded-full border border-white dark:border-zinc-900 ${points >= 3000 ? 'bg-purple-600' : 'bg-gray-300'}`}></div>
-                    </div>
-                </div>
-            </section>
 
             {/* Experiences Section */}
             <section className="mt-10 relative z-10">
