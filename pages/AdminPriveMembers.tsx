@@ -3,6 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 
+// Helper to determine tier based on points (Matching PriveDashboard logic)
+const calculateTier = (points: number) => {
+    if (points >= 3000) return 'PRIVÉ';
+    if (points >= 1500) return 'SIGNATURE';
+    if (points >= 500) return 'PRIME';
+    return 'SELECT';
+};
+
 const AdminPriveMembers: React.FC = () => {
     const navigate = useNavigate();
     const [members, setMembers] = useState<any[]>([]);
@@ -64,7 +72,7 @@ const AdminPriveMembers: React.FC = () => {
 
     const filteredMembers = members.filter(m => {
         const matchesSearch = m.name?.toLowerCase().includes(search.toLowerCase());
-        const tier = m.current_tier ? m.current_tier.toUpperCase() : 'SELECT'; // Default to SELECT if null
+        const tier = calculateTier(m.lash_points || 0);
         const matchesTier = activeFilter === 'TODOS' || tier === activeFilter;
         return matchesSearch && matchesTier;
     });
@@ -151,7 +159,7 @@ const AdminPriveMembers: React.FC = () => {
                                     <div>
                                         <h3 className="font-display font-bold text-lg text-white leading-tight">{member.name}</h3>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-[9px] uppercase font-black text-white/40 tracking-widest">{member.current_tier || 'SELECT'}</span>
+                                            <span className="text-[9px] uppercase font-black text-white/40 tracking-widest">{calculateTier(member.lash_points || 0)}</span>
                                             <span className="w-1 h-1 rounded-full bg-white/20"></span>
                                             <span className="text-[9px] text-white/30 uppercase tracking-wide font-medium">Desde {new Date(member.created_at || Date.now()).getFullYear()}</span>
                                         </div>
