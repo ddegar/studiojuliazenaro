@@ -5,6 +5,9 @@ import { supabase } from '../services/supabase';
 
 const PriveDashboard: React.FC = () => {
     const navigate = useNavigate();
+    const [points, setPoints] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [memberSince, setMemberSince] = useState('');
     const [levels, setLevels] = useState<any[]>([]);
 
     useEffect(() => {
@@ -101,12 +104,49 @@ const PriveDashboard: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark text-primary dark:text-gray-100 font-sans selection:bg-gold/30 pb-12 relative overflow-hidden">
-            {/* ... Header and Main Card ... */}
-            {/* Re-using context, just need to change the implementation details above the Return logic mostly 
-            wait, replace_file_content needs me to replace the chunk.
-            So I will replace from `const [points` down to the end of `Progress Section` opening.
-        */}
+            {/* Progress Section */}
+            <section className="px-6 -mt-12 relative z-10">
+                <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 shadow-xl border border-gray-100 dark:border-zinc-800">
+                    <div className="flex flex-col items-center text-center">
+                        <div className="w-20 h-20 rounded-full bg-gold/10 flex items-center justify-center mb-4">
+                            <span className="material-symbols-outlined text-4xl text-gold-dark">diamond</span>
+                        </div>
+                        <h2 className="text-3xl font-display font-bold text-primary dark:text-white capitalize">{currentTier.name}</h2>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mt-1">Nível Atual JZ Privé</p>
 
+                        <div className="mt-8 w-full space-y-6">
+                            <div className="flex justify-between items-end">
+                                <div className="text-left">
+                                    <p className="text-[10px] uppercase tracking-widest text-gray-400 font-black mb-1">Seu Balance</p>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-3xl font-display font-bold text-primary dark:text-white">{points.toLocaleString()}</span>
+                                        <span className="text-[10px] font-bold text-gray-400">PTS</span>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] uppercase tracking-widest text-gray-400 font-black mb-1">Membro Desde</p>
+                                    <p className="text-sm font-bold text-primary dark:text-white">{memberSince || '---'}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                {renderCheckpoints()}
+                                <div className="h-2 w-full bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-gold transition-all duration-1000 ease-out"
+                                        style={{ width: `${progressPercent}%` }}
+                                    ></div>
+                                </div>
+                                {!isMaxLevel && (
+                                    <p className="text-[10px] text-gray-500 font-medium">
+                                        Faltam <span className="text-primary dark:text-white font-bold">{pointsToNext} pontos</span> para o nível <span className="text-gold-dark font-bold">{nextTierName}</span>
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* Experiences Section */}
             <section className="mt-10 relative z-10">

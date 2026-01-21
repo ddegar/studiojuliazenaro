@@ -31,19 +31,17 @@ const AdminShellPrive: React.FC = () => {
         <div className="min-h-screen bg-[#0a0c0a] text-white font-sans relative">
 
             {/* Mobile/Desktop Header Trigger */}
-            <header className="fixed top-0 left-0 right-0 h-16 bg-[#0a0c0a]/80 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-6 z-40">
-                <div className="flex items-center gap-4">
+            <header className="fixed top-0 left-0 right-0 h-20 bg-[#0a0c0a]/90 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-8 z-40">
+                <div className="flex items-center gap-8">
                     <button
                         onClick={() => setIsMenuOpen(true)}
-                        className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                     >
-                        <span className="material-symbols-outlined">menu</span>
+                        <span className="material-symbols-outlined text-3xl">menu</span>
                     </button>
-                    <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-md bg-gold-dark flex items-center justify-center text-slate-900">
-                            <span className="material-symbols-outlined text-sm">diamond</span>
-                        </div>
-                        <span className="font-display font-medium text-sm tracking-wide">JZ Privé Admin</span>
+                    <div className="flex items-center gap-4">
+                        <span className="material-symbols-outlined text-[#C5A059] text-xl opacity-40">diamond</span>
+                        <span className="font-display font-medium text-lg tracking-tight text-white">JZ Privé Admin</span>
                     </div>
                 </div>
             </header>
