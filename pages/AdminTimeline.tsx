@@ -81,7 +81,7 @@ const AdminTimeline: React.FC = () => {
             `)
             .eq('professional_id', selectedProId)
             .eq('date', date)
-            .neq('status', 'cancelled')
+            .not('status', 'in', '("cancelled", "cancelled_by_user")')
             .order('start_time');
 
          if (error) throw error;
@@ -221,21 +221,22 @@ const AdminTimeline: React.FC = () => {
                }
             }
 
-            // C. FIRST COMPLETION NOTIFICATION
+            // C. FIRST COMPLETION NOTIFICATION (IMPROVED)
             if (apt.user_id) {
-               const { count, error: countError } = await supabase
-                  .from('appointments')
-                  .select('*', { count: 'exact', head: true })
-                  .eq('user_id', apt.user_id)
-                  .eq('status', 'completed');
-               
-               if (!countError && count === 1) { 
+               // Check if user already has an evaluation notification or testimonial
+               const [{ data: evaluationNotif }, { data: existingTestimonial }] = await Promise.all([
+                  supabase.from('notifications').select('id').eq('user_id', apt.user_id).eq('type', 'evaluation').limit(1).single(),
+                  supabase.from('testimonials').select('id').eq('user_id', apt.user_id).limit(1).single()
+               ]);
+
+               if (!evaluationNotif && !existingTestimonial) {
                   await supabase.from('notifications').insert({
                      user_id: apt.user_id,
                      title: 'Sua Experiência ✨',
                      message: 'Como foi seu primeiro atendimento conosco? Sua opinião vale pontos!',
                      link: '/evaluation',
-                     icon: 'star_rate'
+                     icon: 'star_rate',
+                     type: 'evaluation'
                   });
                }
             }
