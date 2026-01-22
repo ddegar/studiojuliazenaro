@@ -51,7 +51,8 @@ const Booking: React.FC = () => {
             avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
             start_hour: p.start_hour || '08:00',
             end_hour: p.end_hour || '22:00',
-            closed_days: p.closed_days || '[0]'
+            closed_days: p.closed_days || '[0]',
+            working_hours: p.working_hours || null
           }));
 
           // Sort: Julia First
