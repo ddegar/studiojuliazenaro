@@ -99,12 +99,12 @@ const Booking: React.FC = () => {
   useEffect(() => {
     if (selection.date && selection.professional) {
       const fetchAppts = async () => {
-        // Fetch ALL appointments/blocks for the day for this professional
+        // Fetch only ACTIVE appointments/blocks (ignore cancelled/no_show)
         const { data } = await supabase.from('appointments')
           .select('start_time, end_time')
           .eq('date', selection.date)
           .eq('professional_id', selection.professional!.id)
-          .in('status', ['scheduled', 'blocked', 'rescheduled', 'confirmed', 'BLOCKED']); // Only these occupy time
+          .not('status', 'in', '("cancelled", "cancelled_by_user", "no_show")');
 
         if (data) {
           // Convert times to minutes from midnight for easy comparison
@@ -136,14 +136,17 @@ const Booking: React.FC = () => {
     const dayOfWeek = new Date(selection.date + 'T00:00:00').getDay();
     const dayConfig = p.working_hours?.[dayOfWeek];
 
+    // IF THE DAY IS CLOSED, NO SLOTS AVAILABLE
+    if (dayConfig?.closed === true) return [];
+
     const startRange = dayConfig?.start || p.start_hour || configs.business_hours_start || '08:00';
     const endRange = dayConfig?.end || p.end_hour || configs.business_hours_end || '22:00';
 
     const [startH, startM = 0] = startRange.split(':').map(Number);
     const [endH, endM = 0] = endRange.split(':').map(Number);
 
-    // The "End Time" is now the "Last possible start time" minus service duration
-    const businessEndMinutes = (endH * 60 + endM) - serviceDuration;
+    // The user wants the LAST slot to start at the end time (e.g. 20:00)
+    const businessEndMinutes = (endH * 60 + endM);
     const startMinutesBound = startH * 60 + startM;
 
     // Avoid invalid range
@@ -442,8 +445,8 @@ const Booking: React.FC = () => {
                   const { error } = await supabase.from('appointments').insert(payload);
 
                   if (error) {
-                    if (error.message.includes('overlap')) {
-                      alert("Desculpe, este horário acabou de ser reservado por outra pessoa. Por favor, atualize e tente outro.");
+                    if (error.message.includes('overlap') || error.message.includes('no_overlap')) {
+                      alert("Este horário já está ocupado ou entra em conflito com outro agendamento. Por favor, escolha outro horário.");
                     } else {
                       throw error;
                     }

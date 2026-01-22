@@ -136,12 +136,21 @@ const AdminBookingForm: React.FC = () => {
             notes: form.type === 'BLOCK' ? (form.notes.split('|')[0]) : form.notes
          });
 
-         if (error) throw error;
+         if (error) {
+            if (error.message.includes('no_overlap') || error.message.includes('overlap')) {
+               alert("ERRO: Este horário entra em conflito com outro agendamento ou bloqueio já existente para esta profissional.");
+               setIsSubmitting(false);
+               return;
+            }
+            throw error;
+         }
 
          alert(form.type === 'BLOCK' ? 'Agenda bloqueada com sucesso!' : 'Agendamento cadastrado com sucesso!');
          navigate('/admin/agenda');
       } catch (err: any) {
-         alert('Erro ao salvar: ' + err.message);
+         if (err.message) { // Only show if not handled above
+            alert('Erro ao salvar: ' + err.message);
+         }
       } finally {
          setIsSubmitting(false);
       }

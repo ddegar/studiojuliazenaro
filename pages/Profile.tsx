@@ -9,7 +9,7 @@ const Profile: React.FC = () => {
   const [profile, setProfile] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', phone: '', profile_pic: '' });
+  const [editForm, setEditForm] = useState({ name: '', phone: '', profile_pic: '', email: '', cpf: '' });
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
 
@@ -23,7 +23,9 @@ const Profile: React.FC = () => {
           setEditForm({
             name: data.name || '',
             phone: data.phone || '',
-            profile_pic: data.profile_pic || ''
+            profile_pic: data.profile_pic || '',
+            email: data.email || '',
+            cpf: data.cpf || ''
           });
         }
       } else {
@@ -71,16 +73,29 @@ const Profile: React.FC = () => {
   const handleSave = async () => {
     try {
       setLoading(true);
+
+      // 1. Update Email in Auth if changed
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && editForm.email !== profile.email) {
+        const { error: authError } = await supabase.auth.updateUser({ email: editForm.email });
+        if (authError) throw authError;
+      }
+
+      // 2. Update Public Profile
       const { error } = await supabase
         .from('profiles')
         .update({
           name: editForm.name,
           phone: editForm.phone,
-          profile_pic: editForm.profile_pic
+          profile_pic: editForm.profile_pic,
+          email: editForm.email,
+          cpf: editForm.cpf.replace(/\D/g, '') // Save clean CPF
         })
         .eq('id', profile.id);
 
       if (error) throw error;
+
+      alert('Perfil atualizado com sucesso! ✨' + (editForm.email !== profile.email ? ' Verifique seu novo e-mail para confirmar a alteração.' : ''));
       await fetchProfile();
       setIsEditing(false);
     } catch (err: any) {
@@ -146,6 +161,22 @@ const Profile: React.FC = () => {
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Celular</label>
                   <input className="w-full h-14 bg-gray-50 border-transparent rounded-2xl px-6 text-sm" value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">E-mail</label>
+                  <input className="w-full h-14 bg-gray-50 border-transparent rounded-2xl px-6 text-sm" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">CPF</label>
+                  <input
+                    className="w-full h-14 bg-gray-50 border-transparent rounded-2xl px-6 text-sm"
+                    value={editForm.cpf}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 11);
+                      setEditForm({ ...editForm, cpf: val });
+                    }}
+                    placeholder="000.000.000-00"
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">URL da Foto</label>

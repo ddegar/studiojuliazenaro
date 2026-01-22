@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from 'recharts';
 import { supabase } from '../services/supabase';
 import { UserRole } from '../types';
+import Logo from '../components/Logo';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -215,10 +216,7 @@ const AdminDashboard: React.FC = () => {
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-[70] w-72 bg-[#1c1f24] border-r border-white/5 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 flex items-center justify-between border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <div className="size-8 rounded-full bg-accent-gold flex items-center justify-center text-primary font-bold">JZ</div>
-            <span className="font-display font-bold">Menu Admin</span>
-          </div>
+          <Logo size="sm" forceLight={true} />
           <button onClick={() => setSidebarOpen(false)}><span className="material-symbols-outlined">close</span></button>
         </div>
         <nav className="p-4 space-y-1 overflow-y-auto no-scrollbar">
@@ -245,6 +243,20 @@ const AdminDashboard: React.FC = () => {
             );
           })}
         </nav>
+        <div className="mt-auto p-4 border-t border-white/5">
+          <button
+            onClick={async () => {
+              if (window.confirm('Deseja realmente sair?')) {
+                await supabase.auth.signOut();
+                navigate('/login');
+              }
+            }}
+            className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all font-bold"
+          >
+            <span className="material-symbols-outlined">logout</span>
+            <span className="text-sm tracking-tight">Sair do Painel</span>
+          </button>
+        </div>
       </aside>
 
       {/* Header */}

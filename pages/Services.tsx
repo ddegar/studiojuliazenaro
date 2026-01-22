@@ -22,13 +22,23 @@ const Services: React.FC = () => {
         ]);
 
         if (prosRes.data) {
-          setProfessionals(prosRes.data.map((p: any) => ({
+          const mappedPros = prosRes.data.map((p: any) => ({
             id: p.id,
             name: p.name,
             role: p.role || 'Especialista',
             avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
-            active: p.active
-          })));
+            active: p.active,
+            dbRole: p.role // store the real role for sorting
+          }));
+
+          // Sort: MASTER_ADMIN first, then by name
+          const sortedPros = mappedPros.sort((a, b) => {
+            if (a.name.toLowerCase().includes('julia zenaro')) return -1;
+            if (b.name.toLowerCase().includes('julia zenaro')) return 1;
+            return a.name.localeCompare(b.name);
+          });
+
+          setProfessionals(sortedPros);
         }
 
         if (servsRes.data) {

@@ -141,7 +141,12 @@ const AdminTimeline: React.FC = () => {
    };
 
    const handleStatusUpdate = async (apt: any, newStatus: string) => {
-      if (!window.confirm(`Tem certeza que deseja marcar como ${newStatus === 'completed' ? 'Finalizado' : 'Não Compareceu'}?`)) return;
+      const statusLabels: Record<string, string> = {
+         'completed': 'Finalizado',
+         'no_show': 'Não Compareceu',
+         'cancelled': 'Cancelado'
+      };
+      if (!window.confirm(`Tem certeza que deseja marcar como ${statusLabels[newStatus] || newStatus}?`)) return;
       try {
          // 1. Update Appointment Status
          const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', apt.id);
@@ -412,11 +417,14 @@ const AdminTimeline: React.FC = () => {
                                                    <button onClick={() => handleWhatsApp(apt)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-[#25D366] transition-colors">
                                                       <span className="material-symbols-outlined !text-[18px]">chat_bubble</span>
                                                    </button>
-                                                   <button onClick={() => handleStatusUpdate(apt, 'completed')} className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all">
+                                                   <button onClick={() => handleStatusUpdate(apt, 'completed')} className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" title="Finalizar Atendimento">
                                                       <span className="material-symbols-outlined !text-[18px]">verified</span>
                                                    </button>
-                                                   <button onClick={() => handleStatusUpdate(apt, 'no_show')} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-rose-500 hover:bg-rose-500 hover:text-white transition-all">
+                                                   <button onClick={() => handleStatusUpdate(apt, 'no_show')} className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all" title="Não Compareceu">
                                                       <span className="material-symbols-outlined !text-[18px]">person_off</span>
+                                                   </button>
+                                                   <button onClick={() => handleStatusUpdate(apt, 'cancelled')} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-gray-400 hover:bg-red-600 hover:text-white transition-all" title="Cancelar Agendamento">
+                                                      <span className="material-symbols-outlined !text-[18px]">close</span>
                                                    </button>
                                                 </>
                                              )}

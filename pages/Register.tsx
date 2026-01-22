@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import Logo from '../components/Logo';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -92,18 +93,7 @@ const Register: React.FC = () => {
           <span className="material-symbols-outlined text-lg">chevron_left</span>
         </button>
 
-        {/* Logo Studio Julia Zenaro + JZ Privé */}
-        <div className="flex flex-col items-center">
-          {/* Ícone estrela */}
-          <div className="w-10 h-10 rounded-full border-2 border-primary/20 flex items-center justify-center mb-2">
-            <span className="text-accent-gold text-lg">★</span>
-          </div>
-          {/* Texto principal */}
-          <span className="text-[13px] font-bold tracking-[0.15em] text-primary leading-tight text-center">STUDIO JULIA</span>
-          <span className="text-[13px] font-bold tracking-[0.15em] text-primary leading-tight text-center">ZENARO</span>
-          {/* Subtexto JZ Privé */}
-          <span className="text-[9px] tracking-[0.25em] text-gray-400 font-medium mt-1">JZ PRIVÉ</span>
-        </div>
+        <Logo size="md" className="mt-2" />
 
         <div className="w-10"></div>
       </header>

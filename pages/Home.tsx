@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import JZPriveCard from '../components/JZPriveCard';
 
 const Home: React.FC = () => {
   const { subscribeToPush, permission } = usePushNotifications();
@@ -11,6 +12,7 @@ const Home: React.FC = () => {
   const [userName, setUserName] = useState('Visitante');
   const [profileImg, setProfileImg] = useState('');
   const [nextAppt, setNextAppt] = useState<any>(null);
+  const [isApptToday, setIsApptToday] = useState(false);
   const [stories, setStories] = useState<any[]>([]);
 
   useEffect(() => {
@@ -48,7 +50,11 @@ const Home: React.FC = () => {
           setUserName(profileRes.data.name?.split(' ')[0] || 'Visitante');
           setProfileImg(profileRes.data.profile_pic || `https://ui-avatars.com/api/?name=${profileRes.data.name}&background=random`);
 
-          const today = new Date().toISOString().split('T')[0];
+          // Get today's date in local YYYY-MM-DD format
+          const now = new Date();
+          const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          const nowISO = now.toISOString();
+
           const { data: appts } = await supabase.from('appointments')
             .select(`
                       id,
@@ -56,17 +62,19 @@ const Home: React.FC = () => {
                       time,
                       status,
                       service_name,
-                      professional_name
+                      professional_name,
+                      start_time
                   `)
             .eq('user_id', user.id)
-            .gte('date', today)
-            .neq('status', 'CANCELLED')
-            .order('date', { ascending: true })
-            .order('time', { ascending: true })
+            .gte('start_time', nowISO) // Better: only show future appointments
+            .in('status', ['CONFIRMED', 'PENDING', 'scheduled'])
+            .order('start_time', { ascending: true })
             .limit(1);
 
           if (appts && appts.length > 0) {
             setNextAppt(appts[0]);
+            // Check if appointment is TODAY
+            setIsApptToday(appts[0].date === today);
           }
         }
       } catch (err) {
@@ -140,25 +148,41 @@ const Home: React.FC = () => {
           </div>
         </section>
 
-        {/* Check-in Emocional */}
-        <div
-          onClick={() => navigate('/checkin')}
-          className="bg-primary p-4 rounded-[24px] text-white flex items-center justify-between shadow-xl shadow-primary/10 active:scale-[0.98] transition-transform cursor-pointer"
-        >
-          <div className="flex items-center gap-4">
-            <div className="size-10 rounded-xl bg-white/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-accent-gold !text-2xl">location_on</span>
-            </div>
-            <div>
-              <p className="text-[8px] font-black uppercase tracking-widest opacity-60">No Studio?</p>
-              <p className="text-sm font-bold">Seja bem-vinda ✨</p>
+        {/* Check-in VIP - ONLY shows on appointment day */}
+        {isApptToday && nextAppt && (
+          <div
+            onClick={() => navigate('/checkin')}
+            className="relative bg-primary p-5 rounded-[24px] text-white shadow-xl shadow-primary/20 active:scale-[0.98] transition-transform cursor-pointer overflow-hidden"
+          >
+            {/* Shimmer effect */}
+            <div
+              className="absolute inset-0 opacity-20 pointer-events-none"
+              style={{
+                background: 'linear-gradient(90deg, transparent 0%, rgba(212,175,55,0.3) 50%, transparent 100%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 3s infinite linear'
+              }}
+            />
+            <style>{`@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }`}</style>
+
+            <div className="flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="size-12 rounded-2xl bg-accent-gold/20 flex items-center justify-center border border-accent-gold/30">
+                  <span className="material-symbols-outlined text-accent-gold !text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-accent-gold mb-0.5">Chegou ao Studio? ✨</p>
+                  <p className="text-base font-display font-bold">Sua experiência VIP te aguarda</p>
+                  <p className="text-[10px] text-white/60 mt-0.5">Toque para realizar seu check-in</p>
+                </div>
+              </div>
+              <span className="material-symbols-outlined text-white/40 !text-xl">arrow_forward</span>
             </div>
           </div>
-          <span className="material-symbols-outlined opacity-40 !text-xl">east</span>
-        </div>
+        )}
 
-        {/* Próximo Atendimento */}
-        {nextAppt ? (
+        {/* Próximo Atendimento - Only shows when there's an active appointment */}
+        {nextAppt && (
           <div onClick={() => navigate('/history')} className="relative overflow-hidden rounded-[32px] bg-white p-5 premium-shadow border border-accent-gold/5 group cursor-pointer active:scale-[0.99] transition-all">
             <div className="flex items-center justify-between">
               <div className="space-y-1.5 flex-1">
@@ -180,12 +204,10 @@ const Home: React.FC = () => {
               <span className="material-symbols-outlined !text-sm text-gray-300">chevron_right</span>
             </div>
           </div>
-        ) : (
-          <div className="bg-white p-5 rounded-[24px] border border-gray-100 flex items-center justify-between opacity-80">
-            <p className="text-xs text-gray-500">Nenhum agendamento futuro.</p>
-            <button onClick={() => navigate('/services')} className="text-[10px] font-bold text-primary underline">Agendar</button>
-          </div>
         )}
+
+        {/* JZ Privé Club Card - New Component */}
+        <JZPriveCard variant="compact" />
 
         {/* Botão Agendar Principal */}
         <div onClick={() => navigate('/services')} className="relative overflow-hidden rounded-[28px] bg-primary-dark p-6 text-white shadow-xl cursor-pointer active:scale-[0.98] transition-transform group">
@@ -201,45 +223,35 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* Grid de Links Rápidos */}
-        <div className="grid grid-cols-2 gap-3">
-          <div onClick={() => navigate('/profile/refer')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm flex flex-col gap-2 cursor-pointer active:scale-95 transition-all">
-            <div className="size-9 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
+        {/* Grid de Links Rápidos - 3 colunas */}
+        <div className="grid grid-cols-3 gap-3">
+          <div onClick={() => navigate('/profile/refer')} className="bg-white p-4 rounded-[20px] border border-gray-100 shadow-sm flex flex-col items-center gap-3 cursor-pointer active:scale-95 transition-all">
+            <div className="size-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
               <span className="material-symbols-outlined !text-xl">diversity_3</span>
             </div>
-            <div>
-              <h4 className="font-bold text-xs text-primary">Indique Amigas</h4>
-              <p className="text-[8px] text-accent-gold font-black uppercase tracking-widest">Ganhe pontos 💖</p>
+            <div className="text-center">
+              <h4 className="font-bold text-[11px] text-primary leading-tight">Indique Amigas</h4>
+              <p className="text-[8px] text-accent-gold font-black uppercase tracking-wide mt-0.5">Ganhe 💖</p>
             </div>
           </div>
 
-          <div onClick={() => navigate('/testimonials')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm flex flex-col gap-2 cursor-pointer active:scale-95 transition-all">
-            <div className="size-9 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
+          <div onClick={() => navigate('/testimonials')} className="bg-white p-4 rounded-[20px] border border-gray-100 shadow-sm flex flex-col items-center gap-3 cursor-pointer active:scale-95 transition-all">
+            <div className="size-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
               <span className="material-symbols-outlined !text-xl">reviews</span>
             </div>
-            <div>
-              <h4 className="font-bold text-xs text-primary">Depoimentos</h4>
-              <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest">Prova social</p>
+            <div className="text-center">
+              <h4 className="font-bold text-[11px] text-primary leading-tight">Depoimentos</h4>
+              <p className="text-[8px] text-gray-400 font-medium uppercase tracking-wide mt-0.5">Inspire-se</p>
             </div>
           </div>
 
-          <div onClick={() => navigate('/profile/points')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm flex flex-col gap-2 cursor-pointer active:scale-95 transition-all">
-            <div className="size-9 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined !text-xl">stars</span>
-            </div>
-            <div>
-              <h4 className="font-bold text-xs text-primary">Zenaro Credits</h4>
-              <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest">Seus prêmios</p>
-            </div>
-          </div>
-
-          <div onClick={() => navigate('/faq')} className="bg-white p-4 rounded-[24px] border border-gray-100 shadow-sm flex flex-col gap-2 cursor-pointer active:scale-95 transition-all">
-            <div className="size-9 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
+          <div onClick={() => navigate('/faq')} className="bg-white p-4 rounded-[20px] border border-gray-100 shadow-sm flex flex-col items-center gap-3 cursor-pointer active:scale-95 transition-all">
+            <div className="size-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
               <span className="material-symbols-outlined !text-xl">help_center</span>
             </div>
-            <div>
-              <h4 className="font-bold text-xs text-primary">Dúvidas</h4>
-              <p className="text-[8px] text-gray-400 font-black uppercase tracking-widest">Fale conosco</p>
+            <div className="text-center">
+              <h4 className="font-bold text-[11px] text-primary leading-tight">Dúvidas</h4>
+              <p className="text-[8px] text-gray-400 font-medium uppercase tracking-wide mt-0.5">Suporte</p>
             </div>
           </div>
         </div>

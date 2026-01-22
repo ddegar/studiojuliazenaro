@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -94,102 +93,102 @@ const AdminPriveBalanceRules: React.FC = () => {
         }
     };
 
+    const getIconByCode = (code: string) => {
+        switch (code) {
+            case 'BASE_GENERATION': return 'payments';
+            case 'BIRTHDAY': return 'card_giftcard';
+            case 'REFERRAL': return 'person_add';
+            case 'CHECKIN': return 'location_on';
+            default: return 'stars';
+        }
+    };
+
     return (
-        <div className="animate-fade-in pb-32 max-w-4xl mx-auto">
+        <div className="flex flex-col min-h-screen bg-[#0a0c0a] text-white font-sans overflow-x-hidden">
             {/* Header */}
-            <header className="flex items-center justify-between mb-12 sticky top-0 z-30 py-6 bg-[#0a0c0a]/90 backdrop-blur-xl px-4 md:px-0 border-b border-white/5 md:border-none">
-                <div className="flex items-center gap-6">
-                    <button onClick={() => navigate('/admin/jz-prive')} className="material-symbols-outlined text-white/40 hover:text-white transition-colors">arrow_back</button>
-                    <div className="flex items-baseline gap-4">
-                        <div>
-                            <h1 className="text-2xl font-display font-medium text-white tracking-tight">JZ Privé Balance</h1>
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-white/20 font-black">Regras de Geração</p>
-                        </div>
+            <header className="sticky top-0 z-50 bg-[#0a0c0a]/80 backdrop-blur-xl border-b border-white/5 px-6 py-6 transition-all">
+                <div className="max-w-4xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-6">
                         <button
-                            onClick={() => setIsCreatingRule(true)}
-                            className="text-[#059669] text-[9px] font-black uppercase tracking-[0.2em] hover:opacity-80 transition-opacity"
+                            onClick={() => navigate('/admin/jz-prive')}
+                            className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-all"
                         >
-                            + Nova Regra
+                            <span className="material-symbols-outlined">arrow_back</span>
                         </button>
+                        <div>
+                            <h1 className="text-xl md:text-2xl font-display font-medium text-white tracking-tight">Regras de Saldo</h1>
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-[#C5A059] font-bold mt-0.5">JZ PRIVÉ CLUB</p>
+                        </div>
                     </div>
+                    <button
+                        onClick={() => setIsCreatingRule(true)}
+                        className="bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] px-6 py-3 rounded-full border border-emerald-500/20 transition-all"
+                    >
+                        + Nova Regra
+                    </button>
                 </div>
-                <button className="text-[#C5A059] text-[11px] font-black uppercase tracking-[0.3em] hover:text-white transition-colors">
-                    Salvar
-                </button>
             </header>
 
-            {/* Config Sections */}
-            <div className="space-y-16">
-                {/* Regras de Geração */}
-                <section>
-                    <div className="flex items-center justify-between mb-8 px-2">
-                        <div>
-                            <h2 className="text-2xl font-display font-medium text-white">Regras de Geração</h2>
-                            <p className="text-[10px] uppercase tracking-[0.15em] text-white/20 font-black">Configuração do Motor de Pontos</p>
-                        </div>
-                        <span className="material-symbols-outlined text-white/10 text-2xl">tune</span>
+            <main className="flex-1 w-full max-w-4xl mx-auto px-6 py-12 space-y-16 animate-fade-in">
+                {/* Generation Rules Section */}
+                <section className="space-y-8">
+                    <div className="flex items-center gap-4">
+                        <div className="size-1 w-12 bg-gradient-to-r from-[#C5A059] to-transparent rounded-full"></div>
+                        <h2 className="text-lg font-display text-white/90 uppercase tracking-[0.1em]">Configuração de Pontos</h2>
                     </div>
 
-                    <div className="bg-[#141814] rounded-[50px] border border-white/5 overflow-hidden">
+                    <div className="space-y-4">
                         {loading ? (
-                            <div className="p-20 flex justify-center"><div className="w-6 h-6 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin"></div></div>
+                            <div className="py-20 flex flex-col items-center gap-4 opacity-50">
+                                <div className="w-8 h-8 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin"></div>
+                                <p className="text-[10px] uppercase tracking-widest font-bold">Sincronizando regras...</p>
+                            </div>
                         ) : (
-                            <div className="divide-y divide-white/5">
+                            <div className="grid gap-4">
                                 {rules.map(rule => (
-                                    <div key={rule.id} className="p-10 flex items-center justify-between hover:bg-white/[0.01] transition-colors group">
-                                        <div className="flex items-center gap-10 flex-1">
-                                            {/* Icon Circle */}
-                                            <div className="w-16 h-16 rounded-full bg-[#0a0c0a] border border-white/5 flex items-center justify-center text-[#C5A059] shrink-0">
-                                                <span className="material-symbols-outlined text-3xl">
-                                                    {rule.code === 'BASE_GENERATION' ? 'payments' :
-                                                        rule.code === 'BIRTHDAY' ? 'card_giftcard' :
-                                                            rule.code === 'REFERRAL' ? 'person_add' :
-                                                                rule.code === 'CHECKIN' ? 'location_on' : 'camera_alt'}
+                                    <div
+                                        key={rule.id}
+                                        className="bg-[#141814] rounded-[32px] border border-white/5 p-6 hover:border-white/10 transition-all group relative overflow-hidden"
+                                    >
+                                        <div className="flex items-center gap-6 relative z-10">
+                                            {/* Icon */}
+                                            <div className="w-14 h-14 rounded-2xl bg-[#0a0c0a] border border-white/5 flex items-center justify-center text-[#C5A059] shrink-0 group-hover:scale-110 transition-transform">
+                                                <span className="material-symbols-outlined text-2xl">
+                                                    {getIconByCode(rule.code)}
                                                 </span>
                                             </div>
 
-                                            <div className="flex-1">
-                                                <div className="flex items-start gap-10 flex-1">
-                                                    {/* Icon Circle */}
-                                                    <div className="w-16 h-16 rounded-full bg-[#0a0c0a] border border-white/5 flex items-center justify-center text-[#C5A059] shrink-0 mt-1">
-                                                        <span className="material-symbols-outlined text-3xl">
-                                                            {rule.code === 'BASE_GENERATION' ? 'payments' :
-                                                                rule.code === 'BIRTHDAY' ? 'card_giftcard' :
-                                                                    rule.code === 'REFERRAL' ? 'person_add' :
-                                                                        rule.code === 'CHECKIN' ? 'location_on' : 'camera_alt'}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="flex-1">
-                                                        <div className="flex items-start justify-between">
-                                                            <div>
-                                                                <h3 className="text-xl font-display font-medium text-white tracking-wide mb-1 transition-colors group-hover:text-emerald-400">{rule.description}</h3>
-                                                                <p className="text-sm text-white/30 font-medium">
-                                                                    {rule.code === 'BASE_GENERATION' ? `1 pt a cada R$ ${10 / rule.points_reward} em serviços` :
-                                                                        `Bônus fixo de ${rule.points_reward} pts`}
-                                                                </p>
-                                                            </div>
-
-                                                            <div className="flex flex-col items-end gap-6">
-                                                                {/* iOS Style Toggle */}
-                                                                <button
-                                                                    onClick={() => handleToggleRule(rule)}
-                                                                    className={`w-14 h-7 rounded-full relative transition-all duration-300 ${rule.is_active ? 'bg-[#059669]' : 'bg-white/10 opacity-40'}`}
-                                                                >
-                                                                    <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all duration-300 shadow-sm ${rule.is_active ? 'left-8' : 'left-1'}`}></div>
-                                                                </button>
-
-                                                                <button
-                                                                    onClick={() => setEditingRule(rule)}
-                                                                    className="text-white/10 hover:text-[#C5A059] transition-colors"
-                                                                >
-                                                                    <span className="material-symbols-outlined text-2xl">edit</span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="text-lg font-display font-medium text-white mb-1 truncate">
+                                                    {rule.description}
+                                                </h3>
+                                                <p className="text-xs text-white/30 font-medium">
+                                                    {rule.code === 'BASE_GENERATION'
+                                                        ? `Gera 1 pt a cada R$ ${10 / rule.points_reward} pagos`
+                                                        : `Recompensa fixa de ${rule.points_reward} pts`}
+                                                </p>
                                             </div>
+
+                                            <div className="flex items-center gap-6">
+                                                <button
+                                                    onClick={() => handleToggleRule(rule)}
+                                                    className={`w-12 h-6 rounded-full relative transition-all duration-300 ${rule.is_active ? 'bg-emerald-500' : 'bg-white/10'}`}
+                                                >
+                                                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ${rule.is_active ? 'left-7' : 'left-1'}`}></div>
+                                                </button>
+
+                                                <button
+                                                    onClick={() => setEditingRule(rule)}
+                                                    className="w-10 h-10 rounded-xl bg-white/5 hover:bg-[#C5A059] hover:text-black flex items-center justify-center text-white/30 transition-all"
+                                                >
+                                                    <span className="material-symbols-outlined text-xl">edit</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Background Decor */}
+                                        <div className="absolute top-0 right-0 p-2 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
+                                            <span className="material-symbols-outlined !text-7xl">{getIconByCode(rule.code)}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -198,170 +197,130 @@ const AdminPriveBalanceRules: React.FC = () => {
                     </div>
                 </section>
 
-                {/* Performance de Campanhas */}
-                <section>
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 className="text-[17px] font-display font-medium text-white">Performance de Campanhas</h2>
-                            <p className="text-[10px] uppercase tracking-widest text-white/20 font-black">Gestão de Promoções Ativas</p>
+                {/* Performance Header */}
+                <section className="space-y-8">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="size-1 w-12 bg-gradient-to-r from-emerald-500 to-transparent rounded-full"></div>
+                            <h2 className="text-lg font-display text-white/90 uppercase tracking-[0.1em]">Campanhas Ativas</h2>
                         </div>
-                        <button onClick={() => navigate('/admin/jz-prive/campaigns')} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full transition-all group">
-                            <span className="material-symbols-outlined text-xs text-[#059669]">add</span>
-                            <span className="text-[9px] font-black uppercase tracking-widest text-white/60 group-hover:text-white">Nova</span>
+                        <button onClick={() => navigate('/admin/jz-prive/campaigns')} className="text-[#C5A059] text-[10px] font-black uppercase tracking-widest hover:underline flex items-center gap-2">
+                            Ver todas <span className="material-symbols-outlined !text-xs">arrow_forward</span>
                         </button>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {campaigns.length === 0 ? (
-                            <div className="p-12 border border-dashed border-white/5 rounded-[40px] text-center opacity-20 italic text-xs">
-                                Nenhuma campanha ativa no momento
+                            <div className="md:col-span-2 p-12 bg-[#141814] border border-dashed border-white/10 rounded-[40px] text-center opacity-40">
+                                <span className="material-symbols-outlined text-4xl mb-4 block">new_releases</span>
+                                <p className="text-sm italic">Nenhuma campanha de boost ativa no momento</p>
                             </div>
                         ) : campaigns.map(camp => (
-                            <div key={camp.id} className="relative bg-[#141814] rounded-[40px] border border-white/5 p-10 overflow-hidden group hover:border-[#C5A059]/20 transition-all">
-                                <div className="flex justify-between items-start relative z-10">
-                                    <div className="space-y-4">
-                                        <h3 className="text-2xl font-display font-medium text-white leading-tight max-w-[200px]">
-                                            {camp.internal_name}
-                                        </h3>
-                                        <p className="text-xs text-white/40 leading-relaxed max-w-[250px]">
-                                            {camp.external_body}
-                                        </p>
-                                    </div>
+                            <div key={camp.id} className="bg-[#141814] rounded-[40px] border border-white/5 p-8 relative overflow-hidden group">
+                                <div className="flex justify-between items-start mb-6">
                                     <div className="bg-[#C5A059]/10 border border-[#C5A059]/20 rounded-full px-3 py-1 flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059] animate-pulse"></div>
+                                        <div className="w-1 h-1 rounded-full bg-[#C5A059] animate-pulse"></div>
                                         <span className="text-[8px] font-black uppercase text-[#C5A059] tracking-widest">Ativa</span>
                                     </div>
+                                    <span className="text-4xl font-display font-bold text-[#C5A059] italic opacity-40 group-hover:opacity-100 transition-opacity">{camp.multiplier}x</span>
                                 </div>
-
-                                <div className="mt-12 flex items-end justify-between relative z-10">
-                                    <div className="flex flex-col">
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-5xl font-display font-bold text-[#C5A059] italic">{camp.multiplier}x</span>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-[#C5A059]/60">Boost</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-4 text-white/20">
-                                            <span className="material-symbols-outlined text-xs">calendar_today</span>
-                                            <span className="text-[9px] font-bold uppercase tracking-widest">12 Out - 14 Out</span>
-                                        </div>
-                                    </div>
-                                    <button className="pb-1 border-b border-[#C5A059] text-[9px] font-black uppercase tracking-[0.2em] text-[#C5A059]">
-                                        Status
-                                    </button>
+                                <h3 className="text-xl font-display font-medium text-white mb-2 leading-tight">{camp.internal_name}</h3>
+                                <p className="text-xs text-white/30 line-clamp-2 mb-6">{camp.external_body}</p>
+                                <div className="flex items-center gap-2 text-[9px] font-bold text-white/20 uppercase tracking-widest bg-black/20 p-3 rounded-2xl w-max">
+                                    <span className="material-symbols-outlined !text-xs">event</span>
+                                    Período Vigente
                                 </div>
-
-                                {/* Abstract Glow Effect */}
-                                <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-[#C5A059]/5 blur-[80px] rounded-full group-hover:bg-[#C5A059]/10 transition-all duration-1000"></div>
                             </div>
                         ))}
                     </div>
                 </section>
-
-                <div className="text-center pt-8">
-                    <button className="text-[9px] font-black uppercase tracking-[0.3em] text-[#C5A059] border-b border-[#C5A059]/30 pb-1">
-                        Histórico de Performance
-                    </button>
-                </div>
-            </div>
-
-            {/* Bottom Tab Navigation (Floating Concept) */}
-            {/* Bottom Tab Navigation (Floating Concept) */}
-            <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#141814]/90 backdrop-blur-xl border border-white/5 p-1.5 rounded-full flex gap-1 shadow-2xl z-40 w-max max-w-[95vw]">
-                {[
-                    { id: 'SALDO', label: 'Saldo', icon: 'payments' },
-                    { id: 'REGRAS', label: 'Regras', icon: 'tune' },
-                    { id: 'CAMPANHAS', label: 'Campanhas', icon: 'campaign' },
-                    { id: 'ADMIN', label: 'Admin', icon: 'admin_panel_settings' }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-1.5 px-4 md:px-6 py-2.5 rounded-full transition-all ${activeTab === tab.id ? 'bg-[#C5A059] text-[#0a0c0a]' : 'text-white/40 hover:text-white'}`}
-                    >
-                        <span className="material-symbols-outlined text-base md:text-lg">{tab.icon}</span>
-                        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest hidden sm:inline">{tab.label}</span>
-                    </button>
-                ))}
-            </nav>
+            </main>
 
             {/* Editing Modal */}
             {editingRule && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-fade-in">
                     <div className="bg-[#141814] w-full max-w-md rounded-[40px] border border-white/10 p-10 space-y-8 animate-scale-in">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-display font-medium text-white">Editar Regra</h2>
-                            <button onClick={() => setEditingRule(null)} className="material-symbols-outlined text-white/20 hover:text-white">close</button>
-                        </div>
+                        <header className="flex justify-between items-center">
+                            <h2 className="text-xl font-display font-medium text-white">Configurar Regra</h2>
+                            <button onClick={() => setEditingRule(null)} className="size-10 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </header>
                         <div className="space-y-6">
-                            <div className="group">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-white/20 block mb-3">Descrição</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#C5A059] px-2">Título da Ação</label>
                                 <input
                                     value={editingRule.description}
                                     onChange={e => setEditingRule({ ...editingRule, description: e.target.value })}
-                                    className="w-full bg-[#0a0c0a] border border-white/5 rounded-2xl py-4 px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
+                                    className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
                                 />
                             </div>
-                            <div className="group">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-white/20 block mb-3">Valor da Recompensa (Pontos)</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#C5A059] px-2">Pontuação base</label>
                                 <input
                                     type="number"
                                     value={editingRule.points_reward}
                                     onChange={e => setEditingRule({ ...editingRule, points_reward: e.target.value })}
-                                    className="w-full bg-[#0a0c0a] border border-white/5 rounded-2xl py-4 px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
+                                    className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none font-mono"
                                 />
+                                <p className="text-[9px] text-white/20 text-center italic mt-2">Valores decimais permitidos para regras de faturamento</p>
                             </div>
                         </div>
                         <button
                             onClick={handleUpdateRule}
-                            className="w-full bg-[#C5A059] text-black py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:scale-[1.02] transition-all"
+                            className="w-full bg-[#C5A059] text-black h-16 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-[#C5A059]/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
                         >
-                            Confirmar Alteração
+                            Salvar Alterações
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Creating Modal */}
+            {/* Creating Modal (simplified version check list) */}
             {isCreatingRule && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-fade-in">
                     <div className="bg-[#141814] w-full max-w-md rounded-[40px] border border-white/10 p-10 space-y-8 animate-scale-in">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-display font-medium text-white">Nova Regra</h2>
-                            <button onClick={() => setIsCreatingRule(false)} className="material-symbols-outlined text-white/20 hover:text-white">close</button>
-                        </div>
+                        <header className="flex justify-between items-center">
+                            <h2 className="text-xl font-display font-medium text-white">Nova Ação</h2>
+                            <button onClick={() => setIsCreatingRule(false)} className="size-10 rounded-full bg-white/5 flex items-center justify-center text-white/40 hover:text-white">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </header>
+
                         <div className="space-y-6">
-                            <div className="group">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-white/20 block mb-3">Código (Snake Case)</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#C5A059] px-2">Código do Evento</label>
                                 <input
-                                    placeholder="EX: CHECKIN_DOMINGO"
+                                    placeholder="EX: COMPARTI_STORY"
                                     value={newRule.code}
-                                    onChange={e => setNewRule({ ...newRule, code: e.target.value })}
-                                    className="w-full bg-[#0a0c0a] border border-white/5 rounded-2xl py-4 px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
+                                    onChange={e => setNewRule({ ...newRule, code: e.target.value.toUpperCase().replace(/\s+/g, '_') })}
+                                    className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
                                 />
                             </div>
-                            <div className="group">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-white/20 block mb-3">Descrição</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#C5A059] px-2">Descrição da Regra</label>
                                 <input
-                                    placeholder="Check-in especial aos domingos"
+                                    placeholder="Ganhe pontos ao postar story..."
                                     value={newRule.description}
                                     onChange={e => setNewRule({ ...newRule, description: e.target.value })}
-                                    className="w-full bg-[#0a0c0a] border border-white/5 rounded-2xl py-4 px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
+                                    className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
                                 />
                             </div>
-                            <div className="group">
-                                <label className="text-[9px] font-black uppercase tracking-widest text-white/20 block mb-3">Pontos</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[#C5A059] px-2">Pontuação</label>
                                 <input
                                     type="number"
                                     value={newRule.points_reward}
                                     onChange={e => setNewRule({ ...newRule, points_reward: Number(e.target.value) })}
-                                    className="w-full bg-[#0a0c0a] border border-white/5 rounded-2xl py-4 px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
+                                    className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-6 text-sm text-white focus:border-[#C5A059]/30 outline-none"
                                 />
                             </div>
                         </div>
                         <button
                             onClick={handleCreateRule}
-                            className="w-full bg-[#059669] text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:scale-[1.02] transition-all"
+                            className="w-full bg-emerald-500 text-black h-16 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
                         >
-                            Criar Regra
+                            Criar Nova Regra
                         </button>
                     </div>
                 </div>
@@ -371,4 +330,3 @@ const AdminPriveBalanceRules: React.FC = () => {
 };
 
 export default AdminPriveBalanceRules;
-

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import JZPriveCard from '../components/JZPriveCard';
 
 interface PointTransaction {
     id: string;
@@ -79,27 +80,9 @@ const PriveHistory: React.FC = () => {
             </header>
 
             <main className="pt-20 px-6 max-w-md mx-auto">
-                {/* Member Card */}
-                <div className={`${currentTier.color} p-8 rounded-[32px] shadow-2xl relative overflow-hidden mb-8 mt-4`}>
-                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
-                    <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-10">
-                            <div>
-                                <p className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-bold mb-1">Status de Membro</p>
-                                <h3 className="font-display italic text-lg text-gold-light">{currentTier.name}</h3>
-                            </div>
-                            <div className="size-10 rounded-full bg-white/10 flex items-center justify-center backdrop-blur-sm">
-                                <span className="material-symbols-outlined text-white/80">auto_awesome</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-bold mb-1 text-center">Saldo JZ Privé</p>
-                            <h2 className="text-4xl font-display font-bold text-white text-center">
-                                {points.toLocaleString()} <span className="text-xs font-medium opacity-60 ml-1">pts</span>
-                            </h2>
-                        </div>
-                    </div>
+                {/* Member Card - Using shared component */}
+                <div className="mb-8 mt-4">
+                    <JZPriveCard variant="full" />
                 </div>
 
                 {/* Filters */}
