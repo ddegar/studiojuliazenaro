@@ -12,6 +12,7 @@ const AdminSettings: React.FC = () => {
       { icon: 'groups', label: 'Gestão de Profissionais', desc: 'Cadastrar e gerenciar equipe', path: '/admin/professionals' },
       { icon: 'help', label: 'Gestão de FAQ', desc: 'Dúvidas frequentes das clientes', path: '/admin/faq' },
       { icon: 'lightbulb', label: 'Dicas de Cuidado', desc: 'Orientações Pré e Pós procedimento', path: '/admin/tips' },
+      { icon: 'reviews', label: 'Gestão de Depoimentos', desc: 'Aprovar e gerenciar feedbacks', path: '/admin/testimonials' },
       { icon: 'gavel', label: 'Políticas de Cancelamento', desc: 'Regras e taxas de reagendamento' },
       { icon: 'notifications_active', label: 'Configuração de Alertas', desc: 'Lembretes automáticos (Push/WhatsApp)' },
    ];

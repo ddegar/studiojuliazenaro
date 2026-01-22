@@ -209,16 +209,24 @@ const Home: React.FC = () => {
         {/* JZ Privé Club Card - New Component */}
         <JZPriveCard variant="compact" />
 
-        {/* Botão Agendar Principal */}
-        <div onClick={() => navigate('/services')} className="relative overflow-hidden rounded-[28px] bg-primary-dark p-6 text-white shadow-xl cursor-pointer active:scale-[0.98] transition-transform group">
-          <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="space-y-1">
-              <h3 className="text-xl font-display font-bold tracking-tight">Novo Agendamento</h3>
-              <p className="text-white/60 text-[9px] font-black uppercase tracking-widest">Encontre seu horário perfeito ✨</p>
-            </div>
-            <div className="bg-accent-gold p-3.5 rounded-full shadow-lg ring-4 ring-white/5">
-              <span className="material-symbols-outlined text-primary text-2xl font-bold">calendar_add_on</span>
+        {/* Featured Card - Novo Agendamento Premium */}
+        <div className="relative overflow-hidden rounded-[32px] bg-white premium-shadow border border-accent-gold/5 group">
+          <div
+            className="w-full bg-center bg-no-repeat aspect-[16/10] bg-cover transition-transform duration-[2s] group-hover:scale-110"
+            style={{
+              backgroundImage: 'linear-gradient(to bottom, rgba(54, 89, 77, 0.1), rgba(54, 89, 77, 0.7)), url("https://lh3.googleusercontent.com/aida-public/AB6AXuAxlUGcpS4edabXPANz7RkbUoCpulA5LlKSZ0tUKhy4j6UNXPyz_-wsyT9xor4SH3SIO2KPIc9YAKXb92aUy4BsdS_Wwk8fxt8CLHfDxFc9B2THg34wCo9A3wjClPOnv-LUXnsridSexC8hpxLIhkQfoVrsZf2qg9ZkUgD-UEchyOBaRJmECZf_S5YfhHoehhzlKoZT8zz-caKC54zCypzc-vOhjfTQQ-5HPg4x8Ivz0f7X52dI3r4ke6H3NOTLaRnWYJiBvtt7Fp8")'
+            }}
+          >
+            <div className="absolute inset-0 p-8 flex flex-col justify-end">
+              <h4 className="text-white text-2xl font-display font-bold mb-2 drop-shadow-lg">Realce sua beleza natural</h4>
+              <p className="text-white/90 text-sm mb-6 max-w-[85%] leading-relaxed font-black uppercase tracking-wider text-[9px]">Transforme seu olhar com nossas especialistas.</p>
+              <button
+                onClick={() => navigate('/services')}
+                className="bg-primary hover:bg-primary-dark text-white font-black uppercase tracking-[0.2em] py-4 px-6 rounded-2xl text-[10px] transition-all flex items-center justify-center gap-3 w-full shadow-2xl active:scale-95 border border-white/10"
+              >
+                <span className="material-symbols-outlined !text-lg">calendar_month</span>
+                Agende seu horário
+              </button>
             </div>
           </div>
         </div>

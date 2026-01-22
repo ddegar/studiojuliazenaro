@@ -104,99 +104,93 @@ const AdminPriveBalanceRules: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-[#0a0c0a] text-white font-sans overflow-x-hidden">
-            {/* Header */}
-            <header className="sticky top-0 z-50 bg-[#0a0c0a]/80 backdrop-blur-xl border-b border-white/5 px-6 py-6 transition-all">
-                <div className="max-w-4xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <button
-                            onClick={() => navigate('/admin/jz-prive')}
-                            className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-all"
-                        >
-                            <span className="material-symbols-outlined">arrow_back</span>
-                        </button>
-                        <div>
-                            <h1 className="text-xl md:text-2xl font-display font-medium text-white tracking-tight">Regras de Saldo</h1>
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-[#C5A059] font-bold mt-0.5">JZ PRIVÉ CLUB</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setIsCreatingRule(true)}
-                        className="bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] px-6 py-3 rounded-full border border-emerald-500/20 transition-all"
-                    >
-                        + Nova Regra
-                    </button>
-                </div>
-            </header>
+        <div className="flex flex-col min-h-screen bg-[#0a0c0a] text-white font-sans overflow-x-hidden pb-24">
 
-            <main className="flex-1 w-full max-w-4xl mx-auto px-6 py-12 space-y-16 animate-fade-in">
+            {/* Title Section */}
+            <div className="px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                    <button
+                        onClick={() => navigate('/admin/jz-prive')}
+                        className="size-12 rounded-full border border-white/10 flex items-center justify-center text-white/60 hover:text-white"
+                    >
+                        <span className="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <div>
+                        <h1 className="text-3xl font-display font-bold text-white leading-tight">Regras de<br />Saldo</h1>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#C5A059] font-black mt-1">JZ PRIVÉ CLUB</p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => setIsCreatingRule(true)}
+                    className="bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-[0.2em] text-[#C5A059] px-6 py-3 rounded-full hover:bg-white/10 transition-all"
+                >
+                    + NOVA REGRA
+                </button>
+            </div>
+
+            <main className="flex-1 px-6 py-8 space-y-12">
                 {/* Generation Rules Section */}
                 <section className="space-y-8">
                     <div className="flex items-center gap-4">
-                        <div className="size-1 w-12 bg-gradient-to-r from-[#C5A059] to-transparent rounded-full"></div>
-                        <h2 className="text-lg font-display text-white/90 uppercase tracking-[0.1em]">Configuração de Pontos</h2>
+                        <div className="h-[2px] w-12 bg-gradient-to-r from-[#C5A059] to-transparent rounded-full font-black"></div>
+                        <h2 className="text-[11px] font-black text-white/40 uppercase tracking-[0.3em]">Configuração de Pontos</h2>
                     </div>
 
                     <div className="space-y-4">
                         {loading ? (
                             <div className="py-20 flex flex-col items-center gap-4 opacity-50">
                                 <div className="w-8 h-8 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin"></div>
-                                <p className="text-[10px] uppercase tracking-widest font-bold">Sincronizando regras...</p>
+                                <p className="text-[10px] uppercase tracking-widest font-bold">Carregando...</p>
                             </div>
                         ) : (
                             <div className="grid gap-4">
                                 {rules.map(rule => (
                                     <div
                                         key={rule.id}
-                                        className="bg-[#141814] rounded-[32px] border border-white/5 p-6 hover:border-white/10 transition-all group relative overflow-hidden"
+                                        className="bg-[#141814]/40 rounded-[32px] border border-white/5 p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-5 group hover:border-[#C5A059]/20 transition-all"
                                     >
-                                        <div className="flex items-center gap-6 relative z-10">
-                                            {/* Icon */}
-                                            <div className="w-14 h-14 rounded-2xl bg-[#0a0c0a] border border-white/5 flex items-center justify-center text-[#C5A059] shrink-0 group-hover:scale-110 transition-transform">
-                                                <span className="material-symbols-outlined text-2xl">
+                                        {/* Icon & Title Group */}
+                                        <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
+                                            <div className="size-14 md:size-16 rounded-full bg-black/40 border border-white/5 flex items-center justify-center text-[#C5A059] shrink-0">
+                                                <span className="material-symbols-outlined text-xl md:text-2xl">
                                                     {getIconByCode(rule.code)}
                                                 </span>
                                             </div>
 
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-lg font-display font-medium text-white mb-1 truncate">
+                                                <h3 className="text-base md:text-lg font-display font-medium text-white mb-0.5 leading-tight truncate">
                                                     {rule.description}
                                                 </h3>
-                                                <p className="text-xs text-white/30 font-medium">
+                                                <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider leading-relaxed">
                                                     {rule.code === 'BASE_GENERATION'
-                                                        ? `Gera 1 pt a cada R$ ${10 / rule.points_reward} pagos`
-                                                        : `Recompensa fixa de ${rule.points_reward} pts`}
+                                                        ? <span className="flex flex-wrap items-center gap-1">Gera <span className="text-[#C5A059]">1 pt</span> a cada <span className="text-white">R$ {10 / (rule.points_reward || 1)}</span> pagos</span>
+                                                        : <span className="flex flex-wrap items-center gap-1">Recompensa fixa de <span className="text-[#C5A059]">{rule.points_reward} pts</span></span>}
                                                 </p>
-                                            </div>
-
-                                            <div className="flex items-center gap-6">
-                                                <button
-                                                    onClick={() => handleToggleRule(rule)}
-                                                    className={`w-12 h-6 rounded-full relative transition-all duration-300 ${rule.is_active ? 'bg-emerald-500' : 'bg-white/10'}`}
-                                                >
-                                                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ${rule.is_active ? 'left-7' : 'left-1'}`}></div>
-                                                </button>
-
-                                                <button
-                                                    onClick={() => setEditingRule(rule)}
-                                                    className="w-10 h-10 rounded-xl bg-white/5 hover:bg-[#C5A059] hover:text-black flex items-center justify-center text-white/30 transition-all"
-                                                >
-                                                    <span className="material-symbols-outlined text-xl">edit</span>
-                                                </button>
                                             </div>
                                         </div>
 
-                                        {/* Background Decor */}
-                                        <div className="absolute top-0 right-0 p-2 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
-                                            <span className="material-symbols-outlined !text-7xl">{getIconByCode(rule.code)}</span>
+                                        <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center gap-3 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                                            <button
+                                                onClick={() => handleToggleRule(rule)}
+                                                className={`w-11 h-6 rounded-full relative transition-all duration-500 ${rule.is_active ? 'bg-emerald-500' : 'bg-white/10'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-500 ${rule.is_active ? 'left-6 shadow-lg shadow-emerald-900/40' : 'left-1'}`}></div>
+                                            </button>
+
+                                            <button
+                                                onClick={() => setEditingRule(rule)}
+                                                className="size-8 rounded-full bg-white/5 flex items-center justify-center text-white/30 hover:bg-[#C5A059] hover:text-black transition-all"
+                                            >
+                                                <span className="material-symbols-outlined !text-sm">edit</span>
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
+
                             </div>
                         )}
                     </div>
                 </section>
-
                 {/* Performance Header */}
                 <section className="space-y-8">
                     <div className="flex items-center justify-between">
@@ -224,8 +218,8 @@ const AdminPriveBalanceRules: React.FC = () => {
                                     </div>
                                     <span className="text-4xl font-display font-bold text-[#C5A059] italic opacity-40 group-hover:opacity-100 transition-opacity">{camp.multiplier}x</span>
                                 </div>
-                                <h3 className="text-xl font-display font-medium text-white mb-2 leading-tight">{camp.internal_name}</h3>
-                                <p className="text-xs text-white/30 line-clamp-2 mb-6">{camp.external_body}</p>
+                                <h3 className="text-lg font-display font-medium text-white mb-2 leading-tight truncate">{camp.internal_name}</h3>
+                                <p className="text-[11px] text-white/40 line-clamp-2 mb-6 h-8">{camp.external_body}</p>
                                 <div className="flex items-center gap-2 text-[9px] font-bold text-white/20 uppercase tracking-widest bg-black/20 p-3 rounded-2xl w-max">
                                     <span className="material-symbols-outlined !text-xs">event</span>
                                     Período Vigente
@@ -235,6 +229,7 @@ const AdminPriveBalanceRules: React.FC = () => {
                     </div>
                 </section>
             </main>
+
 
             {/* Editing Modal */}
             {editingRule && (

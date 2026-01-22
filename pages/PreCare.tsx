@@ -10,12 +10,40 @@ const PreCare: React.FC = () => {
    const [loading, setLoading] = useState(true);
 
    useEffect(() => {
-      const fetchTips = async () => {
-         const { data } = await supabase.from('tips').select('*').eq('type', 'PRE_CARE').eq('active', true);
-         if (data) setTips(data);
-         setLoading(false);
+      const fetchFilteredTips = async () => {
+         try {
+            setLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data: appointments } = await supabase
+               .from('appointments')
+               .select('service_name, professional_id')
+               .eq('user_id', user.id)
+               .order('date', { ascending: false })
+               .limit(1);
+
+            const lastAppt = appointments?.[0];
+            const { data: allTips } = await supabase.from('tips').select('*').eq('type', 'PRE_CARE').eq('active', true);
+
+            if (allTips && lastAppt) {
+               const filtered = allTips.filter(tip => {
+                  const isGeneral = !tip.professional_id && !tip.linked_category;
+                  const matchesProfessional = tip.professional_id === lastAppt.professional_id;
+                  const matchesService = lastAppt.service_name?.toLowerCase().includes(tip.linked_category?.toLowerCase() || '___none___');
+                  return isGeneral || matchesProfessional || matchesService;
+               });
+               setTips(filtered);
+            } else if (allTips) {
+               setTips(allTips.filter(tip => !tip.professional_id && !tip.linked_category));
+            }
+         } catch (error) {
+            console.error(error);
+         } finally {
+            setLoading(false);
+         }
       };
-      fetchTips();
+      fetchFilteredTips();
    }, []);
 
    return (

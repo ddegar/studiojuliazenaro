@@ -7,37 +7,31 @@ import { supabase } from '../services/supabase';
 const AdminTipsManagement: React.FC = () => {
    const navigate = useNavigate();
    const [tips, setTips] = useState<Tip[]>([]);
+   const [professionals, setProfessionals] = useState<any[]>([]);
    const [editing, setEditing] = useState<Partial<Tip> | null>(null);
    const [loading, setLoading] = useState(true);
 
    useEffect(() => {
-      fetchTips();
+      fetchInitialData();
    }, []);
+
+   const fetchInitialData = async () => {
+      setLoading(true);
+      await Promise.all([fetchTips(), fetchProfessionals()]);
+      setLoading(false);
+   };
+
+   const fetchProfessionals = async () => {
+      const { data } = await supabase.from('professionals').select('id, name').eq('active', true);
+      if (data) setProfessionals(data);
+   };
 
    const fetchTips = async () => {
       try {
          setLoading(true);
-         const { data: { user: authUser } } = await supabase.auth.getUser();
-         const { data: profile } = await supabase.from('profiles').select('id, role').eq('id', authUser?.id).single();
-         const isMaster = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile?.role || '');
-
-         let { data, error } = await supabase.from('tips').select('*').order('created_at', { ascending: false });
+         // Simplified fetch: Show all tips for admins
+         const { data, error } = await supabase.from('tips').select('*').order('created_at', { ascending: false });
          if (error) throw error;
-
-         if (!isMaster) {
-            // Filter tips linked to services of this specific professional
-            const { data: pro } = await supabase.from('professionals').select('id').eq('email', authUser?.email).single();
-            if (pro) {
-               const { data: myServices } = await supabase.from('services').select('id').contains('professional_ids', [pro.id]);
-               const myServIds = myServices?.map(s => s.id) || [];
-               data = (data || []).filter(t =>
-                  Array.isArray(t.service_ids) && t.service_ids.some((id: string) => myServIds.includes(id))
-               );
-            } else {
-               data = [];
-            }
-         }
-
          setTips(data || []);
       } catch (error) {
          console.error('Error fetching tips:', error);
@@ -56,20 +50,24 @@ const AdminTipsManagement: React.FC = () => {
             type: editing.type || 'PRE_CARE',
             active: true,
             linked_category: editing.linked_category || null,
-            service_ids: editing.service_ids || []
-            // icon: editing.icon (future implementation)
+            service_ids: editing.service_ids || [],
+            professional_id: editing.professional_id || null,
+            icon: editing.icon || 'star'
          };
 
          if (editing.id) {
-            await supabase.from('tips').update(payload).eq('id', editing.id);
+            const { error: updateError } = await supabase.from('tips').update(payload).eq('id', editing.id);
+            if (updateError) throw updateError;
          } else {
-            await supabase.from('tips').insert(payload);
+            const { error: insertError } = await supabase.from('tips').insert(payload);
+            if (insertError) throw insertError;
          }
 
          await fetchTips();
          setEditing(null);
-      } catch (error) {
-         alert('Erro ao salvar dica');
+         alert('Dica salva com sucesso! ✨');
+      } catch (error: any) {
+         alert(`Erro ao salvar dica: ${error.message || 'Erro desconhecido'}`);
          console.error(error);
       }
    };
@@ -105,8 +103,13 @@ const AdminTipsManagement: React.FC = () => {
                         {tips.filter(t => t.type === 'PRE_CARE').map(tip => (
                            <div key={tip.id} className="bg-card-dark p-5 rounded-3xl border border-white/5 flex justify-between items-center group">
                               <div className="flex-1">
-                                 <h4 className="font-bold text-sm">{tip.title}</h4>
-                                 <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{tip.content}</p>
+                                 <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-bold text-sm">{tip.title}</h4>
+                                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 uppercase font-black tracking-widest">
+                                       {professionals.find(p => p.id === tip.professional_id)?.name || 'Geral'}
+                                    </span>
+                                 </div>
+                                 <p className="text-[10px] text-gray-500 line-clamp-2">{tip.content}</p>
                               </div>
                               <div className="flex gap-2 ml-4">
                                  <button onClick={() => setEditing(tip)} className="size-8 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:bg-white/10 transition-colors">
@@ -128,8 +131,13 @@ const AdminTipsManagement: React.FC = () => {
                         {tips.filter(t => t.type === 'POST_CARE').map(tip => (
                            <div key={tip.id} className="bg-card-dark p-5 rounded-3xl border border-white/5 flex justify-between items-center group">
                               <div className="flex-1">
-                                 <h4 className="font-bold text-sm">{tip.title}</h4>
-                                 <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{tip.content}</p>
+                                 <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-bold text-sm">{tip.title}</h4>
+                                    <span className="text-[8px] px-2 py-0.5 rounded-full bg-white/5 text-gray-400 uppercase font-black tracking-widest">
+                                       {professionals.find(p => p.id === tip.professional_id)?.name || 'Geral'}
+                                    </span>
+                                 </div>
+                                 <p className="text-[10px] text-gray-500 line-clamp-2">{tip.content}</p>
                               </div>
                               <div className="flex gap-2 ml-4">
                                  <button onClick={() => setEditing(tip)} className="size-8 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:bg-white/10 transition-colors">
@@ -166,17 +174,34 @@ const AdminTipsManagement: React.FC = () => {
                         value={editing.content || ''}
                         onChange={e => setEditing({ ...editing, content: e.target.value })}
                      />
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Vincular ao Tipo de Serviço</label>
-                        <input
-                           type="text"
-                           placeholder="Ex: Cílios, Sobrancelha..."
-                           className="w-full h-12 bg-white/5 border-white/10 rounded-xl px-4 text-sm focus:ring-1 focus:ring-accent-gold outline-none"
-                           value={editing.linked_category || ''}
-                           onChange={e => setEditing({ ...editing, linked_category: e.target.value })}
-                        />
-                        <p className="text-[9px] text-gray-600 italic">Deixe em branco para dica geral ou preencha o tipo exato do catálogo.</p>
+
+                     <div className="space-y-4">
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Profissional Responsável</label>
+                           <select
+                              className="w-full h-12 bg-white/5 border-white/10 rounded-xl px-4 text-sm outline-none"
+                              value={editing.professional_id || ''}
+                              onChange={e => setEditing({ ...editing, professional_id: e.target.value || null })}
+                           >
+                              <option value="">Dica Geral (Todas)</option>
+                              {professionals.map(p => (
+                                 <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                           </select>
+                        </div>
+                        <div className="space-y-2">
+                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Categoria de Serviço (Filtro)</label>
+                           <input
+                              type="text"
+                              placeholder="Ex: Cílios, Sobrancelha..."
+                              className="w-full h-12 bg-white/5 border-white/10 rounded-xl px-4 text-sm focus:ring-1 focus:ring-accent-gold outline-none"
+                              value={editing.linked_category || ''}
+                              onChange={e => setEditing({ ...editing, linked_category: e.target.value })}
+                           />
+                           <p className="text-[9px] text-gray-500 italic px-1">Filtre por tipo de procedimento (ex: "Extensão").</p>
+                        </div>
                      </div>
+
                      <div className="flex bg-white/5 p-1 rounded-xl">
                         <button
                            onClick={() => setEditing({ ...editing, type: 'PRE_CARE' })}

@@ -1,58 +1,208 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../services/supabase';
 
 const Evaluation: React.FC = () => {
-  const navigate = useNavigate();
-  const [rating, setRating] = useState(0);
+   const navigate = useNavigate();
+   const [rating, setRating] = useState(0);
+   const [testimonial, setTestimonial] = useState('');
+   const [allowFeed, setAllowFeed] = useState(true);
+   const [photo, setPhoto] = useState<File | null>(null);
+   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+   const [loading, setLoading] = useState(false);
+   const [lastAppointment, setLastAppointment] = useState<any>(null);
 
-  return (
-    <div className="flex flex-col h-full bg-background-light">
-      <header className="p-8 flex items-center justify-between glass-nav border-b">
-         <button onClick={() => navigate('/home')} className="material-symbols-outlined text-primary">close</button>
-         <h2 className="font-display font-bold text-primary text-sm uppercase tracking-[0.3em]">Sua Experiência</h2>
-         <span className="size-6"></span>
-      </header>
+   useEffect(() => {
+      fetchLastAppointment();
+   }, []);
 
-      <main className="flex-1 p-10 flex flex-col items-center justify-center text-center space-y-12">
-         <div className="space-y-6">
-            <h1 className="text-4xl font-display font-bold text-primary leading-tight">Como foi sua <br/>experiência? 💖</h1>
-            <p className="text-sm text-gray-500 leading-relaxed italic">Sua opinião é muito importante para nós ✨</p>
-         </div>
+   const fetchLastAppointment = async () => {
+      try {
+         const { data: { user } } = await supabase.auth.getUser();
+         if (!user) return;
 
-         <div className="flex gap-4">
-            {[1,2,3,4,5].map(star => (
-               <button 
-                key={star} 
-                onClick={() => setRating(star)}
-                className="transition-all active:scale-90"
+         const { data, error } = await supabase
+            .from('appointments')
+            .select('*, professionals(id, name), services(id, name)')
+            .eq('user_id', user.id)
+            .eq('status', 'completed')
+            .order('date', { ascending: false })
+            .limit(1)
+            .single();
+
+         if (error) console.error(error);
+         else setLastAppointment(data);
+      } catch (err) {
+         console.error(err);
+      }
+   };
+
+   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+         const file = e.target.files[0];
+         setPhoto(file);
+         setPhotoPreview(URL.createObjectURL(file));
+      }
+   };
+
+   const handleSubmit = async () => {
+      if (rating === 0) {
+         alert('Por favor, deixe uma nota com estrelas ✨');
+         return;
+      }
+
+      try {
+         setLoading(true);
+         const { data: { user } } = await supabase.auth.getUser();
+         if (!user) return;
+
+         // 1. Check if already reviewed for this appt (or just check first feedback status)
+         // The user requested only for the FIRST appointment.
+         // We'll check if any testimonials exist for this user.
+         const { data: existing } = await supabase
+            .from('testimonials')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+         if (existing) {
+            alert('Você já enviou sua avaliação de boas-vindas! Obrigada pelo carinho ✨');
+            navigate('/home');
+            return;
+         }
+
+         let photoUrl = '';
+         if (photo) {
+            // In a real app, upload to storage
+            // const { data, error } = await supabase.storage.from('testimonials').upload(`${user.id}/${Date.now()}`, photo);
+            // photoUrl = data?.path || '';
+            photoUrl = 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=400'; // Simulation
+         }
+
+         // 2. Save Testimonial
+         const { error: testError } = await supabase.from('testimonials').insert({
+            user_id: user.id,
+            professional_id: lastAppointment?.professional_id,
+            appointment_id: lastAppointment?.id,
+            rating,
+            message: testimonial,
+            photo_url: photoUrl,
+            show_on_feed: allowFeed,
+            status: 'approved'
+         });
+
+         if (testError) throw testError;
+
+         // 3. Award Points (FIRST_FEEDBACK)
+         const { data: rule } = await supabase.from('loyalty_actions').select('points_reward').eq('code', 'FIRST_FEEDBACK').single();
+         const pointsReward = rule?.points_reward || 100;
+         const extraPhotoPoints = photo ? 50 : 0;
+         const totalReward = pointsReward + extraPhotoPoints;
+
+         const { data: profile } = await supabase.from('profiles').select('lash_points').eq('id', user.id).single();
+         const currentPoints = profile?.lash_points || 0;
+
+         await supabase.from('profiles').update({ lash_points: currentPoints + totalReward }).eq('id', user.id);
+
+         alert(`Avaliação enviada! Você ganhou ${totalReward} pontos JZ Privé! ✨💎`);
+         navigate('/home');
+      } catch (err: any) {
+         alert('Erro ao enviar avaliação: ' + err.message);
+      } finally {
+         setLoading(false);
+      }
+   };
+
+   return (
+      <div className="flex flex-col min-h-screen bg-[#f8f7f4] text-[#1a1c1a] font-sans">
+         <header className="p-6 flex items-center justify-between">
+            <button onClick={() => navigate(-1)} className="material-symbols-outlined text-2xl">close</button>
+            <h1 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1a1c1a]/60 pt-1">FEEDBACK</h1>
+            <button className="material-symbols-outlined text-2xl">more_horiz</button>
+         </header>
+
+         <main className="flex-1 px-8 py-6 space-y-10 overflow-y-auto no-scrollbar pb-10">
+            <section className="text-center space-y-4">
+               <h2 className="text-[32px] font-display font-medium leading-tight">
+                  Como foi sua<br />experiência? ✨
+               </h2>
+               <p className="text-sm text-[#1a1c1a]/40 leading-relaxed max-w-[280px] mx-auto">
+                  Sua opinião é fundamental para o Studio Julia Zenaro.
+               </p>
+            </section>
+
+            <div className="flex justify-center gap-2">
+               {[1, 2, 3, 4, 5].map(star => (
+                  <button key={star} onClick={() => setRating(star)} className="transition-transform active:scale-90">
+                     <span className={`material-symbols-outlined !text-4xl ${rating >= star ? 'text-[#C5A059]' : 'text-[#1a1c1a]/10'}`} style={{ fontVariationSettings: rating >= star ? "'FILL' 1" : "'FILL' 0" }}>
+                        star
+                     </span>
+                  </button>
+               ))}
+            </div>
+
+            {/* Photo Card */}
+            <div className="bg-white rounded-[32px] overflow-hidden border border-[#1a1c1a]/5 shadow-sm">
+               <div className="relative aspect-[4/3] bg-[#f0eee9]">
+                  {photoPreview ? (
+                     <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                     <img src="https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=1000" alt="Eyelashes" className="w-full h-full object-cover opacity-60 grayscale-[0.5]" />
+                  )}
+                  <div className="absolute bottom-4 left-4">
+                     <span className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest text-[#1a1c1a]">Resultado do Procedimento</span>
+                  </div>
+               </div>
+               <div className="p-6 flex items-center justify-between">
+                  <div>
+                     <h3 className="text-lg font-display font-medium text-[#1a1c1a]">Antes e Depois</h3>
+                     <p className="text-[11px] text-[#1a1c1a]/40 mt-1">Registre o olhar que criamos hoje para você.</p>
+                  </div>
+                  <label className="bg-[#2D5043] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-[#1f382f] transition-all">
+                     Adicionar
+                     <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                  </label>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1a1c1a]/50 px-2">SEU DEPOIMENTO</h4>
+               <textarea
+                  value={testimonial}
+                  onChange={e => setTestimonial(e.target.value)}
+                  placeholder="Conte-nos o que você mais gostou..."
+                  className="w-full bg-white border border-[#1a1c1a]/5 rounded-[24px] p-6 text-sm min-h-[140px] focus:ring-1 focus:ring-[#2D5043] outline-none placeholder:text-[#1a1c1a]/20"
+               />
+            </div>
+
+            <div className="flex items-start gap-4 px-2">
+               <button
+                  onClick={() => setAllowFeed(!allowFeed)}
+                  className={`mt-1 size-5 rounded-md flex items-center justify-center transition-all ${allowFeed ? 'bg-[#C5A059] text-white' : 'border border-[#1a1c1a]/20'}`}
                >
-                  <span className={`material-symbols-outlined !text-5xl ${rating >= star ? 'text-accent-gold fill-1' : 'text-gray-200'}`} style={{fontVariationSettings: rating >= star ? "'FILL' 1" : "'FILL' 0"}}>
-                    star
-                  </span>
+                  {allowFeed && <span className="material-symbols-outlined !text-sm">check</span>}
                </button>
-            ))}
-         </div>
+               <p className="text-[11px] text-[#1a1c1a]/60 font-medium leading-relaxed">
+                  Permitir uso da minha foto no Feed do Studio
+               </p>
+            </div>
 
-         <textarea 
-          placeholder="Deseja deixar uma nota carinhosa para a Julia? ✨"
-          className="w-full bg-white border border-gray-100 rounded-[32px] p-8 text-sm focus:ring-primary h-48 premium-shadow italic placeholder:text-gray-300"
-         />
-
-         <div className="flex items-center gap-5 w-full bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-            <input type="checkbox" className="size-6 rounded-full text-primary focus:ring-primary border-gray-200" id="share" />
-            <label htmlFor="share" className="text-[11px] text-gray-500 font-bold text-left leading-relaxed">Autorizo o Studio Julia Zenaro a compartilhar minha avaliação carinhosa 💖</label>
-         </div>
-
-         <button 
-          onClick={() => navigate('/home')}
-          className="w-full h-20 bg-primary text-white rounded-[28px] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl active:scale-95 transition-transform"
-         >
-            ENVIAR FEEDBACK ✨
-         </button>
-      </main>
-    </div>
-  );
+            <button
+               onClick={handleSubmit}
+               disabled={loading}
+               className="w-full h-16 bg-[#2D5043] text-white rounded-[20px] flex items-center justify-center gap-3 font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-[#2D5043]/10 hover:translate-y-[-2px] active:translate-y-[0px] transition-all disabled:opacity-50"
+            >
+               {loading ? 'Enviando...' : (
+                  <>
+                     Enviar Avaliação
+                     <span className="material-symbols-outlined !text-lg">send</span>
+                  </>
+               )}
+            </button>
+         </main>
+      </div>
+   );
 };
 
 export default Evaluation;

@@ -220,6 +220,25 @@ const AdminTimeline: React.FC = () => {
                   if (updateError) console.error('Error updating points:', updateError);
                }
             }
+
+            // C. FIRST COMPLETION NOTIFICATION
+            if (apt.user_id) {
+               const { count, error: countError } = await supabase
+                  .from('appointments')
+                  .select('*', { count: 'exact', head: true })
+                  .eq('user_id', apt.user_id)
+                  .eq('status', 'completed');
+               
+               if (!countError && count === 1) { 
+                  await supabase.from('notifications').insert({
+                     user_id: apt.user_id,
+                     title: 'Sua Experiência ✨',
+                     message: 'Como foi seu primeiro atendimento conosco? Sua opinião vale pontos!',
+                     link: '/evaluation',
+                     icon: 'star_rate'
+                  });
+               }
+            }
          }
 
          fetchAppointments();

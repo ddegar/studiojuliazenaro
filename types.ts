@@ -103,8 +103,22 @@ export interface Tip {
   title: string;
   content: string;
   type: 'PRE_CARE' | 'POST_CARE';
-  serviceIds: string[];
+  professional_id?: string | null;
+  service_ids: string[];
   active: boolean;
+  linked_category?: string | null;
+  icon?: string;
+  created_at?: string;
+}
+
+export interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+  category: 'GENERAL' | 'BOOKING' | 'AFTERCARE' | 'PRICING';
+  display_order: number;
+  active: boolean;
+  created_at?: string;
 }
 
 export type LoyaltyTierName = 'Select' | 'Prime' | 'Signature' | 'Privé';

@@ -7,12 +7,26 @@ import { supabase } from '../services/supabase';
 const AdminFAQManagement: React.FC = () => {
    const navigate = useNavigate();
    const [faqs, setFaqs] = useState<FAQ[]>([]);
+   const [categories, setCategories] = useState<any[]>([]);
    const [editing, setEditing] = useState<Partial<FAQ> | null>(null);
+   const [showCategoryManager, setShowCategoryManager] = useState(false);
+   const [newCategoryName, setNewCategoryName] = useState('');
    const [loading, setLoading] = useState(true);
 
    useEffect(() => {
-      fetchFaqs();
+      fetchInitialData();
    }, []);
+
+   const fetchInitialData = async () => {
+      setLoading(true);
+      await Promise.all([fetchFaqs(), fetchCategories()]);
+      setLoading(false);
+   };
+
+   const fetchCategories = async () => {
+      const { data } = await supabase.from('faq_categories').select('*').order('display_order', { ascending: true });
+      if (data) setCategories(data);
+   };
 
    const fetchFaqs = async () => {
       try {
@@ -40,16 +54,42 @@ const AdminFAQManagement: React.FC = () => {
          };
 
          if (editing.id) {
-            await supabase.from('faqs').update(payload).eq('id', editing.id);
+            const { error: updateError } = await supabase.from('faqs').update(payload).eq('id', editing.id);
+            if (updateError) throw updateError;
          } else {
-            await supabase.from('faqs').insert(payload);
+            const { error: insertError } = await supabase.from('faqs').insert(payload);
+            if (insertError) throw insertError;
          }
 
          await fetchFaqs();
          setEditing(null);
-      } catch (error) {
-         alert('Erro ao salvar FAQ');
+         alert('FAQ salvo com sucesso! ✨');
+      } catch (error: any) {
+         alert(`Erro ao salvar FAQ: ${error.message || 'Erro desconhecido'}`);
          console.error(error);
+      }
+   };
+
+   const handleAddCategory = async () => {
+      if (!newCategoryName.trim()) return;
+      try {
+         const { error } = await supabase.from('faq_categories').insert({ name: newCategoryName.toUpperCase() });
+         if (error) throw error;
+         setNewCategoryName('');
+         fetchCategories();
+      } catch (error: any) {
+         alert('Erro ao criar categoria: ' + error.message);
+      }
+   };
+
+   const handleDeleteCategory = async (id: string) => {
+      if (!confirm('Excluir esta categoria? FAQs vinculadas podem parar de aparecer corretamente.')) return;
+      try {
+         const { error } = await supabase.from('faq_categories').delete().eq('id', id);
+         if (error) throw error;
+         fetchCategories();
+      } catch (error: any) {
+         alert('Erro ao excluir categoria: ' + error.message);
       }
    };
 
@@ -70,10 +110,49 @@ const AdminFAQManagement: React.FC = () => {
                <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
                <h1 className="text-lg font-bold">Gestão de FAQ</h1>
             </div>
-            <button onClick={() => setEditing({})} className="size-10 rounded-full bg-primary flex items-center justify-center">
-               <span className="material-symbols-outlined">add</span>
-            </button>
+            <div className="flex gap-2">
+               <button onClick={() => setShowCategoryManager(true)} className="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined !text-sm text-accent-gold">style</span>
+               </button>
+               <button onClick={() => setEditing({ category: categories[0]?.name || 'GERAL' as any })} className="size-10 rounded-full bg-primary flex items-center justify-center">
+                  <span className="material-symbols-outlined">add</span>
+               </button>
+            </div>
          </header>
+
+         {showCategoryManager && (
+            <div className="fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-6 backdrop-blur-md">
+               <div className="bg-card-dark w-full max-w-sm rounded-[40px] p-8 border border-white/10 space-y-6">
+                  <header className="flex justify-between items-center">
+                     <h3 className="text-lg font-display font-bold">Categorias do FAQ</h3>
+                     <button onClick={() => setShowCategoryManager(false)} className="text-gray-500 hover:text-white">
+                        <span className="material-symbols-outlined">close</span>
+                     </button>
+                  </header>
+
+                  <div className="flex gap-2">
+                     <input
+                        className="flex-1 bg-white/5 border-white/10 rounded-xl px-4 text-sm outline-none"
+                        placeholder="Nome (ex: Manutenção)"
+                        value={newCategoryName}
+                        onChange={e => setNewCategoryName(e.target.value)}
+                     />
+                     <button onClick={handleAddCategory} className="bg-primary px-4 rounded-xl font-bold text-[10px] uppercase">Add</button>
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                     {categories.map(cat => (
+                        <div key={cat.id} className="flex justify-between items-center bg-white/5 p-3 rounded-xl">
+                           <span className="text-xs font-bold text-gray-300">{cat.name}</span>
+                           <button onClick={() => handleDeleteCategory(cat.id)} className="text-rose-500/50 hover:text-rose-500 transition-colors">
+                              <span className="material-symbols-outlined !text-sm">delete_sweep</span>
+                           </button>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
+         )}
 
          <main className="flex-1 p-6 space-y-4 overflow-y-auto no-scrollbar pb-32">
             {loading ? <p className="text-center text-gray-500">Carregando...</p> : faqs.map(faq => (
@@ -118,13 +197,12 @@ const AdminFAQManagement: React.FC = () => {
                      />
                      <select
                         className="w-full h-12 bg-white/5 border-white/10 rounded-xl px-4 text-sm outline-none"
-                        value={editing.category || 'GENERAL'}
+                        value={editing.category || (categories[0]?.name || 'GERAL')}
                         onChange={e => setEditing({ ...editing, category: e.target.value as any })}
                      >
-                        <option value="GENERAL">Geral</option>
-                        <option value="BOOKING">Agendamento</option>
-                        <option value="AFTERCARE">Cuidados Pós</option>
-                        <option value="PRICING">Valores</option>
+                        {categories.map(cat => (
+                           <option key={cat.id} value={cat.name}>{cat.name}</option>
+                        ))}
                      </select>
                   </div>
                   <div className="flex gap-3">

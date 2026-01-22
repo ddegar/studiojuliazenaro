@@ -68,6 +68,7 @@ import AdminPriveCampaigns from './pages/AdminPriveCampaigns';
 import AdminPriveBalanceRules from './pages/AdminPriveBalanceRules';
 import AdminPriveSettings from './pages/AdminPriveSettings';
 import AdminShellPrive from './pages/AdminShellPrive';
+import AdminTestimonials from './pages/AdminTestimonials';
 
 const AppContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex justify-center min-h-screen bg-gray-200 dark:bg-zinc-950">
@@ -151,6 +152,7 @@ const App: React.FC = () => {
             <Route path="/admin/loyalty/clients" element={<AdminLoyaltyClients />} />
             <Route path="/admin/loyalty/rewards" element={<AdminLoyaltyRewards />} />
             <Route path="/admin/working-hours" element={<AdminWorkingHours />} />
+            <Route path="/admin/testimonials" element={<AdminTestimonials />} />
           </Route>
 
           {/* Novos Módulos JZ Privé Club Admin */}
