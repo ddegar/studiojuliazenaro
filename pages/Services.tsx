@@ -28,6 +28,10 @@ const Services: React.FC = () => {
             role: p.role || 'Especialista',
             avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=random`,
             active: p.active,
+            working_hours: p.working_hours,
+            closed_days: p.closed_days,
+            start_hour: p.start_hour,
+            end_hour: p.end_hour,
             dbRole: p.role // store the real role for sorting
           }));
 

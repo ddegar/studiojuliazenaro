@@ -20,6 +20,8 @@ const Booking: React.FC = () => {
     business_hours_end: '22:00',
     closed_days: '[0]'
   });
+  const [viewDate, setViewDate] = useState(new Date());
+  const [appointmentsOfMonth, setAppointmentsOfMonth] = useState<any[]>([]);
   const [step, setStep] = useState<BookingStep>(
     preSelected?.service ? 'DATE' : (preSelected?.professional ? 'SERVICE' : 'PROFESSIONAL')
   );
@@ -65,6 +67,14 @@ const Booking: React.FC = () => {
           });
 
           setProfessionals(mappedPros);
+
+          // If professional was pre-selected (from Services or other), hydrate with full data
+          if (selection.professional) {
+            const fullPro = mappedPros.find((p: any) => p.id === selection.professional?.id);
+            if (fullPro) {
+              setSelection(prev => ({ ...prev, professional: fullPro }));
+            }
+          }
         }
         if (servsRes.data) {
           setServices(servsRes.data.map((s: any) => ({
@@ -96,35 +106,44 @@ const Booking: React.FC = () => {
     fetchData();
   }, []);
 
-  // Fetch appointments for availability (using start_time and end_time)
+  // Fetch appointments for the current view month to check availability
   useEffect(() => {
-    if (selection.date && selection.professional) {
-      const fetchAppts = async () => {
-        // Fetch only ACTIVE appointments/blocks (ignore cancelled/no_show)
+    if (selection.professional) {
+      const fetchMonthAppts = async () => {
+        const startOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).toISOString();
+        const endOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
         const { data } = await supabase.from('appointments')
-          .select('start_time, end_time')
-          .eq('date', selection.date)
+          .select('date, start_time, end_time')
           .eq('professional_id', selection.professional!.id)
+          .gte('date', startOfMonth.split('T')[0])
+          .lte('date', endOfMonth.split('T')[0])
           .not('status', 'in', '("cancelled", "cancelled_by_user", "no_show")');
 
-        if (data) {
-          // Convert times to minutes from midnight for easy comparison
-          const intervals = data.map((a: any) => {
-            const start = new Date(a.start_time);
-            const end = new Date(a.end_time);
-            return {
-              start: start.getHours() * 60 + start.getMinutes(),
-              end: end.getHours() * 60 + end.getMinutes()
-            };
-          });
-          setBookedIntervals(intervals);
-        } else {
-          setBookedIntervals([]);
-        }
+        setAppointmentsOfMonth(data || []);
       };
-      fetchAppts();
+      fetchMonthAppts();
     }
-  }, [selection.date, selection.professional]);
+  }, [viewDate, selection.professional]);
+
+  // Sync daily intervals when date is selected
+  useEffect(() => {
+    if (selection.date && appointmentsOfMonth.length > 0) {
+      const daily = appointmentsOfMonth.filter(a => a.date === selection.date);
+      const intervals = daily.map((a: any) => {
+        const start = new Date(a.start_time);
+        const end = new Date(a.end_time);
+        return {
+          start: start.getHours() * 60 + start.getMinutes(),
+          end: end.getHours() * 60 + end.getMinutes()
+        };
+      });
+      setBookedIntervals(intervals);
+    } else if (selection.date) {
+      // Fallback if month data not yet loaded or empty
+      setBookedIntervals([]);
+    }
+  }, [selection.date, appointmentsOfMonth]);
 
   const availableHours = useMemo(() => {
     if (!selection.date || !selection.professional || !selection.service) return [];
@@ -175,21 +194,31 @@ const Booking: React.FC = () => {
   }, [selection.date, selection.professional, bookedIntervals, selection.service, configs]);
 
   // Generate real dates (Next 14 days)
-  const availableDates = useMemo(() => {
-    const dates = [];
+  // Generate calendar grid days
+  const calendarDays = useMemo(() => {
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
-    for (let i = 1; i <= 14; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
+    today.setHours(0, 0, 0, 0);
 
-      const year = d.getFullYear();
-      const monthStr = String(d.getMonth() + 1).padStart(2, '0');
-      const dayStr = String(d.getDate()).padStart(2, '0');
-      const dateString = `${year}-${monthStr}-${dayStr}`;
+    const days = [];
 
-      const p = selection.professional as any;
-      const dayOfWeek = d.getDay();
-      const workingHours = p?.working_hours;
+    // Fill empty slots for previous month
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push({ day: null, full: null, isPast: true });
+    }
+
+    const p = selection.professional as any;
+    const workingHours = p?.working_hours;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dayOfWeek = date.getDay();
+      const isPast = date < today;
 
       let isClosed = false;
       if (workingHours && workingHours[dayOfWeek]) {
@@ -200,22 +229,55 @@ const Booking: React.FC = () => {
         try {
           closedDays = JSON.parse(typeof closedDaysStr === 'string' ? closedDaysStr : JSON.stringify(closedDaysStr));
         } catch {
-          closedDays = [0]; // fallback seguro (domingo)
+          closedDays = [0];
         }
         isClosed = closedDays.includes(dayOfWeek);
       }
 
-      if (!isClosed) {
-        dates.push({
-          full: dateString,
-          day: dayStr,
-          month: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-          weekday: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
+      // Logic to check if "FULL"
+      let isFull = false;
+      if (!isClosed && !isPast && selection.service) {
+        const dayAppts = appointmentsOfMonth.filter(a => a.date === dateString);
+        const dayIntervals = dayAppts.map(a => {
+          const s = new Date(a.start_time);
+          const e = new Date(a.end_time);
+          return { start: s.getHours() * 60 + s.getMinutes(), end: e.getHours() * 60 + e.getMinutes() };
         });
+
+        // Calculate if ANY slot is available
+        const serviceDuration = selection.service.duration || 30;
+        const dayConfig = workingHours?.[dayOfWeek];
+        const startRange = dayConfig?.start || p.start_hour || configs.business_hours_start || '08:00';
+        const endRange = dayConfig?.end || p.end_hour || configs.business_hours_end || '22:00';
+        const [sH, sM = 0] = startRange.split(':').map(Number);
+        const [eH, eM = 0] = endRange.split(':').map(Number);
+        const startBound = sH * 60 + sM;
+        const endBound = eH * 60 + eM;
+
+        let hasAnySlot = false;
+        for (let m = startBound; m <= endBound; m += 30) {
+          const eM = m + serviceDuration;
+          const overlap = dayIntervals.some(b => m < b.end && eM > b.start);
+          if (!overlap) {
+            hasAnySlot = true;
+            break;
+          }
+        }
+        if (!hasAnySlot) isFull = true;
       }
+
+      days.push({
+        day,
+        full: dateString,
+        isPast,
+        isClosed,
+        isFull,
+        weekday: date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
+      });
     }
-    return dates;
-  }, [configs.closed_days, selection.professional]);
+
+    return days;
+  }, [viewDate, selection.professional, appointmentsOfMonth, selection.service, configs]);
 
   const handleStepBack = () => {
     if (step === 'CONFIRM') setStep('TIME');
@@ -318,31 +380,81 @@ const Booking: React.FC = () => {
         )}
 
         {step === 'DATE' && (
-          <div className="p-8 space-y-10 animate-fade-in">
+          <div className="p-8 space-y-8 animate-fade-in">
             <div className="space-y-3 text-center">
-              <h3 className="text-3xl font-display font-bold text-primary leading-tight">Encontre o melhor <br />momento para você</h3>
-              <p className="text-sm text-gray-500 italic">Escolha com calma. Estamos aqui para te receber.</p>
+              <h3 className="text-3xl font-display font-bold text-primary leading-tight">Escolha o melhor dia</h3>
+              <p className="text-sm text-gray-500 italic">Visualize a disponibilidade do mês 💖</p>
             </div>
 
-            <div className="bg-white p-6 rounded-[48px] border border-gray-50 premium-shadow space-y-8">
-              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 px-1">
-                {availableDates.map(d => (
-                  <button
-                    key={d.full}
-                    onClick={() => { setSelection({ ...selection, date: d.full, time: undefined }); setStep('TIME'); }}
-                    className={`shrink-0 w-20 h-24 rounded-3xl flex flex-col items-center justify-center transition-all border ${selection.date === d.full ? 'bg-primary text-white border-primary shadow-xl scale-105' : 'bg-gray-50 border-gray-100 text-gray-400'}`}
-                  >
-                    <span className="text-[8px] font-black uppercase tracking-widest mb-1">{d.weekday}</span>
-                    <span className="text-2xl font-black">{d.day}</span>
-                    <span className="text-[8px] font-black uppercase tracking-widest mt-1">{d.month}</span>
-                  </button>
-                ))}
+            <div className="bg-white p-8 rounded-[48px] border border-gray-50 premium-shadow space-y-8">
+              {/* Calendar Header */}
+              <div className="flex items-center justify-between px-2">
+                <button
+                  onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}
+                  className="size-10 rounded-full bg-gray-50 flex items-center justify-center text-primary"
+                >
+                  <span className="material-symbols-outlined">chevron_left</span>
+                </button>
+                <h4 className="font-display font-bold text-lg text-primary capitalize">
+                  {viewDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                </h4>
+                <button
+                  onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}
+                  className="size-10 rounded-full bg-gray-50 flex items-center justify-center text-primary"
+                >
+                  <span className="material-symbols-outlined">chevron_right</span>
+                </button>
               </div>
 
-              <div className="bg-accent-gold/5 p-5 rounded-2xl flex items-center gap-4 border border-accent-gold/10">
-                <span className="material-symbols-outlined text-accent-gold">event_available</span>
-                <p className="text-[10px] text-primary/70 font-medium leading-relaxed">Selecionamos apenas dias com agenda aberta para sua comodidade.</p>
+              {/* Grid Weekdays */}
+              <div className="grid grid-cols-7 gap-2">
+                {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((wd, i) => (
+                  <div key={i} className="text-center text-[10px] font-black text-gray-300 uppercase py-2">{wd}</div>
+                ))}
+
+                {calendarDays.map((d, i) => {
+                  const isSelected = selection.date === d.full;
+                  const isDisabled = !d.day || d.isPast || d.isClosed || (d.isFull && !isSelected);
+
+                  return (
+                    <button
+                      key={i}
+                      disabled={isDisabled}
+                      onClick={() => { if (d.full) { setSelection({ ...selection, date: d.full, time: undefined }); setStep('TIME'); } }}
+                      className={`
+                                relative aspect-square rounded-2xl flex items-center justify-center text-sm font-bold transition-all
+                                ${!d.day ? 'bg-transparent pointer-events-none' : ''}
+                                ${isSelected ? 'bg-primary text-white shadow-lg scale-110 z-10' : 'bg-transparent text-primary'}
+                                ${d.isPast ? 'opacity-10 grayscale pointer-events-none' : ''}
+                                ${d.isClosed && !d.isPast ? 'text-gray-200 pointer-events-none italic' : ''}
+                                ${d.isFull && !d.isPast && !isSelected ? 'text-gray-300 line-through' : ''}
+                                ${!isSelected && !isDisabled ? 'hover:bg-gray-50 active:scale-95' : ''}
+                            `}
+                    >
+                      {d.day}
+                      {d.isFull && !d.isPast && !isSelected && d.day && (
+                        <span className="absolute bottom-1.5 size-1 bg-rose-400 rounded-full"></span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-rose-400"></div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sem Horários</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-gray-200"></div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fechado</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-accent-gold/5 p-5 rounded-[32px] flex items-center gap-4 border border-accent-gold/10">
+              <span className="material-symbols-outlined text-accent-gold">event_available</span>
+              <p className="text-[10px] text-primary/70 font-medium leading-relaxed">Dias riscados ou com ponto vermelho estão sem horários disponíveis.</p>
             </div>
           </div>
         )}
