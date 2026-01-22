@@ -86,7 +86,7 @@ const AdminBookingForm: React.FC = () => {
       if (!searchClient || searchClient.length < 1) return []; // Only show after typing
       return clients.filter(c =>
          c.name.toLowerCase().includes(searchClient.toLowerCase()) ||
-         c.phone.includes(searchClient)
+         (c.phone?.includes(searchClient) ?? false)
       );
    }, [searchClient, form.clientId, clients]);
 

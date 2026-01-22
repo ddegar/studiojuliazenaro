@@ -133,25 +133,25 @@ const App: React.FC = () => {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/content" element={<AdminContentCreator />} />
             <Route path="/admin/finance" element={<FinancialControl />} />
+            <Route path="/admin/agenda" element={<AdminAgenda />} />
+            <Route path="/admin/agenda/day/:date" element={<AdminTimeline />} />
+            <Route path="/admin/agenda/new" element={<AdminBookingForm />} />
+            <Route path="/admin/services" element={<ServiceManagement />} />
+            <Route path="/admin/clients" element={<AdminClients />} />
+            <Route path="/admin/client/:id" element={<ClientDetailsAdmin />} />
+            <Route path="/admin/professional/:id" element={<ProfessionalDetailsAdmin />} />
+            <Route path="/admin/notifications" element={<AdminNotifications />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/profile" element={<AdminMyProfile />} />
+            <Route path="/admin/studio-details" element={<AdminStudioDetails />} />
+            <Route path="/admin/professionals" element={<AdminProfessionals />} />
+            <Route path="/admin/faq" element={<AdminFAQManagement />} />
+            <Route path="/admin/tips" element={<AdminTipsManagement />} />
+            <Route path="/admin/loyalty" element={<AdminLoyaltySettings />} />
+            <Route path="/admin/loyalty/clients" element={<AdminLoyaltyClients />} />
+            <Route path="/admin/loyalty/rewards" element={<AdminLoyaltyRewards />} />
+            <Route path="/admin/working-hours" element={<AdminWorkingHours />} />
           </Route>
-          <Route path="/admin/agenda" element={<AdminAgenda />} />
-          <Route path="/admin/agenda/day/:date" element={<AdminTimeline />} />
-          <Route path="/admin/agenda/new" element={<AdminBookingForm />} />
-          <Route path="/admin/services" element={<ServiceManagement />} />
-          <Route path="/admin/clients" element={<AdminClients />} />
-          <Route path="/admin/client/:id" element={<ClientDetailsAdmin />} />
-          <Route path="/admin/professional/:id" element={<ProfessionalDetailsAdmin />} />
-          <Route path="/admin/notifications" element={<AdminNotifications />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          <Route path="/admin/profile" element={<AdminMyProfile />} />
-          <Route path="/admin/studio-details" element={<AdminStudioDetails />} />
-          <Route path="/admin/professionals" element={<AdminProfessionals />} />
-          <Route path="/admin/faq" element={<AdminFAQManagement />} />
-          <Route path="/admin/tips" element={<AdminTipsManagement />} />
-          <Route path="/admin/loyalty" element={<AdminLoyaltySettings />} />
-          <Route path="/admin/loyalty/clients" element={<AdminLoyaltyClients />} />
-          <Route path="/admin/loyalty/rewards" element={<AdminLoyaltyRewards />} />
-          <Route path="/admin/working-hours" element={<AdminWorkingHours />} />
 
           {/* Novos Módulos JZ Privé Club Admin */}
           <Route element={<AdminRoute />}>

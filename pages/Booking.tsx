@@ -142,9 +142,12 @@ const Booking: React.FC = () => {
     const [startH, startM = 0] = startRange.split(':').map(Number);
     const [endH, endM = 0] = endRange.split(':').map(Number);
 
-    // The "End Time" is now the "Last possible start time"
-    const businessEndMinutes = endH * 60 + endM;
+    // The "End Time" is now the "Last possible start time" minus service duration
+    const businessEndMinutes = (endH * 60 + endM) - serviceDuration;
     const startMinutesBound = startH * 60 + startM;
+
+    // Avoid invalid range
+    if (businessEndMinutes < startMinutesBound) return [];
 
     // Generate slots every 30 minutes from startBound to endBound
     for (let m = startMinutesBound; m <= businessEndMinutes; m += 30) {
@@ -189,7 +192,12 @@ const Booking: React.FC = () => {
         isClosed = workingHours[dayOfWeek].closed;
       } else {
         const closedDaysStr = p?.closed_days || configs.closed_days || '[0]';
-        const closedDays = JSON.parse(typeof closedDaysStr === 'string' ? closedDaysStr : JSON.stringify(closedDaysStr));
+        let closedDays: number[] = [];
+        try {
+          closedDays = JSON.parse(typeof closedDaysStr === 'string' ? closedDaysStr : JSON.stringify(closedDaysStr));
+        } catch {
+          closedDays = [0]; // fallback seguro (domingo)
+        }
         isClosed = closedDays.includes(dayOfWeek);
       }
 

@@ -3,14 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 
-// Helper to determine tier based on points (Matching PriveDashboard logic)
-const calculateTier = (points: number) => {
-    if (points >= 3000) return 'PRIVÉ';
-    if (points >= 1500) return 'SIGNATURE';
-    if (points >= 500) return 'PRIME';
-    return 'SELECT';
-};
-
 const AdminPriveMembers: React.FC = () => {
     const navigate = useNavigate();
     const [members, setMembers] = useState<any[]>([]);

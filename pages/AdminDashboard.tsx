@@ -44,6 +44,12 @@ const AdminDashboard: React.FC = () => {
           .eq('id', user.id)
           .single();
 
+        if (!profile) {
+          console.warn('Profile not found for user', user.id);
+          navigate('/login');
+          return;
+        }
+
         const isPrivileged = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile.role);
         const isReallyMaster = isPrivileged || user.email === 'admin@juliazenaro.com';
 
