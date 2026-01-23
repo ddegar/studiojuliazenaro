@@ -81,14 +81,14 @@ const AdminClients: React.FC = () => {
    });
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-32">
-         <header className="sticky top-0 z-50 glass-nav !bg-background-dark/80 p-6 border-b border-white/5 space-y-6">
+      <div className="flex flex-col h-full bg-background-dark text-white pb-32 lg:pb-8">
+         <header className="sticky top-0 z-50 glass-nav !bg-background-dark/80 p-6 lg:p-8 border-b border-white/5 space-y-6">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-4">
                   <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
                   <div>
-                     <h1 className="text-xl font-display font-bold">Gestão de Clientes</h1>
-                     <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{clients.length} Cadastradas</p>
+                     <h1 className="text-xl lg:text-2xl font-display font-bold">Gestão de Clientes</h1>
+                     <p className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest">{clients.length} Cadastradas</p>
                   </div>
                </div>
                <button onClick={() => navigate('/admin/clients/new')} className="size-11 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
@@ -116,44 +116,52 @@ const AdminClients: React.FC = () => {
             </div>
          </header>
 
-         <main className="flex-1 p-4 space-y-3 overflow-y-auto no-scrollbar">
-            {loading ? <p className="text-center text-gray-500 py-10">Carregando...</p> : filteredClients.map(client => (
-               <div
-                  key={client.id}
-                  onClick={() => navigate(`/admin/client/${client.id}`)}
-                  className="bg-card-dark p-5 rounded-[32px] border border-white/5 flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-white/5 cursor-pointer"
-               >
-                  <div className="flex items-center gap-4">
-                     <div className={`size-14 rounded-2xl overflow-hidden border-2 p-0.5 transition-all ${client.status === 'Diamante' ? 'border-accent-gold' : 'border-primary/20'}`}>
-                        <img src={client.img} alt={client.name} className="w-full h-full object-cover rounded-xl" />
-                     </div>
-                     <div className="space-y-1">
-                        <h4 className="font-bold text-sm leading-tight text-white group-hover:text-accent-gold transition-colors">{client.name}</h4>
-                        <div className="flex flex-col gap-1">
-                           <div className="flex items-center gap-2">
-                              <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${client.status === 'Diamante' ? 'bg-accent-gold text-primary shadow-lg' : 'bg-white/10 text-gray-400'}`}>{client.status}</span>
-                              <span className="text-[9px] text-gray-500 font-bold uppercase">{client.points} pts</span>
+         <main className="flex-1 p-4 lg:p-8 overflow-y-auto no-scrollbar">
+            {loading ? (
+               <p className="text-center text-gray-500 py-10">Carregando...</p>
+            ) : (
+               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredClients.map(client => (
+                     <div
+                        key={client.id}
+                        onClick={() => navigate(`/admin/client/${client.id}`)}
+                        className="bg-card-dark p-5 rounded-[32px] border border-white/5 flex items-center justify-between active:scale-[0.98] transition-all group hover:bg-white/5 cursor-pointer"
+                     >
+                        <div className="flex items-center gap-4">
+                           <div className={`size-14 rounded-2xl overflow-hidden border-2 p-0.5 transition-all ${client.status === 'Diamante' ? 'border-accent-gold' : 'border-primary/20'}`}>
+                              <img src={client.img} alt={client.name} className="w-full h-full object-cover rounded-xl" />
                            </div>
-                           <p className="text-[9px] text-gray-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">Último: {client.last} com {client.pro}</p>
+                           <div className="space-y-1">
+                              <h4 className="font-bold text-sm leading-tight text-white group-hover:text-accent-gold transition-colors">{client.name}</h4>
+                              <div className="flex flex-col gap-1">
+                                 <div className="flex items-center gap-2">
+                                    <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded ${client.status === 'Diamante' ? 'bg-accent-gold text-primary shadow-lg' : 'bg-white/10 text-gray-400'}`}>{client.status}</span>
+                                    <span className="text-[9px] text-gray-500 font-bold uppercase">{client.points} pts</span>
+                                 </div>
+                                 <p className="text-[9px] text-gray-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">Último: {client.last} com {client.pro}</p>
+                              </div>
+                           </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                           <div className={`size-2 rounded-full ${client.active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-gray-600'}`}></div>
+                           <span className="material-symbols-outlined text-gray-700 !text-sm">chevron_right</span>
                         </div>
                      </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                     <div className={`size-2 rounded-full ${client.active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-gray-600'}`}></div>
-                     <span className="material-symbols-outlined text-gray-700 !text-sm">chevron_right</span>
-                  </div>
+                  ))}
                </div>
-            ))}
+            )}
 
             {!loading && filteredClients.length === 0 && (
-               <div className="py-20 text-center opacity-20">
+               <div className="py-20 text-center opacity-20 col-span-full">
                   <span className="material-symbols-outlined !text-6xl">person_search</span>
                   <p className="mt-4 font-bold text-sm">Nenhuma cliente encontrada.</p>
                </div>
             )}
          </main>
 
-         <AdminBottomNav />
+         <div className="lg:hidden">
+            <AdminBottomNav />
+         </div>
       </div>
    );
 };

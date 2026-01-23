@@ -208,16 +208,17 @@ const AdminDashboard: React.FC = () => {
   const currentDate = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#121417] text-white font-sans flex flex-col overflow-x-hidden">
+    <div className="min-h-screen bg-[#121417] text-white font-sans flex overflow-x-hidden">
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/80 z-[60] backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-black/80 z-[60] backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-[70] w-72 bg-[#1c1f24] border-r border-white/5 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* Sidebar - Persistent on lg+ screens */}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-[70] w-72 bg-[#1c1f24] border-r border-white/5 flex flex-col transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 flex items-center justify-between border-b border-white/5">
           <Logo size="sm" forceLight={true} />
-          <button onClick={() => setSidebarOpen(false)}><span className="material-symbols-outlined">close</span></button>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden"><span className="material-symbols-outlined">close</span></button>
         </div>
         <nav className="p-4 space-y-1 overflow-y-auto no-scrollbar">
           {MENU_ITEMS.map((item, idx) => {
@@ -259,169 +260,175 @@ const AdminDashboard: React.FC = () => {
         </div>
       </aside>
 
-      {/* Header */}
-      <header className="h-20 px-6 flex items-center justify-between border-b border-white/5 bg-[#121417] sticky top-0 z-40">
-        <div className="flex items-center gap-4">
-          <button onClick={() => setSidebarOpen(true)} className="text-gray-400"><span className="material-symbols-outlined">menu</span></button>
-          <h1 className="text-xs font-black uppercase tracking-widest text-white">Visão Geral</h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="text-[10px] font-bold text-white truncate max-w-[100px]">{stats.user.name}</p>
-            <p className="text-[8px] font-black tracking-widest text-accent-gold">{isMaster ? 'MASTER' : 'PRO'}</p>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+        {/* Header */}
+        <header className="h-20 px-6 flex items-center justify-between border-b border-white/5 bg-[#121417] sticky top-0 z-40">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setSidebarOpen(true)} className="text-gray-400 lg:hidden"><span className="material-symbols-outlined">menu</span></button>
+            <h1 className="text-xs font-black uppercase tracking-widest text-white">Visão Geral</h1>
           </div>
-          <div className="size-10 rounded-full bg-[#1c1f24] border border-accent-gold/20 flex items-center justify-center overflow-hidden">
-            <img src={stats.user.avatar || `https://ui-avatars.com/api/?name=${stats.user.name}`} className="w-full h-full object-cover" alt="User" />
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-1 p-5 space-y-8 pb-32">
-        {/* Welcome Section */}
-        <div className="space-y-1">
-          <p className="text-[10px] font-black text-accent-gold/80 tracking-widest">{currentDate}</p>
-          <div className="flex items-center justify-between items-end">
-            <div className="space-y-2">
-              <h2 className="text-4xl md:text-5xl font-display font-bold text-white leading-tight">Olá,<br />{stats.user.name.split(' ')[0]}</h2>
-              <p className="text-xs text-gray-500 font-medium tracking-tight">Resumo do seu estúdio hoje.</p>
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-[10px] md:text-xs font-bold text-white truncate max-w-[100px] md:max-w-[200px]">{stats.user.name}</p>
+              <p className="text-[8px] font-black tracking-widest text-accent-gold">{isMaster ? 'MASTER' : 'PRO'}</p>
             </div>
-            <button
-              onClick={() => navigate('/admin/agenda')}
-              className="bg-[#1c2e28] text-emerald-400 border border-emerald-900/50 px-5 py-3 rounded-full flex items-center gap-2 hover:bg-emerald-900/30 transition-colors shadow-lg"
-            >
-              <span className="material-symbols-outlined !text-sm">add</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest">Novo Agendamento</span>
-            </button>
+            <div className="size-10 rounded-full bg-[#1c1f24] border border-accent-gold/20 flex items-center justify-center overflow-hidden">
+              <img src={stats.user.avatar || `https://ui-avatars.com/api/?name=${stats.user.name}`} className="w-full h-full object-cover" alt="User" />
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* Stats Grid - MATCHING IMAGE 3 (Simple 2x2 Dark Cards) */}
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { label: 'Faturamento (30d)', value: `R$ ${stats.revenue.toLocaleString('pt-BR')}`, icon: 'payments', color: 'bg-emerald-400/10 text-emerald-400', path: '/admin/finance' },
-            { label: 'Equipe / Staff', value: `${stats.professionals} Ativos`, icon: 'badge', color: 'bg-orange-400/10 text-orange-400', path: '/admin/professionals', hide: !isMaster },
-            { label: 'Agendamentos', value: stats.appointmentsToday, icon: 'calendar_today', color: 'bg-blue-400/10 text-blue-400', path: '/admin/agenda' },
-            { label: 'Clientes', value: stats.clients, icon: 'groups', color: 'bg-purple-400/10 text-purple-400', path: '/admin/clients' }
-          ].map((stat, idx) => {
-            if (stat.hide) return null;
-            return (
-              <button key={idx} onClick={() => navigate(stat.path)} className="bg-[#1c1f24] p-5 rounded-3xl border border-white/5 flex flex-col gap-4 text-left hover:border-white/10 transition-all shadow-xl">
-                <div className={`size-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                  <span className="material-symbols-outlined !text-xl">{stat.icon}</span>
-                </div>
-                <div>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-gray-500 mb-1">{stat.label}</p>
-                  <p className="text-lg font-bold text-white">{stat.value}</p>
-                </div>
+        <main className="flex-1 p-5 lg:p-10 xl:p-12 space-y-8 pb-32 lg:pb-12 w-full">
+          {/* Welcome Section */}
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-accent-gold/80 tracking-widest">{currentDate}</p>
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+              <div className="space-y-2">
+                <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white leading-tight">Olá,<br className="md:hidden" />{stats.user.name.split(' ')[0]}</h2>
+                <p className="text-xs md:text-sm text-gray-500 font-medium tracking-tight">Resumo do seu estúdio hoje.</p>
+              </div>
+              <button
+                onClick={() => navigate('/admin/agenda')}
+                className="bg-[#1c2e28] text-emerald-400 border border-emerald-900/50 px-5 py-3 rounded-full flex items-center gap-2 hover:bg-emerald-900/30 transition-colors shadow-lg w-fit"
+              >
+                <span className="material-symbols-outlined !text-sm">add</span>
+                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">Novo Agendamento</span>
               </button>
-            );
-          })}
-        </div>
-
-        {/* Upcoming Section - MATCHING IMAGE 3 */}
-        <div className="bg-[#1c1f24] rounded-[32px] border border-white/5 p-6 space-y-6 shadow-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-accent-gold !text-xl">schedule</span>
-              <h3 className="text-sm font-bold text-white">Próximos Agendamentos</h3>
             </div>
-            <button onClick={() => navigate('/admin/agenda')} className="text-[10px] font-black uppercase text-accent-gold tracking-widest">Ver Agenda</button>
           </div>
-          <div className="space-y-3">
-            {upcomingAppointments.length > 0 ? upcomingAppointments.map((appt, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-[#121417]/50 border border-white/5 hover:bg-[#121417]">
-                <div className="flex items-center gap-4">
-                  <div className="size-10 rounded-full bg-[#1c1f24] flex items-center justify-center text-accent-gold font-bold text-xs ring-1 ring-white/10">
-                    {appt.profiles?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+
+          {/* Stats Grid - Responsive 2x2 -> 4 cols on lg */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Faturamento (30d)', value: `R$ ${stats.revenue.toLocaleString('pt-BR')}`, icon: 'payments', color: 'bg-emerald-400/10 text-emerald-400', path: '/admin/finance' },
+              { label: 'Equipe / Staff', value: `${stats.professionals} Ativos`, icon: 'badge', color: 'bg-orange-400/10 text-orange-400', path: '/admin/professionals', hide: !isMaster },
+              { label: 'Agendamentos', value: stats.appointmentsToday, icon: 'calendar_today', color: 'bg-blue-400/10 text-blue-400', path: '/admin/agenda' },
+              { label: 'Clientes', value: stats.clients, icon: 'groups', color: 'bg-purple-400/10 text-purple-400', path: '/admin/clients' }
+            ].map((stat, idx) => {
+              if (stat.hide) return null;
+              return (
+                <button key={idx} onClick={() => navigate(stat.path)} className="bg-[#1c1f24] p-5 lg:p-6 rounded-3xl border border-white/5 flex flex-col gap-4 text-left hover:border-white/10 hover:scale-[1.02] transition-all shadow-xl">
+                  <div className={`size-10 lg:size-12 rounded-xl ${stat.color} flex items-center justify-center`}>
+                    <span className="material-symbols-outlined !text-xl lg:!text-2xl">{stat.icon}</span>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-white">{appt.profiles?.name || 'Cliente'}</p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-accent-gold mt-0.5">{appt.services?.name || 'Serviço'}</p>
+                    <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">{stat.label}</p>
+                    <p className="text-lg lg:text-xl font-bold text-white">{stat.value}</p>
                   </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black text-gray-500">{new Date(appt.start_time).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {new Date(appt.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
-              </div>
-            )) : (
-              <div className="p-8 text-center text-gray-600 text-[10px] font-black uppercase tracking-widest border border-dashed border-white/10 rounded-2xl italic">Livre por enquanto</div>
-            )}
-          </div>
-        </div>
-
-        {/* Financial BI Section - MATCHING IMAGE 3 */}
-        <div className="bg-[#1c1f24] rounded-[32px] border border-white/5 p-6 space-y-8 shadow-xl">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-accent-gold">trending_up</span>
-            <h3 className="text-sm font-bold text-white">Faturamento (30 dias)</h3>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="h-[140px] w-full relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs><linearGradient id="chartGold" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#d4af37" stopOpacity={0.2} /><stop offset="95%" stopColor="#d4af37" stopOpacity={0} /></linearGradient></defs>
-                <XAxis dataKey="date" hide />
-                <Tooltip contentStyle={{ backgroundColor: '#1c1f24', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
-                <Area type="monotone" dataKey="value" stroke="#d4af37" fill="url(#chartGold)" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {isMaster && (
-            <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/5">
-              {/* Services Ranking */}
-              <div className="space-y-6">
+          {/* Two-column layout on lg for Upcoming + Chart */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Upcoming Section */}
+            <div className="bg-[#1c1f24] rounded-[32px] border border-white/5 p-6 space-y-6 shadow-xl">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-emerald-400 !text-sm">grid_view</span>
-                  <h4 className="text-[8px] font-black uppercase tracking-widest text-white">Serviços Mais Agendados</h4>
+                  <span className="material-symbols-outlined text-accent-gold !text-xl">schedule</span>
+                  <h3 className="text-sm font-bold text-white">Próximos Agendamentos</h3>
                 </div>
-                <div className="space-y-4">
-                  {stats.topServices.map((s: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between gap-2 overflow-hidden">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="text-[9px] font-black text-gray-600">#{i + 1}</span>
-                        <p className="text-[9px] font-bold text-gray-300 truncate tracking-tight">{s.name}</p>
+                <button onClick={() => navigate('/admin/agenda')} className="text-[10px] font-black uppercase text-accent-gold tracking-widest">Ver Agenda</button>
+              </div>
+              <div className="space-y-3">
+                {upcomingAppointments.length > 0 ? upcomingAppointments.map((appt, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-[#121417]/50 border border-white/5 hover:bg-[#121417]">
+                    <div className="flex items-center gap-4">
+                      <div className="size-10 rounded-full bg-[#1c1f24] flex items-center justify-center text-accent-gold font-bold text-xs ring-1 ring-white/10">
+                        {appt.profiles?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                       </div>
-                      <span className="text-[10px] font-black text-emerald-400 shrink-0">{s.count}</span>
+                      <div>
+                        <p className="text-xs font-bold text-white">{appt.profiles?.name || 'Cliente'}</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-accent-gold mt-0.5">{appt.services?.name || 'Serviço'}</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Professionals Ranking */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-accent-gold !text-sm">account_balance_wallet</span>
-                  <h4 className="text-[8px] font-black uppercase tracking-widest text-white">Faturamento por Profissional</h4>
-                </div>
-                <div className="space-y-4">
-                  {stats.proRevenue.map((p: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between gap-1 overflow-hidden">
-                      <p className="text-[9px] font-bold text-gray-300 truncate tracking-tight">{p.name}</p>
-                      <span className="text-[10px] font-black text-emerald-500 shrink-0">R$ {p.revenue.toLocaleString('pt-BR')}</span>
+                    <div className="text-right">
+                      <p className="text-[10px] font-black text-gray-500">{new Date(appt.start_time).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {new Date(appt.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )) : (
+                  <div className="p-8 text-center text-gray-600 text-[10px] font-black uppercase tracking-widest border border-dashed border-white/10 rounded-2xl italic">Livre por enquanto</div>
+                )}
               </div>
             </div>
-          )}
-        </div>
-      </main>
 
-      {/* Bottom Nav - MATCHING IMAGE 3 */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#121417] border-t border-white/5 flex items-center justify-around h-20 px-4 z-50">
-        {[
-          { label: 'PAINEL', icon: 'grid_view', path: '/admin', active: location.pathname === '/admin' },
-          { label: 'AGENDA', icon: 'calendar_month', path: '/admin/agenda', active: location.pathname.includes('agenda') },
-          { label: 'EQUIPE', icon: 'person', path: '/admin/professionals', active: location.pathname.includes('professionals') },
-          { label: 'AJUSTES', icon: 'settings', path: isMaster ? '/admin/settings' : '/admin/my-profile', active: location.pathname.includes('profile') || location.pathname.includes('settings') }
-        ].map((item, idx) => (
-          <button key={idx} onClick={() => navigate(item.path)} className={`flex flex-col items-center gap-1 transition-all ${item.active ? 'text-emerald-400' : 'text-gray-500'}`}>
-            <span className={`material-symbols-outlined !text-[24px]`}>{item.icon}</span>
-            <span className="text-[8px] font-black tracking-widest">{item.label}</span>
-          </button>
-        ))}
-      </nav>
+            {/* Financial BI Section */}
+            <div className="bg-[#1c1f24] rounded-[32px] border border-white/5 p-6 space-y-8 shadow-xl">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-accent-gold">trending_up</span>
+                <h3 className="text-sm font-bold text-white">Faturamento (30 dias)</h3>
+              </div>
+
+              <div className="h-[140px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs><linearGradient id="chartGold" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#d4af37" stopOpacity={0.2} /><stop offset="95%" stopColor="#d4af37" stopOpacity={0} /></linearGradient></defs>
+                    <XAxis dataKey="date" hide />
+                    <Tooltip contentStyle={{ backgroundColor: '#1c1f24', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
+                    <Area type="monotone" dataKey="value" stroke="#d4af37" fill="url(#chartGold)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {isMaster && (
+                <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/5">
+                  {/* Services Ranking */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-emerald-400 !text-sm">grid_view</span>
+                      <h4 className="text-[8px] font-black uppercase tracking-widest text-white">Serviços Mais Agendados</h4>
+                    </div>
+                    <div className="space-y-4">
+                      {stats.topServices.map((s: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between gap-2 overflow-hidden">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-[9px] font-black text-gray-600">#{i + 1}</span>
+                            <p className="text-[9px] font-bold text-gray-300 truncate tracking-tight">{s.name}</p>
+                          </div>
+                          <span className="text-[10px] font-black text-emerald-400 shrink-0">{s.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Professionals Ranking */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-accent-gold !text-sm">account_balance_wallet</span>
+                      <h4 className="text-[8px] font-black uppercase tracking-widest text-white">Faturamento por Profissional</h4>
+                    </div>
+                    <div className="space-y-4">
+                      {stats.proRevenue.map((p: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between gap-1 overflow-hidden">
+                          <p className="text-[9px] font-bold text-gray-300 truncate tracking-tight">{p.name}</p>
+                          <span className="text-[10px] font-black text-emerald-500 shrink-0">R$ {p.revenue.toLocaleString('pt-BR')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+
+        {/* Bottom Nav - Hidden on lg (sidebar visible) */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#121417] border-t border-white/5 flex items-center justify-around h-20 px-4 z-50 lg:hidden">
+          {[
+            { label: 'PAINEL', icon: 'grid_view', path: '/admin', active: location.pathname === '/admin' },
+            { label: 'AGENDA', icon: 'calendar_month', path: '/admin/agenda', active: location.pathname.includes('agenda') },
+            { label: 'EQUIPE', icon: 'person', path: '/admin/professionals', active: location.pathname.includes('professionals') },
+            { label: 'AJUSTES', icon: 'settings', path: isMaster ? '/admin/settings' : '/admin/my-profile', active: location.pathname.includes('profile') || location.pathname.includes('settings') }
+          ].map((item, idx) => (
+            <button key={idx} onClick={() => navigate(item.path)} className={`flex flex-col items-center gap-1 transition-all ${item.active ? 'text-emerald-400' : 'text-gray-500'}`}>
+              <span className={`material-symbols-outlined !text-[24px]`}>{item.icon}</span>
+              <span className="text-[8px] font-black tracking-widest">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 };

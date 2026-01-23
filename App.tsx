@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Onboarding from './pages/Onboarding';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -73,9 +73,19 @@ import AdminPriveSettings from './pages/AdminPriveSettings';
 import AdminShellPrive from './pages/AdminShellPrive';
 import AdminTestimonials from './pages/AdminTestimonials';
 
-const AppContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+// Container for client-facing pages (mobile-first, 430px max width)
+const AppContainerClient: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex justify-center min-h-screen bg-gray-200 dark:bg-zinc-950">
     <div className="relative w-full max-w-[430px] bg-background-light dark:bg-background-dark min-h-screen shadow-2xl flex flex-col overflow-x-hidden">
+      {children}
+    </div>
+  </div>
+);
+
+// Container for admin pages (full width for desktop/tablet)
+const AppContainerAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="min-h-screen bg-gray-200 dark:bg-zinc-950">
+    <div className="relative w-full bg-background-light dark:bg-background-dark min-h-screen flex flex-col overflow-x-hidden">
       {children}
     </div>
   </div>
@@ -84,8 +94,9 @@ const AppContainer: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const App: React.FC = () => {
   return (
     <Router>
-      <AppContainer>
-        <Routes>
+      <Routes>
+        {/* Client-facing routes with mobile container */}
+        <Route element={<AppContainerClient><Outlet /></AppContainerClient>}>
           {/* Autenticação */}
           <Route path="/" element={<Onboarding />} />
           <Route path="/login" element={<Login onAuth={() => { }} />} />
@@ -106,7 +117,6 @@ const App: React.FC = () => {
           {/* Cliente Perfil & Relacionamento */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/aesthetic" element={<AestheticProfile />} />
-          {/* <Route path="/profile/points" element={<LashPoints />} />  Deprecated */}
           <Route path="/profile/levels" element={<FidelityLevels />} />
           <Route path="/profile/refer" element={<ReferFriend />} />
           <Route path="/profile/coupons" element={<Coupons />} />
@@ -133,9 +143,10 @@ const App: React.FC = () => {
           <Route path="/checkin/share" element={<CheckInShare />} />
           <Route path="/checkin/success" element={<CheckInSuccess />} />
           <Route path="/evaluation" element={<Evaluation />} />
+        </Route>
 
-          {/* Administrativo */}
-          {/* Rotas Protegidas de Admin */}
+        {/* Admin routes with full-width container */}
+        <Route element={<AppContainerAdmin><Outlet /></AppContainerAdmin>}>
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/content" element={<AdminContentCreator />} />
@@ -173,10 +184,10 @@ const App: React.FC = () => {
               <Route path="/admin/jz-prive/settings" element={<AdminPriveSettings />} />
             </Route>
           </Route>
+        </Route>
 
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </AppContainer>
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </Router>
   );
 };

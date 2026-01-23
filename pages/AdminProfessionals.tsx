@@ -121,15 +121,15 @@ const AdminProfessionals: React.FC = () => {
    };
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-32">
-         <header className="p-6 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80 sticky top-0 z-40">
+      <div className="flex flex-col h-full bg-background-dark text-white pb-32 lg:pb-8">
+         <header className="p-6 lg:p-8 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80 sticky top-0 z-40">
             <div className="flex items-center gap-4">
                <button onClick={() => navigate('/admin')} className="size-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
                   <span className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</span>
                </button>
                <div>
-                  <h1 className="text-xl font-display font-bold">Gestão de Equipe</h1>
-                  <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{pros.length} Profissionais</p>
+                  <h1 className="text-xl lg:text-2xl font-display font-bold">Gestão de Equipe</h1>
+                  <p className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest">{pros.length} Profissionais</p>
                </div>
             </div>
             <button onClick={() => setShowAdd(true)} className="size-11 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/20 ring-4 ring-primary/5 active:scale-95 transition-transform">
@@ -137,57 +137,59 @@ const AdminProfessionals: React.FC = () => {
             </button>
          </header>
 
-         <main className="flex-1 p-6 space-y-4 overflow-y-auto no-scrollbar">
-            {loading ? (
-               <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-                  <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs font-bold uppercase tracking-widest">Sincronizando equipe...</p>
-               </div>
-            ) : pros.length === 0 ? (
-               <div className="text-center py-20 space-y-4 opacity-30">
-                  <span className="material-symbols-outlined !text-6xl">group_off</span>
-                  <p className="font-display italic text-lg">Nenhum talento cadastrado.</p>
-               </div>
-            ) : pros.map(pro => (
-               <div
-                  key={pro.id}
-                  className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-5 transition-all hover:border-white/10 group relative"
-               >
-                  <div className="flex items-center gap-5" onClick={() => navigate(`/admin/professional/${pro.id}`)}>
-                     <div className="size-16 rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg shadow-black/40">
-                        <img src={pro.image_url || `https://ui-avatars.com/api/?name=${pro.name}&background=random`} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={pro.name} />
-                     </div>
-                     <div className="flex-1">
-                        <h4 className="font-bold text-base text-white group-hover:text-accent-gold transition-colors">{pro.name}</h4>
-                        <p className="text-[10px] text-accent-gold font-black uppercase tracking-[0.2em] mt-0.5">{pro.role}</p>
-                     </div>
-                     <div className={`px-3 py-1.5 rounded-full border-2 ${pro.active ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-gray-500/10 border-gray-500/20'}`}>
-                        <span className={`text-[8px] font-black uppercase tracking-widest ${pro.active ? 'text-emerald-500' : 'text-gray-500'}`}>{pro.active ? 'ON' : 'OFF'}</span>
-                     </div>
+         <main className="flex-1 p-6 lg:p-8 overflow-y-auto no-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+               {loading ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+                     <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                     <p className="text-xs font-bold uppercase tracking-widest">Sincronizando equipe...</p>
                   </div>
+               ) : pros.length === 0 ? (
+                  <div className="text-center py-20 space-y-4 opacity-30">
+                     <span className="material-symbols-outlined !text-6xl">group_off</span>
+                     <p className="font-display italic text-lg">Nenhum talento cadastrado.</p>
+                  </div>
+               ) : pros.map(pro => (
+                  <div
+                     key={pro.id}
+                     className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-5 transition-all hover:border-white/10 group relative"
+                  >
+                     <div className="flex items-center gap-5" onClick={() => navigate(`/admin/professional/${pro.id}`)}>
+                        <div className="size-16 rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg shadow-black/40">
+                           <img src={pro.image_url || `https://ui-avatars.com/api/?name=${pro.name}&background=random`} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={pro.name} />
+                        </div>
+                        <div className="flex-1">
+                           <h4 className="font-bold text-base text-white group-hover:text-accent-gold transition-colors">{pro.name}</h4>
+                           <p className="text-[10px] text-accent-gold font-black uppercase tracking-[0.2em] mt-0.5">{pro.role}</p>
+                        </div>
+                        <div className={`px-3 py-1.5 rounded-full border-2 ${pro.active ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-gray-500/10 border-gray-500/20'}`}>
+                           <span className={`text-[8px] font-black uppercase tracking-widest ${pro.active ? 'text-emerald-500' : 'text-gray-500'}`}>{pro.active ? 'ON' : 'OFF'}</span>
+                        </div>
+                     </div>
 
-                  <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                     <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5 opacity-40">
-                           <span className="material-symbols-outlined !text-xs text-gray-400">mail</span>
-                           <span className="text-[9px] font-medium lowercase tracking-tight">{pro.email || 'sem email'}</span>
+                     <div className="pt-4 border-t border-white/5 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                           <div className="flex items-center gap-1.5 opacity-40">
+                              <span className="material-symbols-outlined !text-xs text-gray-400">mail</span>
+                              <span className="text-[9px] font-medium lowercase tracking-tight">{pro.email || 'sem email'}</span>
+                           </div>
+                           <div className="flex gap-1 ml-4 border-l border-white/10 pl-4">
+                              {(pro.permissions as any)?.canManageAgenda && <span title="Agenda" className="material-symbols-outlined !text-[12px] text-accent-gold">calendar_month</span>}
+                              {(pro.permissions as any)?.canViewGlobalFinances && <span title="Master Finance" className="material-symbols-outlined !text-[12px] text-primary">payments</span>}
+                              {(pro.permissions as any)?.canCreateContent && <span title="Conteúdo" className="material-symbols-outlined !text-[12px] text-blue-400">history_toggle_off</span>}
+                           </div>
                         </div>
-                        <div className="flex gap-1 ml-4 border-l border-white/10 pl-4">
-                           {(pro.permissions as any)?.canManageAgenda && <span title="Agenda" className="material-symbols-outlined !text-[12px] text-accent-gold">calendar_month</span>}
-                           {(pro.permissions as any)?.canViewGlobalFinances && <span title="Master Finance" className="material-symbols-outlined !text-[12px] text-primary">payments</span>}
-                           {(pro.permissions as any)?.canCreateContent && <span title="Conteúdo" className="material-symbols-outlined !text-[12px] text-blue-400">history_toggle_off</span>}
-                        </div>
+                        <button
+                           onClick={(e) => { e.stopPropagation(); toggleProStatus(pro); }}
+                           className={`transition-all p-2 rounded-full ${pro.active ? 'text-gray-500 hover:text-rose-500 hover:bg-rose-500/10' : 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10'}`}
+                           title={pro.active ? 'Desativar Profissional' : 'Ativar Profissional'}
+                        >
+                           <span className="material-symbols-outlined !text-lg">{pro.active ? 'person_off' : 'person_check'}</span>
+                        </button>
                      </div>
-                     <button
-                        onClick={(e) => { e.stopPropagation(); toggleProStatus(pro); }}
-                        className={`transition-all p-2 rounded-full ${pro.active ? 'text-gray-500 hover:text-rose-500 hover:bg-rose-500/10' : 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10'}`}
-                        title={pro.active ? 'Desativar Profissional' : 'Ativar Profissional'}
-                     >
-                        <span className="material-symbols-outlined !text-lg">{pro.active ? 'person_off' : 'person_check'}</span>
-                     </button>
                   </div>
-               </div>
-            ))}
+               ))}
+            </div>
          </main>
 
          {showAdd && (
@@ -266,8 +268,10 @@ const AdminProfessionals: React.FC = () => {
                </form>
             </div>
          )}
-         <AdminBottomNav />
-      </div>
+         <div className="lg:hidden">
+            <AdminBottomNav />
+         </div>
+      </div >
    );
 };
 

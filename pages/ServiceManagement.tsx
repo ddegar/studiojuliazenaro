@@ -144,16 +144,16 @@ const ServiceManagement: React.FC = () => {
    }
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-32">
-         <header className="sticky top-0 z-40 glass-nav !bg-background-dark/80 p-6 border-b border-white/5 flex flex-col gap-4">
+      <div className="flex flex-col h-full bg-background-dark text-white pb-32 lg:pb-8">
+         <header className="sticky top-0 z-40 glass-nav !bg-background-dark/80 p-6 lg:p-8 border-b border-white/5 flex flex-col gap-4">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-4">
                   <button onClick={() => navigate('/admin')} className="size-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
                      <span className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</span>
                   </button>
                   <div>
-                     <h1 className="text-xl font-display font-bold">Catálogo de Serviços</h1>
-                     <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{filteredServices.length} Procedimentos Ativos</p>
+                     <h1 className="text-xl lg:text-2xl font-display font-bold">Catálogo de Serviços</h1>
+                     <p className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest">{filteredServices.length} Procedimentos Ativos</p>
                   </div>
                </div>
                {(isMaster || (currentUser as any)?.permissions?.canManageOwnServices) && (
@@ -164,66 +164,68 @@ const ServiceManagement: React.FC = () => {
             </div>
          </header>
 
-         <main className="flex-1 p-6 space-y-4 overflow-y-auto no-scrollbar">
-            {loading ? (
-               <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-                  <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs font-bold uppercase tracking-widest">Sincronizando catálogo...</p>
-               </div>
-            ) : filteredServices.length === 0 ? (
-               <div className="text-center py-20 space-y-4 opacity-30">
-                  <span className="material-symbols-outlined !text-6xl">category</span>
-                  <p className="font-display italic text-lg">Nenhum serviço encontrado.</p>
-               </div>
-            ) : filteredServices.map(service => (
-               <div key={service.id} className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-6 group hover:border-white/10 transition-all">
-                  <div className="flex justify-between items-start">
-                     <div className="flex items-center gap-5">
-                        <div className="size-20 rounded-2xl overflow-hidden border border-white/10 shadow-lg shadow-black/20">
-                           <img src={service.imageUrl || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400'} className="w-full h-full object-cover" alt={service.name} />
-                        </div>
-                        <div className="space-y-1.5">
-                           <h3 className="text-base font-bold text-white group-hover:text-accent-gold transition-colors">{service.name}</h3>
-                           <div className="flex flex-wrap gap-2">
-                              <span className="bg-primary/10 text-primary text-[8px] font-black px-2.5 py-1 rounded-full uppercase border border-primary/20">{service.category}</span>
-                              <span className="bg-accent-gold/10 text-accent-gold text-[8px] font-black px-2.5 py-1 rounded-full uppercase border border-accent-gold/20">{service.pointsReward} Lash Points</span>
+         <main className="flex-1 p-6 lg:p-8 overflow-y-auto no-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+               {loading ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
+                     <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                     <p className="text-xs font-bold uppercase tracking-widest">Sincronizando catálogo...</p>
+                  </div>
+               ) : filteredServices.length === 0 ? (
+                  <div className="text-center py-20 space-y-4 opacity-30">
+                     <span className="material-symbols-outlined !text-6xl">category</span>
+                     <p className="font-display italic text-lg">Nenhum serviço encontrado.</p>
+                  </div>
+               ) : filteredServices.map(service => (
+                  <div key={service.id} className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-6 group hover:border-white/10 transition-all">
+                     <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-5">
+                           <div className="size-20 rounded-2xl overflow-hidden border border-white/10 shadow-lg shadow-black/20">
+                              <img src={service.imageUrl || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400'} className="w-full h-full object-cover" alt={service.name} />
+                           </div>
+                           <div className="space-y-1.5">
+                              <h3 className="text-base font-bold text-white group-hover:text-accent-gold transition-colors">{service.name}</h3>
+                              <div className="flex flex-wrap gap-2">
+                                 <span className="bg-primary/10 text-primary text-[8px] font-black px-2.5 py-1 rounded-full uppercase border border-primary/20">{service.category}</span>
+                                 <span className="bg-accent-gold/10 text-accent-gold text-[8px] font-black px-2.5 py-1 rounded-full uppercase border border-accent-gold/20">{service.pointsReward} Lash Points</span>
+                              </div>
                            </div>
                         </div>
-                     </div>
-                     <div className="flex gap-2">
-                        <button
-                           onClick={() => { setEditingService(service); setShowModal(true); }}
-                           className="size-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all active:scale-90"
-                        >
-                           <span className="material-symbols-outlined !text-xl">edit</span>
-                        </button>
-                        {isMaster && (
+                        <div className="flex gap-2">
                            <button
-                              onClick={() => handleDelete(service.id)}
-                              className="size-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90"
+                              onClick={() => { setEditingService(service); setShowModal(true); }}
+                              className="size-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all active:scale-90"
                            >
-                              <span className="material-symbols-outlined !text-xl">delete</span>
+                              <span className="material-symbols-outlined !text-xl">edit</span>
                            </button>
-                        )}
+                           {isMaster && (
+                              <button
+                                 onClick={() => handleDelete(service.id)}
+                                 className="size-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90"
+                              >
+                                 <span className="material-symbols-outlined !text-xl">delete</span>
+                              </button>
+                           )}
+                        </div>
                      </div>
-                  </div>
 
-                  <div className="grid grid-cols-3 gap-4 pt-5 border-t border-white/5">
-                     <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
-                        <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Preço</p>
-                        <p className="text-sm font-black text-emerald-500">R$ {service.price}</p>
-                     </div>
-                     <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
-                        <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Tempo</p>
-                        <p className="text-sm font-black text-gray-300">{service.duration} min</p>
-                     </div>
-                     <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
-                        <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Equipe</p>
-                        <p className="text-sm font-black text-accent-gold">{service.professionalIds.length}</p>
+                     <div className="grid grid-cols-3 gap-4 pt-5 border-t border-white/5">
+                        <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
+                           <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Preço</p>
+                           <p className="text-sm font-black text-emerald-500">R$ {service.price}</p>
+                        </div>
+                        <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
+                           <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Tempo</p>
+                           <p className="text-sm font-black text-gray-300">{service.duration} min</p>
+                        </div>
+                        <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
+                           <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Equipe</p>
+                           <p className="text-sm font-black text-accent-gold">{service.professionalIds.length}</p>
+                        </div>
                      </div>
                   </div>
-               </div>
-            ))}
+               ))}
+            </div>
          </main>
 
          {showModal && (
@@ -327,7 +329,9 @@ const ServiceManagement: React.FC = () => {
                </form>
             </div>
          )}
-         <AdminBottomNav />
+         <div className="lg:hidden">
+            <AdminBottomNav />
+         </div>
       </div>
    );
 };

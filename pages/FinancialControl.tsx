@@ -237,11 +237,11 @@ const FinancialControl: React.FC = () => {
    const navigate = useNavigate();
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-24 overflow-y-auto custom-scrollbar">
-         <header className="px-6 pt-12 pb-6 flex items-center gap-4">
+      <div className="flex flex-col h-full bg-background-dark text-white pb-24 lg:pb-8 overflow-y-auto custom-scrollbar">
+         <header className="px-6 lg:px-10 pt-12 lg:pt-8 pb-6 flex items-center gap-4">
             <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back</button>
             <div>
-               <h1 className="text-2xl font-bold font-display">Controle Financeiro</h1>
+               <h1 className="text-2xl lg:text-3xl font-bold font-display">Controle Financeiro</h1>
                <p className="text-xs text-gray-400">
                   {isMaster ? 'Visão Geral do Studio' : 'Seu Fluxo de Caixa'}
                </p>
@@ -250,7 +250,7 @@ const FinancialControl: React.FC = () => {
 
          {/* MASTER DASHBOARD SECTIONS */}
          {isMaster && (
-            <div className="px-6 mb-8 space-y-8">
+            <div className="px-6 lg:px-10 mb-8 space-y-8">
 
                {/* 1. STUDIO OVERVIEW */}
                <div>
@@ -258,7 +258,7 @@ const FinancialControl: React.FC = () => {
                      <span className="material-symbols-outlined text-accent-gold text-lg">domain</span>
                      <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Studio Geral</h3>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
                         <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500/70 mb-1">Receita Total</p>
                         <p className="text-lg font-bold text-emerald-400">R$ {studioStats.income.toLocaleString('pt-BR', { notation: 'compact' })}</p>
@@ -382,7 +382,7 @@ const FinancialControl: React.FC = () => {
          )}
 
          {/* Common Filters for List */}
-         <div className="px-6 mb-6">
+         <div className="px-6 lg:px-10 mb-6">
             <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
                {(['TODAY', '7D', '30D', 'ALL'] as const).map(p => (
                   <button
@@ -397,7 +397,7 @@ const FinancialControl: React.FC = () => {
          </div>
 
          {/* Actions */}
-         <div className="px-6 mb-6 flex gap-4">
+         <div className="px-6 lg:px-10 mb-6 flex gap-4">
             <button onClick={() => { setType('INCOME'); setShowForm(true); }} className="flex-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 h-14 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all">
                + RECEITA
             </button>
@@ -407,7 +407,7 @@ const FinancialControl: React.FC = () => {
          </div>
 
          {/* Transactions List */}
-         <div className="flex items-center justify-between px-6 mb-4">
+         <div className="flex items-center justify-between px-6 lg:px-10 mb-4">
             <div>
                <h2 className="text-xl font-display font-bold">Lançamentos</h2>
                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
@@ -428,7 +428,7 @@ const FinancialControl: React.FC = () => {
          </div>
 
          {/* Transactions List Content */}
-         <div className="space-y-3 px-6">
+         <div className="space-y-3 px-6 lg:px-10">
             {transactions
                .filter(t => {
                   if (!isMaster) return true; // Already filtered by server
@@ -534,7 +534,9 @@ const FinancialControl: React.FC = () => {
             </div>
          )}
 
-         <AdminBottomNav />
+         <div className="lg:hidden">
+            <AdminBottomNav />
+         </div>
          {/* Category Manager Modal */}
          {showCategoryManager && (
             <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">

@@ -189,14 +189,14 @@ const AdminAgenda: React.FC = () => {
    }
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-32">
-         <header className="sticky top-0 z-50 glass-nav !bg-background-dark/80 p-6 border-b border-white/5 flex flex-col gap-6">
+      <div className="flex flex-col h-full bg-background-dark text-white pb-32 lg:pb-8">
+         <header className="sticky top-0 z-50 glass-nav !bg-background-dark/80 p-6 lg:p-8 border-b border-white/5 flex flex-col gap-6">
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-4">
                   <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
                   <div>
-                     <h1 className="text-xl font-display font-bold">Agenda Mestra</h1>
-                     <p className="text-[10px] text-gray-500 uppercase font-bold tracking-[0.2em]">Sincronizada em Tempo Real</p>
+                     <h1 className="text-xl md:text-2xl font-display font-bold">Agenda Mestra</h1>
+                     <p className="text-[10px] md:text-xs text-gray-500 uppercase font-bold tracking-[0.2em]">Sincronizada em Tempo Real</p>
                   </div>
                </div>
                <div className="flex gap-3">
@@ -239,19 +239,19 @@ const AdminAgenda: React.FC = () => {
             </div>
          </header>
 
-         <main className="flex-1 p-6 space-y-10 overflow-y-auto no-scrollbar">
+         <main className="flex-1 p-6 lg:p-10 space-y-10 overflow-y-auto no-scrollbar">
             <>
                <div className="flex justify-between items-center px-4">
-                  <h2 className="text-2xl font-display font-bold capitalize">{monthName} <span className="text-gray-600">{viewYear}</span></h2>
+                  <h2 className="text-2xl md:text-3xl font-display font-bold capitalize">{monthName} <span className="text-gray-600">{viewYear}</span></h2>
                   <div className="flex gap-4">
                      <button onClick={() => changeMonth(-1)} className="material-symbols-outlined text-gray-500 hover:text-white transition-colors">chevron_left</button>
                      <button onClick={() => changeMonth(1)} className="material-symbols-outlined text-gray-500 hover:text-white transition-colors">chevron_right</button>
                   </div>
                </div>
 
-               <div className="grid grid-cols-7 gap-3 transition-opacity duration-300">
+               <div className="grid grid-cols-7 gap-2 md:gap-4 transition-opacity duration-300">
                   {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => (
-                     <div key={d} className="text-center text-[9px] font-black uppercase text-gray-700 pb-2">{d}</div>
+                     <div key={d} className="text-center text-[9px] md:text-xs font-black uppercase text-gray-700 pb-2">{d}</div>
                   ))}
                   {/* Empty cells for offset */}
                   {Array.from({ length: new Date(viewYear, viewMonth, 1).getDay() }).map((_, i) => (
@@ -298,7 +298,7 @@ const AdminAgenda: React.FC = () => {
                                ${filter === 'FREE' && isFree && !isToday && !isDayClosed ? 'ring-1 ring-emerald-500/50 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : ''}
                             `}
                         >
-                           <span className={`text-xs font-black ${isToday ? 'text-white' : (filter === 'FREE' && isFree && !isDayClosed ? 'text-emerald-400' : (isDayClosed ? 'text-rose-900/40' : 'text-gray-400'))}`}>{day}</span>
+                           <span className={`text-xs md:text-sm font-black ${isToday ? 'text-white' : (filter === 'FREE' && isFree && !isDayClosed ? 'text-emerald-400' : (isDayClosed ? 'text-rose-900/40' : 'text-gray-400'))}`}>{day}</span>
                            <div className="flex gap-1 items-center">
                               {isDayClosed && <span className="text-[8px] font-black text-rose-900/40 uppercase">Folga</span>}
                               {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>}
@@ -334,7 +334,9 @@ const AdminAgenda: React.FC = () => {
                </div>
             </>
          </main>
-         <AdminBottomNav />
+         <div className="lg:hidden">
+            <AdminBottomNav />
+         </div>
       </div>
    );
 };
