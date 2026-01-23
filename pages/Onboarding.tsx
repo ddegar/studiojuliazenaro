@@ -86,8 +86,8 @@ const Onboarding: React.FC = () => {
             <h1 className="font-display text-4xl text-primary leading-tight flex flex-col items-center">
               {step.title}
               {step.titleHighlight === 'LOGO_PLACEHOLDER' ? (
-                <div className="mt-2 transform scale-125">
-                  <Logo size="xl" className="w-[300px]" />
+                <div className="mt-2 transform scale-90">
+                  <Logo size="xl" className="w-[240px]" />
                 </div>
               ) : (
                 <span className="italic">{step.titleHighlight}</span>
