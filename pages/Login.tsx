@@ -78,7 +78,7 @@ const Login: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
     <div className="flex flex-col min-h-screen bg-background-light font-sans overflow-y-auto no-scrollbar">
       {/* Header Area */}
       <header className="w-full flex flex-col items-center pt-10 pb-0 px-4">
-        <div className="w-full max-w-[400px] transform scale-125 origin-bottom">
+        <div className="w-full max-w-[400px] transform scale-90 origin-bottom">
           <Logo size="xl" className="w-full" />
         </div>
       </header>

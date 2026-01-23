@@ -30,7 +30,7 @@ const Stories: React.FC = () => {
             image_url,
             type,
             created_at,
-            profiles (name, avatar_url)
+            profiles (name, profile_pic)
           `)
           .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false });
@@ -43,7 +43,7 @@ const Stories: React.FC = () => {
             url: s.image_url,
             type: 'image', // Default to image for now
             authorName: s.profiles?.name || 'Studio Julia Zenaro',
-            authorAvatar: s.profiles?.avatar_url || `https://ui-avatars.com/api/?name=Studio`,
+            authorAvatar: s.profiles?.profile_pic || `https://ui-avatars.com/api/?name=Studio`,
             createdAt: s.created_at
           }));
           setItems(formatted);
