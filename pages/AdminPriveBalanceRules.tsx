@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../services/supabase';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,7 +8,7 @@ const AdminPriveBalanceRules: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [rules, setRules] = useState<any[]>([]);
     const [campaigns, setCampaigns] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState('REGRAS');
+    const [services, setServices] = useState<any[]>([]);
     const [editingRule, setEditingRule] = useState<any>(null);
     const [isCreatingRule, setIsCreatingRule] = useState(false);
     const [newRule, setNewRule] = useState({ code: '', description: '', points_reward: 0 });
@@ -19,14 +20,16 @@ const AdminPriveBalanceRules: React.FC = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [rulesRes, campaignsRes] = await Promise.all([
+            const [rulesRes, campaignsRes, servicesRes] = await Promise.all([
                 supabase.from('loyalty_actions').select('*').order('description'),
-                supabase.from('loyalty_campaigns').select('*').eq('is_active', true).order('created_at', { ascending: false })
+                supabase.from('loyalty_campaigns').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+                supabase.from('services').select('id, name, points_reward, category').order('name')
             ]);
 
             if (rulesRes.error) throw rulesRes.error;
             setRules(rulesRes.data || []);
             setCampaigns(campaignsRes.data || []);
+            setServices(servicesRes.data || []);
         } catch (err) {
             console.error(err);
         } finally {
@@ -68,6 +71,20 @@ const AdminPriveBalanceRules: React.FC = () => {
         }
     };
 
+    const handleDeleteRule = async () => {
+        if (!editingRule) return;
+        if (!window.confirm('Tem certeza que deseja excluir esta regra? (Ação irreversível)')) return;
+        try {
+            const { error } = await supabase.from('loyalty_actions').delete().eq('id', editingRule.id);
+            if (error) throw error;
+            setEditingRule(null);
+            fetchData();
+            alert('Regra excluída com sucesso.');
+        } catch (err: any) {
+            alert('Erro ao excluir: ' + err.message);
+        }
+    };
+
     const handleCreateRule = async () => {
         if (!newRule.code || !newRule.description) {
             alert('Preencha os campos obrigatórios.');
@@ -93,6 +110,18 @@ const AdminPriveBalanceRules: React.FC = () => {
         }
     };
 
+    const toggleServicePoints = async (service: any) => {
+        const newPoints = service.points_reward > 0 ? 0 : 50; // Default restore to 50 or 0
+        try {
+            const { error } = await supabase.from('services').update({ points_reward: newPoints }).eq('id', service.id);
+            if (error) throw error;
+            // Update local state instantly
+            setServices(services.map(s => s.id === service.id ? { ...s, points_reward: newPoints } : s));
+        } catch (err: any) {
+            alert('Erro ao atualizar serviço: ' + err.message);
+        }
+    };
+
     const getIconByCode = (code: string) => {
         switch (code) {
             case 'BASE_GENERATION': return 'payments';
@@ -103,7 +132,6 @@ const AdminPriveBalanceRules: React.FC = () => {
             case 'STORY_INSTA': return 'camera_alt';
             case 'STORY_STUDIO': return 'add_a_photo';
             case 'STORY': return 'alternate_email';
-            case 'BOOKING_REAL': return 'payments';
             default: return 'stars';
         }
     };
@@ -154,7 +182,6 @@ const AdminPriveBalanceRules: React.FC = () => {
                                         key={rule.id}
                                         className="bg-[#141814]/40 rounded-[32px] border border-white/5 p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-5 group hover:border-[#C5A059]/20 transition-all"
                                     >
-                                        {/* Icon & Title Group */}
                                         <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
                                             <div className="size-14 md:size-16 rounded-full bg-black/40 border border-white/5 flex items-center justify-center text-[#C5A059] shrink-0">
                                                 <span className="material-symbols-outlined text-xl md:text-2xl">
@@ -191,11 +218,43 @@ const AdminPriveBalanceRules: React.FC = () => {
                                         </div>
                                     </div>
                                 ))}
-
                             </div>
                         )}
                     </div>
                 </section>
+
+                {/* Excluded Services Section */}
+                <section className="space-y-8">
+                    <div className="flex items-center gap-4">
+                        <div className="h-[2px] w-12 bg-gradient-to-r from-rose-500 to-transparent rounded-full font-black"></div>
+                        <h2 className="text-[11px] font-black text-white/40 uppercase tracking-[0.3em]">Exceções de Serviço</h2>
+                    </div>
+                    <div className="bg-[#141814]/40 rounded-[32px] border border-white/5 p-6 space-y-6">
+                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                            Serviços marcados geram pontos automaticamente. Desmarque para excluir da pontuação.
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {services.map(service => (
+                                <div key={service.id} className="flex items-center justify-between bg-black/20 p-3 rounded-2xl border border-white/5">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`size-2 rounded-full ${service.points_reward > 0 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`}></div>
+                                        <div>
+                                            <p className="text-xs font-bold text-white line-clamp-1">{service.name}</p>
+                                            <p className="text-[9px] text-gray-500">{service.points_reward} pts</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => toggleServicePoints(service)}
+                                        className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${service.points_reward > 0 ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20' : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/20'}`}
+                                    >
+                                        {service.points_reward > 0 ? 'ATIVO' : 'OFF'}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
                 {/* Performance Header */}
                 <section className="space-y-8">
                     <div className="flex items-center justify-between">
@@ -236,9 +295,9 @@ const AdminPriveBalanceRules: React.FC = () => {
             </main>
 
 
-            {/* Editing Modal */}
-            {editingRule && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-fade-in">
+            {/* Editing Modal - PORTAL FIX */}
+            {editingRule && createPortal(
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[9999] flex items-center justify-center p-6 animate-fade-in">
                     <div className="bg-[#141814] w-full max-w-md rounded-[40px] border border-white/10 p-10 space-y-8 animate-scale-in">
                         <header className="flex justify-between items-center">
                             <h2 className="text-xl font-display font-medium text-white">Configurar Regra</h2>
@@ -266,19 +325,29 @@ const AdminPriveBalanceRules: React.FC = () => {
                                 <p className="text-[9px] text-white/20 text-center italic mt-2">Valores decimais permitidos para regras de faturamento</p>
                             </div>
                         </div>
-                        <button
-                            onClick={handleUpdateRule}
-                            className="w-full bg-[#C5A059] text-black h-16 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-[#C5A059]/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                        >
-                            Salvar Alterações
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleDeleteRule}
+                                className="flex-1 bg-rose-500/10 border border-rose-500/20 text-rose-500 h-14 rounded-[20px] font-black text-[10px] uppercase tracking-[0.1em] hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined !text-sm">delete</span>
+                                Excluir
+                            </button>
+                            <button
+                                onClick={handleUpdateRule}
+                                className="flex-[2] bg-[#C5A059] text-black h-14 rounded-[20px] font-black text-[10px] uppercase tracking-[0.1em] shadow-xl shadow-[#C5A059]/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                            >
+                                Salvar Alterações
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {/* Creating Modal (simplified version check list) */}
-            {isCreatingRule && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-fade-in">
+            {/* Creating Modal - PORTAL FIX */}
+            {isCreatingRule && createPortal(
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[9999] flex items-center justify-center p-6 animate-fade-in">
                     <div className="bg-[#141814] w-full max-w-md rounded-[40px] border border-white/10 p-10 space-y-8 animate-scale-in">
                         <header className="flex justify-between items-center">
                             <h2 className="text-xl font-display font-medium text-white">Nova Ação</h2>
@@ -323,7 +392,8 @@ const AdminPriveBalanceRules: React.FC = () => {
                             Criar Nova Regra
                         </button>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

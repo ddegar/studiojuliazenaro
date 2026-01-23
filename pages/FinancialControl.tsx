@@ -237,305 +237,307 @@ const FinancialControl: React.FC = () => {
    const navigate = useNavigate();
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-24 lg:pb-8 overflow-y-auto custom-scrollbar">
-         <header className="px-6 lg:px-10 pt-12 lg:pt-8 pb-6 flex items-center gap-4">
-            <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back</button>
-            <div>
-               <h1 className="text-2xl lg:text-3xl font-bold font-display">Controle Financeiro</h1>
-               <p className="text-xs text-gray-400">
-                  {isMaster ? 'Visão Geral do Studio' : 'Seu Fluxo de Caixa'}
-               </p>
-            </div>
-         </header>
-
-         {/* MASTER DASHBOARD SECTIONS */}
-         {isMaster && (
-            <div className="px-6 lg:px-10 mb-8 space-y-8">
-
-               {/* 1. STUDIO OVERVIEW */}
+      <div className="flex flex-col h-full bg-background-dark text-white pb-24 lg:pb-8 overflow-y-auto custom-scrollbar items-center">
+         <div className="w-full max-w-6xl px-6 lg:px-10">
+            <header className="pt-12 lg:pt-8 pb-6 flex items-center gap-4">
+               <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back</button>
                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                     <span className="material-symbols-outlined text-accent-gold text-lg">domain</span>
-                     <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Studio Geral</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                     <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500/70 mb-1">Receita Total</p>
-                        <p className="text-lg font-bold text-emerald-400">R$ {studioStats.income.toLocaleString('pt-BR', { notation: 'compact' })}</p>
-                     </div>
-                     <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-4">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-rose-500/70 mb-1">Despesa Total</p>
-                        <p className="text-lg font-bold text-rose-400">R$ {studioStats.expense.toLocaleString('pt-BR', { notation: 'compact' })}</p>
-                     </div>
-                     <div className="bg-white/5 border border-white/10 rounded-2xl p-4 relative overflow-hidden">
-                        <div className={`absolute inset-0 opacity-10 ${studioStats.net >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                        <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Resultado Líquido</p>
-                        <p className={`text-lg font-bold relative z-10 ${studioStats.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                           R$ {studioStats.net.toLocaleString('pt-BR', { notation: 'compact' })}
-                        </p>
-                     </div>
-                  </div>
+                  <h1 className="text-2xl lg:text-3xl font-bold font-display">Controle Financeiro</h1>
+                  <p className="text-xs text-gray-400">
+                     {isMaster ? 'Visão Geral do Studio' : 'Seu Fluxo de Caixa'}
+                  </p>
                </div>
+            </header>
 
-               {/* 2. JULIA (PERSONAL) */}
-               <div className="bg-[#1c1f24] rounded-3xl p-5 border border-white/5 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-4 opacity-5">
-                     <span className="material-symbols-outlined text-6xl">person</span>
-                  </div>
-                  <div className="relative z-10">
-                     <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                           <div className="size-10 rounded-full bg-accent-gold/20 flex items-center justify-center text-accent-gold border border-accent-gold/30">
-                              <span className="material-symbols-outlined">diamond</span>
-                           </div>
-                           <div>
-                              <p className="text-sm font-bold text-white">Julia Zenaro</p>
-                              <p className="text-[10px] text-gray-500">Performance Individual</p>
-                           </div>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-[9px] font-bold uppercase text-gray-500">Líquido</p>
-                           <p className={`text-xl font-bold ${juliaStats.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              R$ {juliaStats.net.toLocaleString('pt-BR')}
-                           </p>
-                        </div>
-                     </div>
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-black/20 rounded-xl p-3 flex justify-between items-center">
-                           <span className="text-[10px] text-gray-400">Entradas</span>
-                           <span className="text-xs font-bold text-emerald-400">+ {juliaStats.income.toLocaleString('pt-BR', { notation: 'compact' })}</span>
-                        </div>
-                        <div className="bg-black/20 rounded-xl p-3 flex justify-between items-center">
-                           <span className="text-[10px] text-gray-400">Saídas</span>
-                           <span className="text-xs font-bold text-rose-400">- {juliaStats.expense.toLocaleString('pt-BR', { notation: 'compact' })}</span>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-
-               {/* 3. TEAM BREAKDOWN */}
-               <div>
-                  <div className="flex items-center justify-between mb-3 cursor-pointer" onClick={() => setShowTeamDetails(!showTeamDetails)}>
-                     <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-gray-400 text-lg">groups</span>
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Equipe</h3>
-                     </div>
-                     <span className={`material-symbols-outlined text-gray-500 transition-transform ${showTeamDetails ? 'rotate-180' : ''}`}>expand_more</span>
-                  </div>
-
-                  {showTeamDetails && (
-                     <div className="space-y-3">
-                        {teamStats
-                           // Exclude Julia from Team View to avoid redundancy if she is also a pro? 
-                           // Usually user wants to see everyone in team view too, or just others. 
-                           // Let's Keep everyone for completeness, user can ignore Julia card here.
-                           .sort((a, b) => b.income - a.income) // Sort by Revenue
-                           .map(pro => {
-                              if (!pro || !pro.name) return null;
-                              return (
-                                 <button
-                                    key={pro.id || Math.random()}
-                                    onClick={() => setViewFilter(viewFilter === pro.profile_id ? 'ALL' : pro.profile_id)}
-                                    className={`w-full text-left bg-card-dark p-4 rounded-2xl border transition-all flex items-center justify-between ${viewFilter === pro.profile_id ? 'border-accent-gold bg-accent-gold/5' : 'border-white/5 hover:border-white/10'}`}
-                                 >
-                                    <div className="flex items-center gap-3">
-                                       <div className="size-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
-                                          {(pro as any).avatar || (pro as any).image_url || (pro as any).profile_pic ? (
-                                             <img src={(pro as any).avatar || (pro as any).image_url || (pro as any).profile_pic} alt={pro.name} className="w-full h-full object-cover" />
-                                          ) : (
-                                             <span>{(pro.name || '??').substring(0, 2).toUpperCase()}</span>
-                                          )}
-                                       </div>
-                                       <div>
-                                          <p className={`text-sm font-bold ${viewFilter === pro.profile_id ? 'text-accent-gold' : 'text-gray-200'}`}>
-                                             {(pro.name || 'Desconhecido').split(' ')[0]}
-                                          </p>
-                                          <p className="text-[10px] text-gray-500">{0} Lançamentos</p>
-                                       </div>
-                                    </div>
-                                    <div className="text-right">
-                                       <p className="text-xs font-bold text-white">R$ {Number(pro.income || 0).toLocaleString('pt-BR', { notation: 'compact' })}</p>
-                                       <p className={`text-[9px] font-bold ${pro.net >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                          {pro.net >= 0 ? 'Lucro' : 'Preju'} R$ {Math.abs(pro.net || 0).toLocaleString('pt-BR', { notation: 'compact' })}
-                                       </p>
-                                    </div>
-                                 </button>
-                              )
-                           })
-                        }
-                     </div>
-                  )}
-               </div>
-            </div>
-         )}
-
-         {/* REGULAR PRO BALANCE CARD (Only if NOT master) */}
-         {!isMaster && (
-            <div className="px-6 mb-8">
-               <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Seu Saldo</p>
-                  <h2 className={`text-3xl font-bold ${currentBalance >= 0 ? 'text-green-400' : 'text-rose-400'}`}>
-                     R$ {currentBalance.toFixed(2)}
-                  </h2>
-               </div>
-            </div>
-         )}
-
-         {/* Common Filters for List */}
-         <div className="px-6 lg:px-10 mb-6">
-            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
-               {(['TODAY', '7D', '30D', 'ALL'] as const).map(p => (
-                  <button
-                     key={p}
-                     onClick={() => setPeriod(p)}
-                     className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${period === p ? 'bg-accent-gold text-primary shadow-lg' : 'text-gray-500'}`}
-                  >
-                     {p === 'TODAY' ? 'Hoje' : p === '7D' ? '7 Dias' : p === '30D' ? '30 Dias' : 'Tudo'}
-                  </button>
-               ))}
-            </div>
-         </div>
-
-         {/* Actions */}
-         <div className="px-6 lg:px-10 mb-6 flex gap-4">
-            <button onClick={() => { setType('INCOME'); setShowForm(true); }} className="flex-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 h-14 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all">
-               + RECEITA
-            </button>
-            <button onClick={() => { setType('EXPENSE'); setShowForm(true); }} className="flex-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 h-14 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all">
-               - DESPESA
-            </button>
-         </div>
-
-         {/* Transactions List */}
-         <div className="flex items-center justify-between px-6 lg:px-10 mb-4">
-            <div>
-               <h2 className="text-xl font-display font-bold">Lançamentos</h2>
-               <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                  {isMaster && viewFilter !== 'ALL'
-                     ? (viewFilter === 'ME' ? 'Apenas Você' : (transactionUser => transactionUser ? `Filtrando: ${transactionUser.name}` : 'Filtrando Profissional')(professionals.find(p => p.profile_id === viewFilter)))
-                     : 'Todos'
-                  }
-               </p>
-            </div>
+            {/* MASTER DASHBOARD SECTIONS */}
             {isMaster && (
-               <button
-                  onClick={() => setViewFilter('ALL')}
-                  className={`text-[10px] font-bold px-3 py-1 rounded-lg border ${viewFilter === 'ALL' ? 'bg-white text-black border-white' : 'border-white/20 text-gray-400'}`}
-               >
-                  VER TUDO
-               </button>
-            )}
-         </div>
+               <div className="mb-8 space-y-6">
 
-         {/* Transactions List Content */}
-         <div className="space-y-3 px-6 lg:px-10">
-            {transactions
-               .filter(t => {
-                  if (!isMaster) return true; // Already filtered by server
-                  if (viewFilter === 'ALL') return true;
-                  if (viewFilter === 'ME') return t.user_id === user?.id; // Julia
-                  return t.user_id === viewFilter; // Specific ID
-               })
-               .map((t) => (
-                  <div key={t.id} className="bg-card-dark p-5 rounded-3xl border border-white/5 flex justify-between items-center group hover:border-white/10 transition-colors">
-                     <div className="flex items-center gap-4">
-                        <div className={`size-10 rounded-2xl flex items-center justify-center ${t.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                           <span className="material-symbols-outlined !text-xl">{t.type === 'INCOME' ? 'payments' : 'shopping_bag'}</span>
-                        </div>
-                        <div>
-                           <div className="flex items-center gap-2">
-                              <p className="font-bold text-sm text-gray-200">{t.category}</p>
-                              {t.appointment_id && <span className="text-[8px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded-md uppercase font-black tracking-tighter">Auto</span>}
-                           </div>
-                           <p className="text-[10px] text-gray-500 mt-0.5">{t.description || new Date(t.date).toLocaleDateString()}</p>
-                           {/* Show who made this transaction if Master Viewing ALL */}
-                           {isMaster && viewFilter === 'ALL' && (
-                              <p className="text-[9px] text-accent-gold mt-1">
-                                 {professionals.find(p => p.profile_id === t.user_id)?.name.split(' ')[0] || 'Desconhecido'}
-                              </p>
-                           )}
-                        </div>
+                  {/* 1. STUDIO OVERVIEW */}
+                  <div>
+                     <div className="flex items-center gap-2 mb-3">
+                        <span className="material-symbols-outlined text-accent-gold text-lg">domain</span>
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Studio Geral</h3>
                      </div>
-                     <div className="flex items-center gap-4">
-                        <div className="text-right">
-                           <p className={`font-black text-sm ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4">
+                           <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500/70 mb-1">Receita Total</p>
+                           <p className="text-lg font-bold text-emerald-400">R$ {studioStats.income.toLocaleString('pt-BR', { notation: 'compact' })}</p>
+                        </div>
+                        <div className="bg-rose-500/5 border border-rose-500/20 rounded-2xl p-4">
+                           <p className="text-[9px] font-black uppercase tracking-widest text-rose-500/70 mb-1">Despesa Total</p>
+                           <p className="text-lg font-bold text-rose-400">R$ {studioStats.expense.toLocaleString('pt-BR', { notation: 'compact' })}</p>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 relative overflow-hidden">
+                           <div className={`absolute inset-0 opacity-10 ${studioStats.net >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                           <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Resultado Líquido</p>
+                           <p className={`text-lg font-bold relative z-10 ${studioStats.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              R$ {studioStats.net.toLocaleString('pt-BR', { notation: 'compact' })}
                            </p>
-                           <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
-                        </div>
-                        <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <button onClick={() => openEdit(t)} className="size-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">edit</span></button>
-                           <button onClick={() => handleDelete(t.id)} className="size-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">delete</span></button>
                         </div>
                      </div>
                   </div>
-               ))}
-            {transactions.length === 0 && !loading && (
-               <div className="py-20 text-center opacity-30 italic text-sm">Nenhum lançamento no período</div>
-            )}
-         </div>
 
-         {/* Form Modal */}
-         {showForm && (
-            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-               <div className="bg-background-dark border border-white/10 w-full max-w-md rounded-3xl p-6 space-y-6">
-                  <div className="flex justify-between items-center">
-                     <h3 className="text-lg font-bold">{editingTransaction ? 'Editar' : 'Nova'} {type === 'INCOME' ? 'Receita' : 'Despesa'}</h3>
-                     <button onClick={closeModal} className="text-gray-400 hover:text-white transition-all">
-                        <span className="material-symbols-outlined">close</span>
-                     </button>
+                  {/* 2. JULIA (PERSONAL) */}
+                  <div className="bg-[#1c1f24] rounded-3xl p-5 border border-white/5 relative overflow-hidden">
+                     <div className="absolute top-0 right-0 p-4 opacity-5">
+                        <span className="material-symbols-outlined text-6xl">person</span>
+                     </div>
+                     <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                           <div className="flex items-center gap-3">
+                              <div className="size-10 rounded-full bg-accent-gold/20 flex items-center justify-center text-accent-gold border border-accent-gold/30">
+                                 <span className="material-symbols-outlined">diamond</span>
+                              </div>
+                              <div>
+                                 <p className="text-sm font-bold text-white">Julia Zenaro</p>
+                                 <p className="text-[10px] text-gray-500">Performance Individual</p>
+                              </div>
+                           </div>
+                           <div className="text-right">
+                              <p className="text-[9px] font-bold uppercase text-gray-500">Líquido</p>
+                              <p className={`text-xl font-bold ${juliaStats.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                 R$ {juliaStats.net.toLocaleString('pt-BR')}
+                              </p>
+                           </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="bg-black/20 rounded-xl p-3 flex justify-between items-center">
+                              <span className="text-[10px] text-gray-400">Entradas</span>
+                              <span className="text-xs font-bold text-emerald-400">+ {juliaStats.income.toLocaleString('pt-BR', { notation: 'compact' })}</span>
+                           </div>
+                           <div className="bg-black/20 rounded-xl p-3 flex justify-between items-center">
+                              <span className="text-[10px] text-gray-400">Saídas</span>
+                              <span className="text-xs font-bold text-rose-400">- {juliaStats.expense.toLocaleString('pt-BR', { notation: 'compact' })}</span>
+                           </div>
+                        </div>
+                     </div>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                     <div>
-                        <label className="text-gray-500 text-xs font-bold uppercase block mb-2">Valor (R$)</label>
-                        <input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold" placeholder="0.00" autoFocus />
-                     </div>
-                     <div>
-                        <div className="flex justify-between items-center mb-2">
-                           <label className="text-gray-500 text-xs font-bold uppercase">Categoria</label>
-                           <button type="button" onClick={() => setShowCategoryManager(true)} className="text-[10px] text-accent-gold font-bold hover:underline">
-                              GERENCIAR
-                           </button>
+                  {/* 3. TEAM BREAKDOWN */}
+                  <div>
+                     <div className="flex items-center justify-between mb-3 cursor-pointer" onClick={() => setShowTeamDetails(!showTeamDetails)}>
+                        <div className="flex items-center gap-2">
+                           <span className="material-symbols-outlined text-gray-400 text-lg">groups</span>
+                           <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Equipe</h3>
                         </div>
-                        <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-[#1c1f24] border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold">
-                           <option value="" className="bg-[#1c1f24] text-white">Selecione...</option>
-                           {(type === 'INCOME' ? incomeCategories : expenseCategories).map(cat => (
-                              <option key={cat} value={cat} className="bg-[#1c1f24] text-white">{cat}</option>
-                           ))}
-                        </select>
-                     </div>
-                     <div>
-                        <label className="text-gray-500 text-xs font-bold uppercase block mb-2">Descrição (Opcional)</label>
-                        <input type="text" value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold" placeholder="Ex: Cílios 0.07D" />
-                     </div>
-                     <div>
-                        <label className="text-gray-500 text-xs font-bold uppercase block mb-2">Data</label>
-                        <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold" />
+                        <span className={`material-symbols-outlined text-gray-500 transition-transform ${showTeamDetails ? 'rotate-180' : ''}`}>expand_more</span>
                      </div>
 
-                     {type === 'EXPENSE' && (
-                        <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer" onClick={() => setIsRecurring(!isRecurring)}>
-                           <div className={`size-6 rounded-lg border-2 flex items-center justify-center transition-all ${isRecurring ? 'bg-accent-gold border-accent-gold' : 'border-white/20'}`}>
-                              {isRecurring && <span className="material-symbols-outlined !text-sm text-primary">check</span>}
-                           </div>
-                           <div>
-                              <p className="text-xs font-bold uppercase tracking-widest text-gray-200">Despesa Mensal (Fixa)</p>
-                              <p className="text-[9px] text-gray-500 font-medium">Repetir automaticamente todos os meses</p>
-                           </div>
+                     {showTeamDetails && (
+                        <div className="space-y-3">
+                           {teamStats
+                              // Exclude Julia from Team View to avoid redundancy if she is also a pro? 
+                              // Usually user wants to see everyone in team view too, or just others. 
+                              // Let's Keep everyone for completeness, user can ignore Julia card here.
+                              .sort((a, b) => b.income - a.income) // Sort by Revenue
+                              .map(pro => {
+                                 if (!pro || !pro.name) return null;
+                                 return (
+                                    <button
+                                       key={pro.id || Math.random()}
+                                       onClick={() => setViewFilter(viewFilter === pro.profile_id ? 'ALL' : pro.profile_id)}
+                                       className={`w-full text-left bg-card-dark p-4 rounded-2xl border transition-all flex items-center justify-between ${viewFilter === pro.profile_id ? 'border-accent-gold bg-accent-gold/5' : 'border-white/5 hover:border-white/10'}`}
+                                    >
+                                       <div className="flex items-center gap-3">
+                                          <div className="size-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white overflow-hidden">
+                                             {(pro as any).avatar || (pro as any).image_url || (pro as any).profile_pic ? (
+                                                <img src={(pro as any).avatar || (pro as any).image_url || (pro as any).profile_pic} alt={pro.name} className="w-full h-full object-cover" />
+                                             ) : (
+                                                <span>{(pro.name || '??').substring(0, 2).toUpperCase()}</span>
+                                             )}
+                                          </div>
+                                          <div>
+                                             <p className={`text-sm font-bold ${viewFilter === pro.profile_id ? 'text-accent-gold' : 'text-gray-200'}`}>
+                                                {(pro.name || 'Desconhecido').split(' ')[0]}
+                                             </p>
+                                             <p className="text-[10px] text-gray-500">{0} Lançamentos</p>
+                                          </div>
+                                       </div>
+                                       <div className="text-right">
+                                          <p className="text-xs font-bold text-white">R$ {Number(pro.income || 0).toLocaleString('pt-BR', { notation: 'compact' })}</p>
+                                          <p className={`text-[9px] font-bold ${pro.net >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                             {pro.net >= 0 ? 'Lucro' : 'Preju'} R$ {Math.abs(pro.net || 0).toLocaleString('pt-BR', { notation: 'compact' })}
+                                          </p>
+                                       </div>
+                                    </button>
+                                 )
+                              })
+                           }
                         </div>
                      )}
+                  </div>
+               </div>
+            )}
 
-                     <button type="submit" className="w-full bg-accent-gold text-primary font-bold py-4 rounded-xl uppercase tracking-widest mt-4">
-                        Salvar
+            {/* REGULAR PRO BALANCE CARD (Only if NOT master) */}
+            {!isMaster && (
+               <div className="mb-8">
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                     <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Seu Saldo</p>
+                     <h2 className={`text-3xl font-bold ${currentBalance >= 0 ? 'text-green-400' : 'text-rose-400'}`}>
+                        R$ {currentBalance.toFixed(2)}
+                     </h2>
+                  </div>
+               </div>
+            )}
+
+            {/* Common Filters for List */}
+            <div className="mb-6">
+               <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
+                  {(['TODAY', '7D', '30D', 'ALL'] as const).map(p => (
+                     <button
+                        key={p}
+                        onClick={() => setPeriod(p)}
+                        className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${period === p ? 'bg-accent-gold text-primary shadow-lg' : 'text-gray-500'}`}
+                     >
+                        {p === 'TODAY' ? 'Hoje' : p === '7D' ? '7 Dias' : p === '30D' ? '30 Dias' : 'Tudo'}
                      </button>
-                  </form>
+                  ))}
                </div>
             </div>
-         )}
 
-         <div className="lg:hidden">
-            <AdminBottomNav />
+            {/* Actions */}
+            <div className="mb-6 flex gap-4">
+               <button onClick={() => { setType('INCOME'); setShowForm(true); }} className="flex-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 h-14 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all">
+                  + RECEITA
+               </button>
+               <button onClick={() => { setType('EXPENSE'); setShowForm(true); }} className="flex-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 h-14 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 transition-all">
+                  - DESPESA
+               </button>
+            </div>
+
+            {/* Transactions List */}
+            <div className="flex items-center justify-between mb-4">
+               <div>
+                  <h2 className="text-xl font-display font-bold">Lançamentos</h2>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                     {isMaster && viewFilter !== 'ALL'
+                        ? (viewFilter === 'ME' ? 'Apenas Você' : (transactionUser => transactionUser ? `Filtrando: ${transactionUser.name}` : 'Filtrando Profissional')(professionals.find(p => p.profile_id === viewFilter)))
+                        : 'Todos'
+                     }
+                  </p>
+               </div>
+               {isMaster && (
+                  <button
+                     onClick={() => setViewFilter('ALL')}
+                     className={`text-[10px] font-bold px-3 py-1 rounded-lg border ${viewFilter === 'ALL' ? 'bg-white text-black border-white' : 'border-white/20 text-gray-400'}`}
+                  >
+                     VER TUDO
+                  </button>
+               )}
+            </div>
+
+            {/* Transactions List Content */}
+            <div className="space-y-3">
+               {transactions
+                  .filter(t => {
+                     if (!isMaster) return true; // Already filtered by server
+                     if (viewFilter === 'ALL') return true;
+                     if (viewFilter === 'ME') return t.user_id === user?.id; // Julia
+                     return t.user_id === viewFilter; // Specific ID
+                  })
+                  .map((t) => (
+                     <div key={t.id} className="bg-card-dark p-5 rounded-3xl border border-white/5 flex justify-between items-center group hover:border-white/10 transition-colors">
+                        <div className="flex items-center gap-4">
+                           <div className={`size-10 rounded-2xl flex items-center justify-center ${t.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                              <span className="material-symbols-outlined !text-xl">{t.type === 'INCOME' ? 'payments' : 'shopping_bag'}</span>
+                           </div>
+                           <div>
+                              <div className="flex items-center gap-2">
+                                 <p className="font-bold text-sm text-gray-200">{t.category}</p>
+                                 {t.appointment_id && <span className="text-[8px] bg-white/5 text-gray-500 px-1.5 py-0.5 rounded-md uppercase font-black tracking-tighter">Auto</span>}
+                              </div>
+                              <p className="text-[10px] text-gray-500 mt-0.5">{t.description || new Date(t.date).toLocaleDateString()}</p>
+                              {/* Show who made this transaction if Master Viewing ALL */}
+                              {isMaster && viewFilter === 'ALL' && (
+                                 <p className="text-[9px] text-accent-gold mt-1">
+                                    {professionals.find(p => p.profile_id === t.user_id)?.name.split(' ')[0] || 'Desconhecido'}
+                                 </p>
+                              )}
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                           <div className="text-right">
+                              <p className={`font-black text-sm ${t.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                 {t.type === 'INCOME' ? '+' : '-'} R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </p>
+                              <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</p>
+                           </div>
+                           <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => openEdit(t)} className="size-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">edit</span></button>
+                              <button onClick={() => handleDelete(t.id)} className="size-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all"><span className="material-symbols-outlined !text-base">delete</span></button>
+                           </div>
+                        </div>
+                     </div>
+                  ))}
+               {transactions.length === 0 && !loading && (
+                  <div className="py-20 text-center opacity-30 italic text-sm">Nenhum lançamento no período</div>
+               )}
+            </div>
+
+            {/* Form Modal */}
+            {showForm && (
+               <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+                  <div className="bg-background-dark border border-white/10 w-full max-w-md rounded-3xl p-6 space-y-6">
+                     <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-bold">{editingTransaction ? 'Editar' : 'Nova'} {type === 'INCOME' ? 'Receita' : 'Despesa'}</h3>
+                        <button onClick={closeModal} className="text-gray-400 hover:text-white transition-all">
+                           <span className="material-symbols-outlined">close</span>
+                        </button>
+                     </div>
+
+                     <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                           <label className="text-gray-500 text-xs font-bold uppercase block mb-2">Valor (R$)</label>
+                           <input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold" placeholder="0.00" autoFocus />
+                        </div>
+                        <div>
+                           <div className="flex justify-between items-center mb-2">
+                              <label className="text-gray-500 text-xs font-bold uppercase">Categoria</label>
+                              <button type="button" onClick={() => setShowCategoryManager(true)} className="text-[10px] text-accent-gold font-bold hover:underline">
+                                 GERENCIAR
+                              </button>
+                           </div>
+                           <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-[#1c1f24] border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold">
+                              <option value="" className="bg-[#1c1f24] text-white">Selecione...</option>
+                              {(type === 'INCOME' ? incomeCategories : expenseCategories).map(cat => (
+                                 <option key={cat} value={cat} className="bg-[#1c1f24] text-white">{cat}</option>
+                              ))}
+                           </select>
+                        </div>
+                        <div>
+                           <label className="text-gray-500 text-xs font-bold uppercase block mb-2">Descrição (Opcional)</label>
+                           <input type="text" value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold" placeholder="Ex: Cílios 0.07D" />
+                        </div>
+                        <div>
+                           <label className="text-gray-500 text-xs font-bold uppercase block mb-2">Data</label>
+                           <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-accent-gold" />
+                        </div>
+
+                        {type === 'EXPENSE' && (
+                           <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer" onClick={() => setIsRecurring(!isRecurring)}>
+                              <div className={`size-6 rounded-lg border-2 flex items-center justify-center transition-all ${isRecurring ? 'bg-accent-gold border-accent-gold' : 'border-white/20'}`}>
+                                 {isRecurring && <span className="material-symbols-outlined !text-sm text-primary">check</span>}
+                              </div>
+                              <div>
+                                 <p className="text-xs font-bold uppercase tracking-widest text-gray-200">Despesa Mensal (Fixa)</p>
+                                 <p className="text-[9px] text-gray-500 font-medium">Repetir automaticamente todos os meses</p>
+                              </div>
+                           </div>
+                        )}
+
+                        <button type="submit" className="w-full bg-accent-gold text-primary font-bold py-4 rounded-xl uppercase tracking-widest mt-4">
+                           Salvar
+                        </button>
+                     </form>
+                  </div>
+               </div>
+            )}
+
+            <div className="lg:hidden">
+               <AdminBottomNav />
+            </div>
          </div>
          {/* Category Manager Modal */}
          {showCategoryManager && (

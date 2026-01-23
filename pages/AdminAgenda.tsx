@@ -239,8 +239,8 @@ const AdminAgenda: React.FC = () => {
             </div>
          </header>
 
-         <main className="flex-1 p-6 lg:p-10 space-y-10 overflow-y-auto no-scrollbar">
-            <>
+         <main className="flex-1 p-6 lg:p-6 space-y-6 overflow-y-auto no-scrollbar">
+            <div className="max-w-6xl mx-auto w-full">
                <div className="flex justify-between items-center px-4">
                   <h2 className="text-2xl md:text-3xl font-display font-bold capitalize">{monthName} <span className="text-gray-600">{viewYear}</span></h2>
                   <div className="flex gap-4">
@@ -249,7 +249,7 @@ const AdminAgenda: React.FC = () => {
                   </div>
                </div>
 
-               <div className="grid grid-cols-7 gap-2 md:gap-4 transition-opacity duration-300">
+               <div className="grid grid-cols-7 gap-2 lg:gap-3 transition-opacity duration-300">
                   {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => (
                      <div key={d} className="text-center text-[9px] md:text-xs font-black uppercase text-gray-700 pb-2">{d}</div>
                   ))}
@@ -291,7 +291,7 @@ const AdminAgenda: React.FC = () => {
                         <button
                            key={i}
                            onClick={() => handleDayClick(day)}
-                           className={`aspect-square rounded-3xl border flex flex-col items-center justify-center gap-1.5 transition-all relative 
+                           className={`aspect-square md:aspect-auto md:h-12 rounded-2xl md:rounded-xl border flex flex-col items-center justify-center gap-1 transition-all relative 
                                ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}
                                ${!isVisible ? 'opacity-20 grayscale' : 'opacity-100'}
                                ${isDayClosed && !isToday ? 'bg-rose-500/5 border-rose-500/10 grayscale-[0.8]' : ''}
@@ -309,7 +309,7 @@ const AdminAgenda: React.FC = () => {
                   })}
                </div>
 
-               <div className="bg-card-dark p-8 rounded-[40px] border border-white/5 space-y-6">
+               <div className="bg-card-dark p-6 rounded-3xl border border-white/5 space-y-4">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Status dos Dias</h3>
                   <div className="grid grid-cols-2 gap-4">
                      <div className="flex items-center gap-3">
@@ -332,7 +332,7 @@ const AdminAgenda: React.FC = () => {
                      </div>
                   </div>
                </div>
-            </>
+            </div>
          </main>
          <div className="lg:hidden">
             <AdminBottomNav />

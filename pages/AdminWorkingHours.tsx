@@ -41,14 +41,16 @@ const AdminWorkingHours: React.FC = () => {
 
     return (
         <div className="flex flex-col h-full bg-background-dark text-white">
-            <header className="p-4 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/admin/settings')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-                    <h1 className="text-lg font-bold">Gestão de Horários</h1>
+            <header className="p-4 lg:px-6 border-b border-white/5 flex items-center justify-center glass-nav !bg-background-dark/80">
+                <div className="w-full max-w-7xl flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate('/admin/settings')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
+                        <h1 className="text-lg font-bold">Gestão de Horários</h1>
+                    </div>
                 </div>
             </header>
 
-            <main className="flex-1 p-6 space-y-6 overflow-y-auto no-scrollbar pb-32">
+            <main className="flex-1 p-6 lg:p-6 w-full max-w-7xl mx-auto space-y-6 overflow-y-auto no-scrollbar pb-32">
                 <div className="space-y-2">
                     <h2 className="text-2xl font-display font-bold">Horários da Equipe</h2>
                     <p className="text-xs text-gray-500 italic">Configure a jornada de trabalho individual de cada profissional.</p>
@@ -59,7 +61,7 @@ const AdminWorkingHours: React.FC = () => {
                         <button
                             key={pro.id}
                             onClick={() => navigate(`/admin/professional/${pro.id}?tab=SCHEDULE`)}
-                            className="w-full bg-card-dark p-6 rounded-[32px] border border-white/5 flex items-center gap-5 group active:scale-[0.98] transition-all"
+                            className="w-full bg-card-dark p-6 lg:p-5 rounded-[32px] border border-white/5 flex items-center gap-5 group active:scale-[0.98] transition-all"
                         >
                             <div className="size-16 rounded-2xl overflow-hidden border border-white/10">
                                 <img

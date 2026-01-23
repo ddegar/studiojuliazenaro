@@ -71,14 +71,16 @@ const AdminStudioDetails: React.FC = () => {
 
     return (
         <div className="flex flex-col h-full bg-background-dark text-white">
-            <header className="p-4 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80 shrink-0">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-                    <h1 className="text-lg font-bold">Dados do Estúdio</h1>
+            <header className="p-4 lg:px-6 border-b border-white/5 flex items-center justify-center glass-nav !bg-background-dark/80 shrink-0">
+                <div className="w-full max-w-7xl flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
+                        <h1 className="text-lg font-bold">Dados do Estúdio</h1>
+                    </div>
                 </div>
             </header>
 
-            <main className="flex-1 p-6 space-y-8 overflow-y-auto no-scrollbar pb-32">
+            <main className="flex-1 p-6 lg:p-6 w-full max-w-7xl mx-auto space-y-8 overflow-y-auto no-scrollbar pb-32">
                 <div className="space-y-6">
                     <div className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-6">
                         <div className="flex items-center gap-4 mb-2">
@@ -99,7 +101,7 @@ const AdminStudioDetails: React.FC = () => {
                                     <input
                                         type="tel"
                                         placeholder="14 99999-9999"
-                                        className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-14 pr-5 text-sm focus:ring-1 focus:ring-accent-gold outline-none font-bold"
+                                        className="w-full h-14 md:h-12 bg-white/5 border border-white/10 rounded-2xl px-14 lg:px-4 text-sm focus:ring-1 focus:ring-accent-gold outline-none font-bold"
                                         value={configs.whatsapp_central?.replace('55', '') || ''}
                                         onChange={e => setConfigs({ ...configs, whatsapp_central: '55' + e.target.value.replace(/\D/g, '') })}
                                     />
@@ -198,14 +200,16 @@ const AdminStudioDetails: React.FC = () => {
                 </div>
             </main >
 
-            <div className="p-6 fixed bottom-0 inset-x-0 glass-nav !bg-background-dark/90 border-t border-white/5 z-50">
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="w-full h-16 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-[0.3em] shadow-xl shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 transition-all"
-                >
-                    {saving ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'SALVAR ALTERAÇÕES'}
-                </button>
+            <div className="p-6 fixed bottom-0 inset-x-0 glass-nav !bg-background-dark/90 border-t border-white/5 z-50 flex justify-center">
+                <div className="w-full max-w-7xl">
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="w-full md:w-auto md:px-12 h-16 md:h-12 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-[0.3em] shadow-xl shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95 transition-all mx-auto"
+                    >
+                        {saving ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'SALVAR ALTERAÇÕES'}
+                    </button>
+                </div>
             </div>
         </div >
     );

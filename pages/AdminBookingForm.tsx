@@ -166,17 +166,19 @@ const AdminBookingForm: React.FC = () => {
 
    return (
       <div className="flex flex-col h-full bg-background-dark text-white">
-         <header className="p-6 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/90">
-            <div className="flex items-center gap-4">
-               <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-               <div>
-                  <h1 className="text-lg font-bold">Novo Lançamento</h1>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Painel Administrativo</p>
+         <header className="p-6 lg:p-6 border-b border-white/5 flex items-center justify-center glass-nav !bg-background-dark/90 sticky top-0 z-50">
+            <div className="w-full max-w-4xl flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
+                  <div>
+                     <h1 className="text-lg font-bold">Novo Lançamento</h1>
+                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Painel Administrativo</p>
+                  </div>
                </div>
             </div>
          </header>
 
-         <main className="flex-1 p-6 space-y-10 overflow-y-auto no-scrollbar pb-32">
+         <main className="flex-1 p-6 lg:p-8 w-full max-w-4xl mx-auto space-y-8 overflow-y-auto no-scrollbar pb-32">
             <div className="flex bg-white/5 p-1.5 rounded-3xl border border-white/10">
                <button
                   onClick={() => setForm({ ...form, type: 'APPOINTMENT' })}
@@ -321,19 +323,21 @@ const AdminBookingForm: React.FC = () => {
             </div>
          </main>
 
-         <div className="p-6 glass-nav !bg-background-dark/95 border-t border-white/10">
-            <button
-               onClick={handleSave}
-               disabled={isSubmitting}
-               className={`w-full h-16 rounded-3xl font-bold uppercase tracking-[0.3em] text-[11px] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ${form.type === 'BLOCK' ? 'bg-rose-600 shadow-rose-600/20' : 'bg-primary shadow-primary/30'}`}
-            >
-               {isSubmitting ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : (
-                  <>
-                     <span className="material-symbols-outlined">{form.type === 'BLOCK' ? 'lock' : 'calendar_add_on'}</span>
-                     {form.type === 'BLOCK' ? 'BLOQUEAR AGENDA' : 'EFETUAR LANÇAMENTO'}
-                  </>
-               )}
-            </button>
+         <div className="p-6 glass-nav !bg-background-dark/95 border-t border-white/10 flex justify-center">
+            <div className="w-full max-w-4xl">
+               <button
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                  className={`w-full h-16 rounded-3xl font-bold uppercase tracking-[0.3em] text-[11px] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ${form.type === 'BLOCK' ? 'bg-rose-600 shadow-rose-600/20' : 'bg-primary shadow-primary/30'}`}
+               >
+                  {isSubmitting ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : (
+                     <>
+                        <span className="material-symbols-outlined">{form.type === 'BLOCK' ? 'lock' : 'calendar_add_on'}</span>
+                        {form.type === 'BLOCK' ? 'BLOQUEAR AGENDA' : 'EFETUAR LANÇAMENTO'}
+                     </>
+                  )}
+               </button>
+            </div>
          </div>
       </div>
    );

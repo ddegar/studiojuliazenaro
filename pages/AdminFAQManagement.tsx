@@ -105,18 +105,20 @@ const AdminFAQManagement: React.FC = () => {
 
    return (
       <div className="flex flex-col h-full bg-background-dark text-white">
-         <header className="p-4 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80">
-            <div className="flex items-center gap-4">
-               <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-               <h1 className="text-lg font-bold">Gestão de FAQ</h1>
-            </div>
-            <div className="flex gap-2">
-               <button onClick={() => setShowCategoryManager(true)} className="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                  <span className="material-symbols-outlined !text-sm text-accent-gold">style</span>
-               </button>
-               <button onClick={() => setEditing({ category: categories[0]?.name || 'GERAL' as any })} className="size-10 rounded-full bg-primary flex items-center justify-center">
-                  <span className="material-symbols-outlined">add</span>
-               </button>
+         <header className="p-4 lg:px-6 border-b border-white/5 flex items-center justify-center glass-nav !bg-background-dark/80">
+            <div className="w-full max-w-7xl flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
+                  <h1 className="text-lg font-bold">Gestão de FAQ</h1>
+               </div>
+               <div className="flex gap-2">
+                  <button onClick={() => setShowCategoryManager(true)} className="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                     <span className="material-symbols-outlined !text-sm text-accent-gold">style</span>
+                  </button>
+                  <button onClick={() => setEditing({ category: categories[0]?.name || 'GERAL' as any })} className="size-10 rounded-full bg-primary flex items-center justify-center">
+                     <span className="material-symbols-outlined">add</span>
+                  </button>
+               </div>
             </div>
          </header>
 
@@ -154,7 +156,7 @@ const AdminFAQManagement: React.FC = () => {
             </div>
          )}
 
-         <main className="flex-1 p-6 space-y-4 overflow-y-auto no-scrollbar pb-32">
+         <main className="flex-1 p-6 lg:p-6 w-full max-w-7xl mx-auto space-y-4 overflow-y-auto no-scrollbar pb-32">
             {loading ? <p className="text-center text-gray-500">Carregando...</p> : faqs.map(faq => (
                <div key={faq.id} className="bg-card-dark p-5 rounded-3xl border border-white/5 space-y-3">
                   <div className="flex justify-between items-start">

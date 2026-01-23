@@ -88,19 +88,21 @@ const AdminContentCreator: React.FC = () => {
 
    return (
       <div className="flex flex-col h-full bg-background-dark text-white">
-         <header className="p-6 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80 z-20 sticky top-0">
-            <div className="flex items-center gap-4">
-               <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
-                  <span className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</span>
-               </button>
-               <div>
-                  <h1 className="text-lg font-bold">Criar Conteúdo</h1>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Studio Julia Zenaro</p>
+         <header className="p-6 lg:p-6 border-b border-white/5 flex items-center justify-center glass-nav !bg-background-dark/80 z-20 sticky top-0">
+            <div className="w-full max-w-7xl flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
+                     <span className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</span>
+                  </button>
+                  <div>
+                     <h1 className="text-lg font-bold">Criar Conteúdo</h1>
+                     <p className="text-[10px] text-gray-500 uppercase tracking-widest font-black">Studio Julia Zenaro</p>
+                  </div>
                </div>
             </div>
          </header>
 
-         <main className="flex-1 p-6 space-y-8 overflow-y-auto no-scrollbar pb-32">
+         <main className="flex-1 p-6 lg:p-6 w-full max-w-7xl mx-auto space-y-8 overflow-y-auto no-scrollbar pb-32">
             <div className="grid grid-cols-2 gap-4">
                <button
                   onClick={() => setContentType('STORY')}
@@ -144,7 +146,7 @@ const AdminContentCreator: React.FC = () => {
                      value={caption}
                      onChange={e => setCaption(e.target.value)}
                      placeholder="Dê um toque de carinho à sua publicação..."
-                     className="w-full bg-white/5 border border-white/10 rounded-[32px] p-6 text-sm focus:ring-primary h-36 italic placeholder:text-gray-600 transition-all outline-none"
+                     className="w-full bg-white/5 border border-white/10 rounded-[32px] p-6 text-sm focus:ring-primary h-36 md:h-24 italic placeholder:text-gray-600 transition-all outline-none"
                   />
                </div>
 
@@ -154,7 +156,7 @@ const AdminContentCreator: React.FC = () => {
                      <select
                         value={selectedServiceId}
                         onChange={e => setSelectedServiceId(e.target.value)}
-                        className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary appearance-none outline-none"
+                        className="w-full h-16 md:h-12 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary appearance-none outline-none"
                      >
                         <option value="" className="bg-background-dark text-white">Nenhum serviço vinculado</option>
                         {services.map(s => (
@@ -167,19 +169,21 @@ const AdminContentCreator: React.FC = () => {
             </div>
          </main>
 
-         <div className="p-6 fixed bottom-0 inset-x-0 glass-nav !bg-background-dark/95 border-t border-white/5 z-30">
-            <button
-               onClick={handlePublish}
-               disabled={loading || !file}
-               className="w-full h-18 bg-primary text-white rounded-[24px] font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl shadow-primary/40 flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all"
-            >
-               {loading ? <div className="size-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : (
-                  <>
-                     PUBLICAR AGORA
-                     <span className="material-symbols-outlined !text-sm">send</span>
-                  </>
-               )}
-            </button>
+         <div className="p-6 fixed bottom-0 inset-x-0 glass-nav !bg-background-dark/95 border-t border-white/5 z-30 flex justify-center">
+            <div className="w-full max-w-7xl">
+               <button
+                  onClick={handlePublish}
+                  disabled={loading || !file}
+                  className="w-full md:w-auto md:px-16 h-18 md:h-12 bg-primary text-white rounded-[24px] md:rounded-xl font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl shadow-primary/40 flex items-center justify-center gap-4 disabled:opacity-30 active:scale-95 transition-all mx-auto"
+               >
+                  {loading ? <div className="size-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : (
+                     <>
+                        PUBLICAR AGORA
+                        <span className="material-symbols-outlined !text-sm">send</span>
+                     </>
+                  )}
+               </button>
+            </div>
          </div>
       </div>
    );

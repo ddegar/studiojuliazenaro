@@ -164,7 +164,7 @@ const ServiceManagement: React.FC = () => {
             </div>
          </header>
 
-         <main className="flex-1 p-6 lg:p-8 overflow-y-auto no-scrollbar">
+         <main className="flex-1 p-6 lg:p-6 w-full max-w-7xl mx-auto overflow-y-auto no-scrollbar">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                {loading ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">

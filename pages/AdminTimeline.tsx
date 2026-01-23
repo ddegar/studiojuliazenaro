@@ -324,50 +324,52 @@ const AdminTimeline: React.FC = () => {
    return (
       <div className="flex flex-col h-full bg-[#0f1110] text-slate-100 font-sans antialiased overflow-hidden">
          {/* HEADER PREMIUM */}
-         <header className="sticky top-0 z-50 bg-[#0f1110]/80 backdrop-blur-md border-b border-white/5 px-4 pt-12 pb-4">
-            <div className="flex items-center justify-between mb-6">
-               <div className="flex items-center gap-3">
-                  <button onClick={() => navigate('/admin/agenda')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white transition-colors">
-                     <span className="material-symbols-outlined">chevron_left</span>
-                  </button>
-                  <div>
-                     <h1 className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Timeline Diária</h1>
-                     <p className="text-lg font-bold font-display italic text-accent-gold">
-                        {date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }) : ''}
-                     </p>
+         <header className="sticky top-0 z-50 bg-[#0f1110]/80 backdrop-blur-md border-b border-white/5 px-6 lg:px-6 pt-12 pb-4">
+            <div className="w-full max-w-7xl mx-auto">
+               <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                     <button onClick={() => navigate('/admin/agenda')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white transition-colors">
+                        <span className="material-symbols-outlined">chevron_left</span>
+                     </button>
+                     <div>
+                        <h1 className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Timeline Diária</h1>
+                        <p className="text-lg font-bold font-display italic text-accent-gold">
+                           {date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                        </p>
+                     </div>
+                  </div>
+                  <div className="flex gap-2">
+                     <button onClick={() => fetchAppointments()} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 border border-white/5 hover:border-white/10 transition-all">
+                        <span className="material-symbols-outlined">refresh</span>
+                     </button>
+                     <button
+                        onClick={() => navigate('/admin/agenda/new', { state: { date, proId: selectedProId } })}
+                        className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                     >
+                        <span className="material-symbols-outlined">add</span>
+                     </button>
                   </div>
                </div>
-               <div className="flex gap-2">
-                  <button onClick={() => fetchAppointments()} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 border border-white/5 hover:border-white/10 transition-all">
-                     <span className="material-symbols-outlined">refresh</span>
-                  </button>
-                  <button
-                     onClick={() => navigate('/admin/agenda/new', { state: { date, proId: selectedProId } })}
-                     className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-                  >
-                     <span className="material-symbols-outlined">add</span>
-                  </button>
-               </div>
-            </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-               {professionals.map(p => (
-                  <button
-                     key={p.id}
-                     onClick={() => handleProChange(p.id)}
-                     className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border whitespace-nowrap ${selectedProId === p.id ? 'bg-primary border-primary text-white shadow-lg shadow-primary/10' : 'bg-white/5 border-transparent text-slate-400'}`}
-                  >
-                     <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${selectedProId === p.id ? 'bg-white/20' : 'bg-slate-700'}`}>
-                        {p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                     </div>
-                     <span className="text-sm font-medium">{p.name}</span>
-                  </button>
-               ))}
+               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                  {professionals.map(p => (
+                     <button
+                        key={p.id}
+                        onClick={() => handleProChange(p.id)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border whitespace-nowrap ${selectedProId === p.id ? 'bg-primary border-primary text-white shadow-lg shadow-primary/10' : 'bg-white/5 border-transparent text-slate-400'}`}
+                     >
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${selectedProId === p.id ? 'bg-white/20' : 'bg-slate-700'}`}>
+                           {p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="text-sm font-medium">{p.name}</span>
+                     </button>
+                  ))}
+               </div>
             </div>
          </header>
 
          {/* MAIN TIMELINE */}
-         <main className="flex-1 overflow-y-auto no-scrollbar relative px-4 py-6 pb-40">
+         <main className="flex-1 w-full max-w-6xl mx-auto overflow-y-auto no-scrollbar relative px-6 lg:px-6 py-6 pb-40">
             <div className="flex items-center justify-between mb-8">
                <h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-slate-500 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
@@ -497,15 +499,15 @@ const AdminTimeline: React.FC = () => {
                   })()}
                </div>
             </div>
-         </main>
+         </main >
 
          {/* FLOAT REFRESH */}
-         <div className="fixed bottom-24 right-6 z-30">
+         < div className="fixed bottom-24 right-6 z-30" >
             <button onClick={() => fetchAppointments()} className="w-14 h-14 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl flex items-center justify-center text-accent-gold hover:scale-110 active:scale-95 transition-all">
                <span className="material-symbols-outlined !text-2xl">refresh</span>
             </button>
-         </div>
-      </div>
+         </div >
+      </div >
    );
 };
 

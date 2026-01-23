@@ -82,41 +82,43 @@ const AdminClients: React.FC = () => {
 
    return (
       <div className="flex flex-col h-full bg-background-dark text-white pb-32 lg:pb-8">
-         <header className="sticky top-0 z-50 glass-nav !bg-background-dark/80 p-6 lg:p-8 border-b border-white/5 space-y-6">
-            <div className="flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                  <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-                  <div>
-                     <h1 className="text-xl lg:text-2xl font-display font-bold">Gestão de Clientes</h1>
-                     <p className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest">{clients.length} Cadastradas</p>
+         <header className="sticky top-0 z-50 glass-nav !bg-background-dark/80 border-b border-white/5">
+            <div className="w-full max-w-6xl mx-auto p-6 lg:p-6 space-y-6">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                     <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
+                     <div>
+                        <h1 className="text-xl lg:text-2xl font-display font-bold">Gestão de Clientes</h1>
+                        <p className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest">{clients.length} Cadastradas</p>
+                     </div>
                   </div>
-               </div>
-               <button onClick={() => navigate('/admin/clients/new')} className="size-11 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                  <span className="material-symbols-outlined">person_add</span>
-               </button>
-            </div>
-
-            <div className="space-y-4">
-               <div className="relative">
-                  <input
-                     type="text"
-                     placeholder="Buscar por nome ou celular..."
-                     value={search}
-                     onChange={(e) => setSearch(e.target.value)}
-                     className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-14 text-sm focus:ring-accent-gold focus:border-accent-gold transition-all"
-                  />
-                  <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                  <button onClick={() => navigate('/admin/clients/new')} className="size-11 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                     <span className="material-symbols-outlined">person_add</span>
+                  </button>
                </div>
 
-               <div className="flex gap-2">
-                  <button onClick={() => setFilter('ALL')} className={`flex-1 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${filter === 'ALL' ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>Todas</button>
-                  <button onClick={() => setFilter('ACTIVE')} className={`flex-1 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${filter === 'ACTIVE' ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>Ativas</button>
-                  <button onClick={() => setFilter('VIPS')} className={`flex-1 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${filter === 'VIPS' ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>VIPs</button>
+               <div className="space-y-4">
+                  <div className="relative">
+                     <input
+                        type="text"
+                        placeholder="Buscar por nome ou celular..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-14 text-sm focus:ring-accent-gold focus:border-accent-gold transition-all"
+                     />
+                     <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-gray-500">search</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                     <button onClick={() => setFilter('ALL')} className={`flex-1 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${filter === 'ALL' ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>Todas</button>
+                     <button onClick={() => setFilter('ACTIVE')} className={`flex-1 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${filter === 'ACTIVE' ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>Ativas</button>
+                     <button onClick={() => setFilter('VIPS')} className={`flex-1 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${filter === 'VIPS' ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}>VIPs</button>
+                  </div>
                </div>
             </div>
          </header>
 
-         <main className="flex-1 p-4 lg:p-8 overflow-y-auto no-scrollbar">
+         <main className="flex-1 p-4 lg:p-6 w-full max-w-6xl mx-auto overflow-y-auto no-scrollbar">
             {loading ? (
                <p className="text-center text-gray-500 py-10">Carregando...</p>
             ) : (

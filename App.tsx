@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import AdminSidebar from './components/AdminSidebar';
 import Onboarding from './pages/Onboarding';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -83,13 +84,30 @@ const AppContainerClient: React.FC<{ children: React.ReactNode }> = ({ children 
 );
 
 // Container for admin pages (full width for desktop/tablet)
-const AppContainerAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="min-h-screen bg-gray-200 dark:bg-zinc-950">
-    <div className="relative w-full bg-background-light dark:bg-background-dark min-h-screen flex flex-col overflow-x-hidden">
-      {children}
+// Container for admin pages (full width for desktop/tablet but with Sidebar)
+const AppContainerAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="flex h-screen bg-[#121417] overflow-hidden">
+      <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden relative">
+        {/* Mobile Header Trigger */}
+        <div className="lg:hidden p-4 flex items-center gap-4 bg-[#1c1f24] border-b border-white/5 sticky top-0 z-40">
+          <button onClick={() => setSidebarOpen(true)} className="text-white">
+            <span className="material-symbols-outlined">menu</span>
+          </button>
+          <span className="text-sm font-bold text-white uppercase tracking-widest">Menu</span>
+        </div>
+
+        <main className="flex-1 overflow-y-auto no-scrollbar w-full max-w-[1920px] mx-auto">
+          {children}
+        </main>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const App: React.FC = () => {
   return (

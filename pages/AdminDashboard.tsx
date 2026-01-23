@@ -179,23 +179,7 @@ const AdminDashboard: React.FC = () => {
     };
   }, [navigate]);
 
-  const MENU_ITEMS = [
-    { label: 'Dashboard', icon: 'grid_view', path: '/admin' },
-    { label: 'Minha Agenda', icon: 'calendar_month', path: '/admin/agenda' },
-    { label: 'Clientes', icon: 'groups', path: '/admin/clients', masterOnly: true },
-    { label: 'Equipe / Staff', icon: 'badge', path: '/admin/professionals', masterOnly: true },
-    { label: 'Catálogo / Serviços', icon: 'category', path: '/admin/services' },
-    { label: 'Club JZ Privé', icon: 'diamond', path: '/admin/jz-prive', masterOnly: true },
-    { label: 'Financeiro', icon: 'payments', path: '/admin/finance' },
-    { label: 'Conteúdo (Feed)', icon: 'history_toggle_off', path: '/admin/content' },
-    { label: 'Notificações', icon: 'notifications', path: '/admin/notifications', masterOnly: true },
-    { label: 'Meu Perfil', icon: 'person', path: '/admin/profile' },
-    { label: 'Ajustes do Estúdio', icon: 'settings', path: '/admin/settings', masterOnly: true },
-    { label: 'Recursos Extra', subheader: true, masterOnly: true },
-    { label: 'Dicas (Pré/Pós)', icon: 'lightbulb', path: '/admin/tips' },
-    { label: 'FAQ (Dúvidas)', icon: 'help', path: '/admin/faq', masterOnly: true },
-    { label: 'Depoimentos', icon: 'reviews', path: '/admin/testimonials', masterOnly: true },
-  ];
+
 
   if (loading) {
     return (
@@ -208,64 +192,14 @@ const AdminDashboard: React.FC = () => {
   const currentDate = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#121417] text-white font-sans flex overflow-x-hidden">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/80 z-[60] backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar - Persistent on lg+ screens */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-[70] w-72 bg-[#1c1f24] border-r border-white/5 flex flex-col transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 flex items-center justify-between border-b border-white/5">
-          <Logo size="sm" forceLight={true} />
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden"><span className="material-symbols-outlined">close</span></button>
-        </div>
-        <nav className="p-4 space-y-1 overflow-y-auto no-scrollbar">
-          {MENU_ITEMS.map((item, idx) => {
-            if (item.masterOnly && !isMaster) return null;
-            if (item.subheader) return (
-              <div key={idx} className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-4 pt-6 pb-2">
-                {item.label}
-              </div>
-            );
-
-            const isActive = location.pathname === item.path;
-            return (
-              <button
-                key={idx}
-                onClick={() => { navigate(item.path!); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${isActive ? 'bg-accent-gold/10 text-accent-gold' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-              >
-                <span className={`material-symbols-outlined !text-xl ${isActive ? 'fill-1' : 'group-hover:scale-110 transition-transform'}`}>
-                  {item.icon}
-                </span>
-                <span className="text-sm font-bold tracking-tight">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-        <div className="mt-auto p-4 border-t border-white/5">
-          <button
-            onClick={async () => {
-              if (window.confirm('Deseja realmente sair?')) {
-                await supabase.auth.signOut();
-                navigate('/login');
-              }
-            }}
-            className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all font-bold"
-          >
-            <span className="material-symbols-outlined">logout</span>
-            <span className="text-sm tracking-tight">Sair do Painel</span>
-          </button>
-        </div>
-      </aside>
+    <div className="min-h-screen bg-[#121417] text-white font-sans flex flex-col">
+      {/* Sidebar Removida (Global AppContainerAdmin) */}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
         <header className="h-20 px-6 flex items-center justify-between border-b border-white/5 bg-[#121417] sticky top-0 z-40">
           <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(true)} className="text-gray-400 lg:hidden"><span className="material-symbols-outlined">menu</span></button>
             <h1 className="text-xs font-black uppercase tracking-widest text-white">Visão Geral</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -279,7 +213,7 @@ const AdminDashboard: React.FC = () => {
           </div>
         </header>
 
-        <main className="flex-1 p-5 lg:p-10 xl:p-12 space-y-8 pb-32 lg:pb-12 w-full">
+        <main className="flex-1 p-5 lg:p-6 space-y-6 pb-32 lg:pb-8 w-full max-w-7xl mx-auto overflow-y-auto no-scrollbar">
           {/* Welcome Section */}
           <div className="space-y-1">
             <p className="text-[10px] font-black text-accent-gold/80 tracking-widest">{currentDate}</p>

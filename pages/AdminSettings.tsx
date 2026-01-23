@@ -19,14 +19,16 @@ const AdminSettings: React.FC = () => {
 
    return (
       <div className="flex flex-col h-full bg-background-dark text-white">
-         <header className="p-4 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80">
-            <div className="flex items-center gap-4">
-               <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-               <h1 className="text-lg font-bold">Ajustes Gerais</h1>
+         <header className="p-4 lg:px-6 border-b border-white/5 flex items-center justify-center glass-nav !bg-background-dark/80">
+            <div className="w-full max-w-7xl flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
+                  <h1 className="text-lg font-bold">Ajustes Gerais</h1>
+               </div>
             </div>
          </header>
 
-         <main className="flex-1 p-6 space-y-6 overflow-y-auto no-scrollbar pb-32">
+         <main className="flex-1 p-6 lg:p-6 w-full max-w-7xl mx-auto space-y-6 overflow-y-auto no-scrollbar pb-32">
             <div className="space-y-3">
                {settingsItems.map((item, i) => (
                   <button
@@ -62,29 +64,7 @@ const AdminSettings: React.FC = () => {
             </div>
          </main>
 
-         <nav className="fixed bottom-0 inset-x-0 bg-background-dark/95 backdrop-blur-xl border-t border-white/10 px-6 py-4 flex justify-between items-center z-50">
-            <button onClick={() => navigate('/admin')} className="flex flex-col items-center gap-1 text-slate-500">
-               <span className="material-symbols-outlined text-[24px]">grid_view</span>
-               <span className="text-[10px] font-bold uppercase">Dash</span>
-            </button>
-            <button onClick={() => navigate('/admin/agenda')} className="flex flex-col items-center gap-1 text-slate-500">
-               <span className="material-symbols-outlined text-[24px]">calendar_month</span>
-               <span className="text-[10px] font-bold uppercase">Agenda</span>
-            </button>
-            <div className="relative -top-8">
-               <button onClick={() => navigate('/admin/content')} className="size-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40 border-4 border-background-dark">
-                  <span className="material-symbols-outlined text-white text-[28px]">add</span>
-               </button>
-            </div>
-            <button onClick={() => navigate('/admin/finance')} className="flex flex-col items-center gap-1 text-slate-500">
-               <span className="material-symbols-outlined text-[24px]">payments</span>
-               <span className="text-[10px] font-bold uppercase">Caixa</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-primary">
-               <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>settings</span>
-               <span className="text-[10px] font-bold uppercase">Ajustes</span>
-            </button>
-         </nav>
+
       </div>
    );
 };

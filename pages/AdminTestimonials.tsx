@@ -61,7 +61,7 @@ const AdminTestimonials: React.FC = () => {
     return (
         <div className="flex flex-col min-h-screen bg-[#0a0c0a] text-white font-sans">
             <header className="sticky top-0 z-50 bg-[#0a0c0a]/80 backdrop-blur-xl border-b border-white/5 px-6 py-8">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex items-center gap-6">
                         <button
                             onClick={() => navigate('/admin')}
@@ -93,7 +93,7 @@ const AdminTestimonials: React.FC = () => {
                 </div>
             </header>
 
-            <main className="flex-1 w-full max-w-6xl mx-auto px-6 py-12">
+            <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-12">
                 {loading ? (
                     <div className="py-20 flex flex-col items-center gap-4 opacity-50">
                         <div className="w-8 h-8 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin"></div>
