@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Logo from '../components/Logo';
 
 const STEPS = [
   {
     badge: 'PREMIUM EXPERIENCE',
     title: 'Bem-vinda ao',
-    titleHighlight: 'Studio Julia Zenaro',
+    titleHighlight: 'LOGO_PLACEHOLDER', // Special marker
     emoji: '✨',
     description: 'Um espaço onde beleza, cuidado e exclusividade se encontram.',
     subdescription: 'Seu momento começa aqui.',
@@ -82,9 +83,15 @@ const Onboarding: React.FC = () => {
               </div>
             )}
 
-            <h1 className="font-display text-4xl text-primary leading-tight">
-              {step.title} <br />
-              <span className="italic">{step.titleHighlight}</span>
+            <h1 className="font-display text-4xl text-primary leading-tight flex flex-col items-center">
+              {step.title}
+              {step.titleHighlight === 'LOGO_PLACEHOLDER' ? (
+                <div className="mt-2 transform scale-125">
+                  <Logo size="xl" className="w-[300px]" />
+                </div>
+              ) : (
+                <span className="italic">{step.titleHighlight}</span>
+              )}
             </h1>
 
             {step.emoji && (

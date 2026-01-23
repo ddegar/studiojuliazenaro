@@ -1,20 +1,21 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 
 const CheckIn: React.FC = () => {
    const navigate = useNavigate();
-   const [step, setStep] = useState<'LOCATING' | 'READY' | 'ERROR'>('LOCATING');
-   const [loading, setLoading] = useState(false);
-   const [appointment, setAppointment] = useState<any>(null);
+   const [loading, setLoading] = useState(true);
    const [userName, setUserName] = useState('');
    const [userId, setUserId] = useState('');
-   const [pointsReward, setPointsReward] = useState(0);
+   const [checkedIn, setCheckedIn] = useState(false);
+   const [checkInTime, setCheckInTime] = useState<string | null>(null);
+   const [appointment, setAppointment] = useState<any>(null);
 
+   // Initial Data Fetch
    useEffect(() => {
       const fetchCheckInData = async () => {
          try {
+            setLoading(true);
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                navigate('/login');
@@ -22,33 +23,39 @@ const CheckIn: React.FC = () => {
             }
             setUserId(user.id);
 
+            // Fetch Profile
             const { data: profile } = await supabase
                .from('profiles')
                .select('name')
                .eq('id', user.id)
                .single();
+            setUserName(profile?.name?.split(' ')[0] || 'Cliente');
 
-            setUserName(profile?.name || 'Cliente');
-
+            // Check for Today's Appointment
             const today = new Date().toISOString().split('T')[0];
             const { data: appt } = await supabase
                .from('appointments')
-               .select('*, services(points_reward)')
+               .select('*')
                .eq('user_id', user.id)
                .eq('date', today)
-               .eq('status', 'PENDING')
-               .maybeSingle();
+               .in('status', ['PENDING', 'ARRIVED', 'CONFIRMED'])
+               .order('time', { ascending: true })
+               .limit(1)
+               .single();
 
             if (appt) {
                setAppointment(appt);
-               setPointsReward(appt.services?.points_reward || 0);
-               setStep('READY');
-            } else {
-               setStep('ERROR');
+               if (appt.status === 'ARRIVED') {
+                  setCheckedIn(true);
+                  // If we had a real check-in timestamp we would use it, 
+                  // for now we simulate or use updated_at if available
+                  setCheckInTime(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
+               }
             }
          } catch (err) {
             console.error('Check-in fetch error:', err);
-            setStep('ERROR');
+         } finally {
+            setLoading(false);
          }
       };
 
@@ -56,119 +63,139 @@ const CheckIn: React.FC = () => {
    }, [navigate]);
 
    const handleCheckIn = async () => {
-      setLoading(true);
+      if (checkedIn || !appointment) return;
+
+      // Optimistic UI update
+      const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      setCheckedIn(true);
+      setCheckInTime(now);
+
       try {
-         // 1. Update appointment status
-         const { error: apptError } = await supabase
+         await supabase
             .from('appointments')
             .update({ status: 'ARRIVED' })
             .eq('id', appointment.id);
 
-         if (apptError) throw apptError;
-
-         // 2. Reward points if any
-         if (pointsReward > 0) {
-            // Add transaction
-            await supabase.from('point_transactions').insert({
-               user_id: userId,
-               amount: pointsReward,
-               source: 'CHECK_IN',
-               description: `Pontos ganhos no check-in: ${appointment.service_name}`
-            });
-
-            // Update profile balance
-            const { data: profile } = await supabase.from('profiles').select('lash_points').eq('id', userId).single();
-            const currentPoints = profile?.lash_points || 0;
-
-            await supabase.from('profiles')
-               .update({ lash_points: currentPoints + pointsReward })
-               .eq('id', userId);
-         }
-
-         navigate('/checkin/success');
-      } catch (err: any) {
-         console.error('Check-in error:', err);
-         alert('Erro ao notificar chegada: ' + err.message);
-      } finally {
-         setLoading(false);
+         // Haptic feedback if available (mobile)
+         if (navigator.vibrate) navigator.vibrate(50);
+      } catch (err) {
+         console.error('Error checking in:', err);
+         setCheckedIn(false); // Revert on error
+         setCheckInTime(null);
+         alert('Erro ao confirmar presença. Tente novamente.');
       }
    };
 
+   const handleWifi = () => {
+      // Copy to clipboard
+      navigator.clipboard.writeText('JZPrive2024'); // Example password
+      alert('Senha do Wi-Fi "JZPrive2024" copiada!');
+   };
+
+   if (loading) {
+      return (
+         <div className="min-h-screen bg-[#FDF8F2] flex items-center justify-center">
+            <div className="size-10 border-4 border-[#122B22] border-t-transparent rounded-full animate-spin"></div>
+         </div>
+      );
+   }
+
    return (
-      <div className="flex flex-col h-full bg-background-light">
-         <header className="p-8 flex items-center justify-between glass-nav border-b border-gray-100 sticky top-0 z-50">
-            <button onClick={() => navigate('/home')} className="size-10 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors">
-               <span className="material-symbols-outlined text-primary">close</span>
+      <div className="min-h-screen bg-[#FDF8F2] font-sans text-[#122B22] relative overflow-hidden flex flex-col">
+         {/* Background Texture/Gradient */}
+         <div className="absolute top-0 right-0 w-[80%] h-[50%] bg-[#C9A961]/5 rounded-bl-[100px] pointer-events-none"></div>
+
+         {/* Header */}
+         <header className="px-8 pt-12 pb-6 flex items-center justify-between relative z-10">
+            <button onClick={() => navigate('/home')} className="size-10 bg-white rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-all">
+               <span className="material-symbols-outlined text-[#122B22]">close</span>
             </button>
-            <h2 className="font-display font-bold text-primary text-sm uppercase tracking-[0.3em]">Momento Julia Zenaro ✨</h2>
-            <span className="size-10"></span>
+            <div className="w-10"></div> {/* Spacer for balance */}
          </header>
 
-         <main className="flex-1 p-10 flex flex-col items-center justify-center text-center space-y-12">
-            {step === 'LOCATING' && (
-               <div className="space-y-10 animate-pulse">
-                  <div className="size-44 rounded-full bg-primary/5 flex items-center justify-center relative">
-                     <span className="material-symbols-outlined text-primary !text-7xl">spa</span>
-                     <div className="absolute inset-0 border-2 border-primary/20 rounded-full animate-ping"></div>
-                  </div>
-                  <div className="space-y-4">
-                     <h3 className="text-3xl font-display font-bold text-primary">Localizando você...</h3>
-                     <p className="text-sm text-gray-400 italic font-medium px-10">Estamos preparando tudo para sua chegada.</p>
-                  </div>
-               </div>
-            )}
+         {/* Main Content */}
+         <main className="flex-1 px-8 flex flex-col">
+            <div className="mb-10 mt-4">
+               <p className="text-[10px] mobile-s:text-[9px] uppercase tracking-[0.3em] text-[#C9A961] font-black mb-3">Ritual de Chegada</p>
+               <h1 className="font-display font-medium text-4xl leading-tight">
+                  Que bom ter você aqui,<br />
+                  <span className="italic font-serif">{userName}.</span>
+               </h1>
+               <p className="text-[#122B22]/60 mt-4 font-medium text-sm">Seu momento exclusivo começa agora.</p>
+            </div>
 
-            {step === 'READY' && (
-               <div className="space-y-12 animate-fade-in w-full max-w-sm">
-                  <div className="size-44 rounded-full bg-primary/10 flex items-center justify-center mx-auto ring-[32px] ring-primary/5 relative">
-                     <span className="material-symbols-outlined text-primary !text-8xl">favorite</span>
-                     {pointsReward > 0 && (
-                        <div className="absolute -bottom-2 -right-2 bg-accent-gold text-primary p-3 rounded-2xl shadow-xl border-4 border-white rotate-12">
-                           <p className="text-[10px] font-black uppercase leading-none">+{pointsReward}</p>
-                           <p className="text-[8px] font-bold uppercase tracking-tighter">Points</p>
-                        </div>
-                     )}
+            <div className="space-y-4 w-full max-w-sm mx-auto">
+               {/* Card 1: Check-in */}
+               <button
+                  onClick={handleCheckIn}
+                  disabled={checkedIn}
+                  className={`w-full bg-white p-6 rounded-[32px] shadow-sm flex items-center gap-5 transition-all ${!checkedIn ? 'active:scale-95 hover:shadow-md' : 'opacity-90'}`}
+               >
+                  <div className={`size-14 rounded-full flex items-center justify-center shrink-0 transition-colors ${checkedIn ? 'bg-[#122B22] text-white' : 'bg-[#F5F5F5] text-[#122B22]/30'}`}>
+                     <span className="material-symbols-outlined !text-2xl">check</span>
                   </div>
-
-                  <div className="space-y-4">
-                     <h1 className="text-4xl font-display font-bold text-primary leading-tight">Olá, {userName.split(' ')[0]}! ✨</h1>
-                     <p className="text-sm text-gray-500 italic font-medium">Você chegou ao seu refúgio de autocuidado.</p>
+                  <div className="text-left">
+                     <h3 className={`font-bold text-base ${checkedIn ? 'text-[#122B22]/40 line-through' : 'text-[#122B22]'}`}>
+                        Confirmar presença
+                     </h3>
+                     <p className="text-[11px] text-[#122B22]/50 font-medium">
+                        {checkedIn ? `Presença confirmada às ${checkInTime}` : 'Check-in no Studio'}
+                     </p>
                   </div>
+               </button>
 
-                  <div className="bg-white p-8 rounded-[48px] premium-shadow border border-gray-100 text-left space-y-6">
+               {/* Card 2: Wi-Fi */}
+               <button
+                  onClick={handleWifi}
+                  className="w-full bg-[#FFFBF5] border border-[#C9A961]/20 p-6 rounded-[32px] shadow-sm flex items-center gap-5 active:scale-95 hover:bg-[#FFF8EB] transition-all"
+               >
+                  <div className="size-14 rounded-full bg-[#E8DCC0] flex items-center justify-center shrink-0 text-[#122B22]">
+                     <span className="material-symbols-outlined !text-2xl">wifi</span>
+                  </div>
+                  <div className="text-left flex-1">
                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] uppercase font-black text-accent-gold tracking-[0.25em]">Confirmar Presença</span>
-                        <span className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-4 py-1.5 rounded-full uppercase">Hoje</span>
+                        <h3 className="font-bold text-base text-[#122B22]">Wi-Fi Privé</h3>
+                        <span className="material-symbols-outlined text-[#122B22]/30 text-sm">arrow_forward_ios</span>
                      </div>
-                     <div className="space-y-2">
-                        <p className="font-bold text-2xl text-primary leading-tight">{appointment.service_name || 'Serviço Premium'}</p>
-                        <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">{appointment.professional_name || 'Studio Julia Zenaro'}</p>
+                     <p className="text-[10px] text-[#122B22]/50 font-black uppercase tracking-widest mt-0.5">Conexão exclusiva</p>
+                  </div>
+               </button>
+
+               {/* Card 3: Share to Earn */}
+               <button
+                  onClick={() => navigate('/checkin/filter')}
+                  className="w-full bg-[#122B22] p-6 rounded-[32px] shadow-xl shadow-[#122B22]/20 flex items-center gap-5 active:scale-95 group transition-all relative overflow-hidden"
+               >
+                  {/* Shimmer Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+
+                  <div className="size-14 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-[#C9A961] border border-white/5">
+                     <span className="material-symbols-outlined !text-2xl">auto_awesome</span>
+                  </div>
+                  <div className="text-left flex-1">
+                     <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-base text-white">Ativar benefícios JZ Privé</h3>
+                        <span className="bg-[#C9A961] text-[#122B22] text-[9px] font-black px-2 py-1 rounded-md uppercase">+50</span>
                      </div>
+                     <p className="text-[10px] text-white/50 font-black uppercase tracking-widest mt-0.5">Compartilhe sua experiência</p>
                   </div>
-
-                  <button
-                     onClick={handleCheckIn}
-                     disabled={loading}
-                     className="w-full h-20 bg-primary text-white rounded-[28px] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                     {loading ? <div className="size-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'NOTIFICAR CHEGADA ✨'}
-                  </button>
-               </div>
-            )}
-
-            {step === 'ERROR' && (
-               <div className="space-y-10 animate-fade-in">
-                  <div className="size-36 rounded-full bg-rose-50 flex items-center justify-center mx-auto border-4 border-white shadow-xl">
-                     <span className="material-symbols-outlined text-rose-500 !text-6xl">event_busy</span>
-                  </div>
-                  <div className="space-y-3">
-                     <h3 className="text-2xl font-display font-bold text-primary">Ops! Nada por aqui.</h3>
-                     <p className="text-sm text-gray-500 px-10 leading-relaxed">Não encontramos agendamentos pendentes para hoje. Que tal garantir seu horário agora?</p>
-                  </div>
-                  <button onClick={() => navigate('/services')} className="w-full max-w-[200px] h-14 bg-primary text-white rounded-full text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20 mx-auto block active:scale-95 transition-all">Ver Serviços</button>
-               </div>
-            )}
+               </button>
+            </div>
          </main>
+
+         {/* Footer Navigation (Optional, or just simple footer text like the reference) */}
+         <div className="p-8 pb-10 text-center">
+            <div className="w-12 h-0.5 bg-[#122B22]/10 mx-auto mb-6"></div>
+            <p className="font-serif italic text-lg text-[#122B22]/40">Seu espaço de cuidado sempre te espera</p>
+
+            {/* Bottom Apps Bar Placeholder (Mock visual) */}
+            <div className="mt-8 bg-white rounded-full h-16 shadow-xl shadow-[#122B22]/5 flex items-center justify-around px-2">
+               <button onClick={() => navigate('/home')} className="p-4 rounded-full text-[#122B22] active:bg-gray-50"><span className="material-symbols-outlined">home</span></button>
+               <button onClick={() => navigate('/feed')} className="p-4 rounded-full text-[#122B22]/30 active:bg-gray-50"><span className="material-symbols-outlined">grid_view</span></button>
+               <button onClick={() => navigate('/booking')} className="p-4 rounded-full text-[#122B22]/30 active:bg-gray-50"><span className="material-symbols-outlined">calendar_today</span></button>
+               <button onClick={() => navigate('/profile')} className="p-4 rounded-full text-[#122B22]/30 active:bg-gray-50"><span className="material-symbols-outlined">person</span></button>
+            </div>
+         </div>
       </div>
    );
 };

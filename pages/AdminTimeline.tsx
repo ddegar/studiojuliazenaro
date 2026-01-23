@@ -221,23 +221,29 @@ const AdminTimeline: React.FC = () => {
                }
             }
 
-            // C. FIRST COMPLETION NOTIFICATION (IMPROVED)
+            // C. MILESTONE NOTIFICATION: 50 POINTS (IMPROVED)
             if (apt.user_id) {
-               // Check if user already has an evaluation notification or testimonial
-               const [{ data: evaluationNotif }, { data: existingTestimonial }] = await Promise.all([
-                  supabase.from('notifications').select('id').eq('user_id', apt.user_id).eq('type', 'evaluation').limit(1).single(),
-                  supabase.from('testimonials').select('id').eq('user_id', apt.user_id).limit(1).single()
-               ]);
+               // Get current points to check if threshold reached
+               const { data: profile } = await supabase.from('profiles').select('lash_points').eq('id', apt.user_id).single();
+               const currentPts = profile?.lash_points || 0;
 
-               if (!evaluationNotif && !existingTestimonial) {
-                  await supabase.from('notifications').insert({
-                     user_id: apt.user_id,
-                     title: 'Sua Experiência ✨',
-                     message: 'Como foi seu primeiro atendimento conosco? Sua opinião vale pontos!',
-                     link: '/evaluation',
-                     icon: 'star_rate',
-                     type: 'evaluation'
-                  });
+               if (currentPts >= 50) {
+                  // Check if user already has an evaluation notification or testimonial
+                  const [{ data: evaluationNotif }, { data: existingTestimonial }] = await Promise.all([
+                     supabase.from('notifications').select('id').eq('user_id', apt.user_id).eq('type', 'evaluation').limit(1).single(),
+                     supabase.from('testimonials').select('id').eq('user_id', apt.user_id).limit(1).single()
+                  ]);
+
+                  if (!evaluationNotif && !existingTestimonial) {
+                     await supabase.from('notifications').insert({
+                        user_id: apt.user_id,
+                        title: 'Sua Experiência ✨',
+                        message: 'Você atingiu seus primeiros 50 pontos! Que tal nos contar o que está achando e ganhar ainda mais mimos?',
+                        link: '/evaluation',
+                        icon: 'auto_awesome',
+                        type: 'evaluation'
+                     });
+                  }
                }
             }
          }

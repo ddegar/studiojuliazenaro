@@ -1,57 +1,179 @@
-
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../services/supabase';
 
 const BookingConfirmed: React.FC = () => {
-  const navigate = useNavigate();
+   const navigate = useNavigate();
+   const location = useLocation();
+   const { selection } = location.state || {}; // { professional, service, date, time }
 
-  return (
-    <div className="flex flex-col h-full bg-background-dark text-white p-10 items-center justify-center text-center">
-      <div className="mb-12 relative">
-        <div className="absolute inset-0 bg-accent-gold/20 blur-[60px] rounded-full animate-pulse"></div>
-        <div className="relative z-10 size-32 rounded-full border-2 border-accent-gold/30 bg-primary/20 flex items-center justify-center shadow-[0_0_50px_rgba(228,199,143,0.3)]">
-           <span className="material-symbols-outlined text-accent-gold !text-7xl animate-bounce-slow">verified</span>
-        </div>
-      </div>
-      
-      <div className="space-y-4 mb-16 relative z-10">
-        <h1 className="font-display text-4xl font-bold tracking-tight text-white leading-tight">Estamos te <br/>esperando ✨</h1>
-        <p className="text-accent-gold text-lg font-display italic">Vai ser um prazer cuidar de você</p>
-        <p className="text-gray-500 text-xs leading-relaxed max-w-[280px] mx-auto uppercase tracking-widest font-black">
-          Seu atendimento foi agendado com sucesso e carinho.
-        </p>
-      </div>
-      
-      <div className="w-full bg-white/5 border border-white/10 rounded-[40px] p-8 mb-16 text-left space-y-5 backdrop-blur-md">
-         <div className="flex items-center gap-5">
-            <div className="size-14 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/20">
-               <span className="material-symbols-outlined !text-3xl">favorite</span>
-            </div>
-            <div className="space-y-1">
-               <p className="text-[10px] uppercase font-black text-accent-gold tracking-[0.2em]">Seu brilho garantido</p>
-               <p className="text-sm text-gray-300 font-medium leading-tight">Prepare-se para um novo olhar.</p>
-            </div>
-         </div>
-      </div>
+   const [studioAddress, setStudioAddress] = useState('');
 
-      <div className="space-y-6 w-full relative z-10">
-         <button 
-          onClick={() => navigate('/home')}
-          className="w-full h-20 bg-accent-gold text-primary rounded-[32px] font-black uppercase tracking-[0.3em] text-[11px] shadow-[0_20px_50px_-10px_rgba(228,199,143,0.4)] active:scale-[0.97] transition-all flex items-center justify-center gap-4 group"
-         >
-            Voltar para a Home 💖
-         </button>
-         
-         <button 
-          onClick={() => navigate('/history')}
-          className="w-full h-14 bg-white/5 border border-white/10 text-gray-500 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:text-white transition-colors flex items-center justify-center gap-3"
-         >
-            <span className="material-symbols-outlined !text-lg">calendar_month</span>
-            Ver detalhes da reserva
-         </button>
+   useEffect(() => {
+      const fetchAddress = async () => {
+         const { data, error } = await supabase
+            .from('studio_config')
+            .select('value')
+            .eq('key', 'studio_address')
+            .single();
+
+         if (data) {
+            setStudioAddress(data.value);
+         }
+      };
+      fetchAddress();
+   }, []);
+
+   // Format Helper
+   const formatDate = (dateStr: string) => {
+      if (!dateStr) return 'Data não informada';
+      const [year, month, day] = dateStr.split('-');
+      const date = new Date(Number(year), Number(month) - 1, Number(day));
+      return date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+   };
+
+   const addToCalendar = () => {
+      if (!selection) return;
+
+      const [year, month, day] = selection.date.split('-');
+      const [hour, minute] = selection.time.split(':');
+
+      // Create Start and End Dates properly
+      const startTime = new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute));
+      const duration = selection.service?.duration || 60;
+      const endTime = new Date(startTime.getTime() + duration * 60000);
+
+      const formatGoogleDate = (date: Date) => {
+         return date.toISOString().replace(/-|:|\.\d\d\d/g, "");
+      };
+
+      const start = formatGoogleDate(startTime);
+      const end = formatGoogleDate(endTime);
+
+      const title = `Procedimento: ${selection.service?.name} - Studio Julia Zenaro`;
+      const details = `Profissional: ${selection.professional?.name}. Endereço: ${studioAddress}`;
+      const locationText = studioAddress || 'Studio Julia Zenaro';
+
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${start}/${end}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(locationText)}&sf=true&output=xml`;
+
+      window.open(url, '_blank');
+   };
+
+   return (
+      <div className="flex flex-col h-full bg-white relative overflow-hidden">
+         {/* Header */}
+         <header className="px-6 py-6 flex items-center justify-between">
+            <button onClick={() => navigate('/home')} className="p-2 -ml-2 text-primary hover:bg-gray-50 rounded-full transition-colors">
+               <span className="material-symbols-outlined !text-2xl">close</span>
+            </button>
+            <span className="text-sm font-bold text-primary">Confirmação</span>
+            <div className="w-10"></div>
+         </header>
+
+         <main className="flex-1 flex flex-col items-center px-8 pt-4 pb-12 overflow-y-auto no-scrollbar">
+            {/* Animated Check */}
+            <div className="mb-8 relative">
+               <div className="size-24 rounded-full bg-accent-gold/10 flex items-center justify-center animate-pulse-slow">
+                  <div className="size-16 rounded-full bg-accent-gold text-white flex items-center justify-center shadow-lg shadow-accent-gold/30">
+                     <span className="material-symbols-outlined !text-4xl animate-bounce-slow">check</span>
+                  </div>
+               </div>
+            </div>
+
+            <div className="text-center space-y-3 mb-10">
+               <h1 className="font-display text-3xl font-bold text-primary leading-tight">Agendamento <br />Confirmado</h1>
+               <p className="text-sm text-gray-400 font-medium italic">Estamos ansiosas para ver você.</p>
+            </div>
+
+            {/* Details Card */}
+            <div className="w-full bg-white rounded-[32px] border border-gray-100 shadow-xl shadow-gray-100/50 p-0 overflow-hidden mb-8">
+               <div className="p-8 space-y-4">
+                  <span className="inline-block px-3 py-1 bg-accent-gold/10 text-accent-gold text-[9px] font-black uppercase tracking-widest rounded-lg mb-2">
+                     Serviço Premium
+                  </span>
+
+                  <h2 className="font-display text-2xl font-bold text-primary leading-tight">
+                     {selection?.service?.name || 'Serviço Selecionado'}
+                  </h2>
+
+                  <div className="pt-6 space-y-5">
+                     {/* Data */}
+                     <div className="flex items-start gap-4">
+                        <div className="size-10 rounded-full bg-gray-50 flex items-center justify-center text-primary shrink-0">
+                           <span className="material-symbols-outlined !text-lg">calendar_today</span>
+                        </div>
+                        <div>
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Data</p>
+                           <p className="text-sm font-bold text-primary capitalize">
+                              {selection?.date ? formatDate(selection.date) : '...'}
+                           </p>
+                        </div>
+                     </div>
+
+                     {/* Horário */}
+                     <div className="flex items-start gap-4">
+                        <div className="size-10 rounded-full bg-gray-50 flex items-center justify-center text-primary shrink-0">
+                           <span className="material-symbols-outlined !text-lg">schedule</span>
+                        </div>
+                        <div>
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Horário</p>
+                           <p className="text-sm font-bold text-primary">
+                              {selection?.time} ({selection?.service?.duration || 60} min)
+                           </p>
+                        </div>
+                     </div>
+
+                     {/* Profissional */}
+                     <div className="flex items-start gap-4">
+                        <div className="size-10 rounded-full bg-gray-50 flex items-center justify-center text-primary shrink-0">
+                           <span className="material-symbols-outlined !text-lg">person</span>
+                        </div>
+                        <div>
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Profissional</p>
+                           <p className="text-sm font-bold text-primary">
+                              {selection?.professional?.name || 'Especialista JZ'}
+                           </p>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t border-dashed border-gray-100 flex justify-between items-end">
+                     <span className="text-xs text-gray-400">Valor estimado</span>
+                     <span className="text-xl font-bold text-primary">
+                        R$ {selection?.service?.price || '0,00'}
+                     </span>
+                  </div>
+               </div>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full space-y-4">
+               <button
+                  onClick={addToCalendar}
+                  className="w-full h-14 bg-primary text-white rounded-[20px] font-bold text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-primary/20 flex items-center justify-center gap-3 active:scale-95 transition-all"
+               >
+                  <span className="material-symbols-outlined !text-lg">calendar_add_on</span>
+                  Adicionar ao calendário
+               </button>
+
+               <button
+                  onClick={() => navigate('/history')}
+                  className="w-full h-14 bg-transparent text-gray-400 hover:text-primary rounded-[20px] font-bold text-[10px] uppercase tracking-widest transition-colors"
+               >
+                  Ver meus agendamentos
+               </button>
+            </div>
+
+            {/* Footer Address */}
+            <div className="mt-auto pt-8 flex items-center gap-2 text-gray-300">
+               <span className="material-symbols-outlined !text-sm">location_on</span>
+               <p className="text-[10px] font-medium text-center max-w-[200px] leading-tight">
+                  {studioAddress || 'Carregando endereço...'}
+               </p>
+            </div>
+         </main>
       </div>
-    </div>
-  );
+   );
 };
 
 export default BookingConfirmed;

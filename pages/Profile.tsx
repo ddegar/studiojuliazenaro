@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import JZReferralCard from '../components/JZReferralCard';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,55 @@ const Profile: React.FC = () => {
   const [editForm, setEditForm] = useState({ name: '', phone: '', profile_pic: '', email: '', cpf: '' });
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione uma imagem válida.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB.');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profiles')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profiles')
+        .getPublicUrl(filePath);
+
+      setEditForm({ ...editForm, profile_pic: publicUrl });
+      alert('Foto atualizada com sucesso! ✨');
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      alert('Erro ao fazer upload: ' + err.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -120,7 +170,6 @@ const Profile: React.FC = () => {
     { icon: 'auto_awesome', label: 'Perfil do Olhar', desc: 'Lash design e curvaturas favoritas', path: '/profile/aesthetic', hide: isPro },
     { icon: 'dashboard', label: 'Painel Admin', desc: 'Gerenciamento do estúdio', path: '/admin', show: isPro },
     { icon: 'workspace_premium', label: 'JZ Privé Club', desc: `Nível: ${profile?.lash_points >= 3000 ? 'Privé' : profile?.lash_points >= 1500 ? 'Signature' : profile?.lash_points >= 500 ? 'Prime' : 'Select'} • Saldo: ${profile?.lash_points || 0}`, path: '/prive', hide: isPro },
-    { icon: 'diversity_3', label: 'Indique Amigas', desc: 'Ganhe pontos indicando', path: '/profile/refer', hide: isPro },
     { icon: 'lock', label: 'Segurança', desc: 'Alterar minha senha de acesso', path: '#', action: () => setIsChangingPassword(true) },
     { icon: 'help_center', label: 'Dúvidas e FAQ', desc: 'Tire suas dúvidas agora', path: '/faq' },
   ];
@@ -134,22 +183,22 @@ const Profile: React.FC = () => {
       </header>
 
       <main className="flex-1">
-        <div className="flex flex-col items-center py-12 px-6 text-center bg-white/50 border-b border-gray-50">
-          <div className="relative mb-6">
-            <div className="w-32 h-32 rounded-[40px] border-4 border-white shadow-xl overflow-hidden bg-gray-100 ring-1 ring-primary/5">
+        <div className="flex flex-col items-center py-8 px-6 text-center bg-white/50 border-b border-gray-50">
+          <div className="relative mb-4">
+            <div className="w-28 h-28 rounded-[32px] border-4 border-white shadow-xl overflow-hidden bg-gray-100 ring-1 ring-primary/5">
               <img src={profile?.profile_pic || `https://ui-avatars.com/api/?name=${profile?.name}&background=random`} alt="avatar" className="w-full h-full object-cover" />
             </div>
-            <button onClick={() => setIsEditing(true)} className="absolute -bottom-2 -right-2 w-10 h-10 bg-primary text-white rounded-2xl border-4 border-white flex items-center justify-center shadow-lg">
-              <span className="material-symbols-outlined !text-xl">edit</span>
+            <button onClick={() => setIsEditing(true)} className="absolute -bottom-1 -right-1 w-9 h-9 bg-primary text-white rounded-xl border-4 border-white flex items-center justify-center shadow-lg">
+              <span className="material-symbols-outlined !text-lg">edit</span>
             </button>
           </div>
-          <h1 className="font-display text-3xl font-bold text-primary mb-1 tracking-tight">{profile?.name || 'Visitante'}</h1>
-          <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mb-6 opacity-60">
+          <h1 className="font-display text-2xl font-bold text-primary mb-0.5 tracking-tight">{profile?.name || 'Visitante'}</h1>
+          <p className="text-gray-500 font-bold text-[9px] uppercase tracking-widest opacity-60">
             {isPro ? 'Equipe Studio' : 'Cliente VIP'} • Desde {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : '...'}
           </p>
         </div>
 
-        <div className="px-6 py-10 space-y-10">
+        <div className="px-6 py-6 space-y-6">
           {isEditing ? (
             <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-xl space-y-6 animate-slide-up">
               <h3 className="text-xl font-display font-bold text-primary">Editar Perfil</h3>
@@ -178,9 +227,37 @@ const Profile: React.FC = () => {
                     placeholder="000.000.000-00"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">URL da Foto</label>
-                  <input className="w-full h-14 bg-gray-50 border-transparent rounded-2xl px-6 text-sm" value={editForm.profile_pic} onChange={e => setEditForm({ ...editForm, profile_pic: e.target.value })} />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Foto de Perfil</label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 border border-gray-200">
+                      <img
+                        src={editForm.profile_pic || `https://ui-avatars.com/api/?name=${editForm.name}&background=random`}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <label className="flex-1 h-14 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center gap-3 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploadingImage}
+                      />
+                      {uploadingImage ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Enviando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-primary !text-xl">cloud_upload</span>
+                          <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Escolher Foto</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -215,17 +292,36 @@ const Profile: React.FC = () => {
                 ))}
               </div>
 
-              <div className="space-y-3 pt-6 border-t border-gray-100">
+
+
+              {/* Card de Indicação */}
+              {/* Card de Indicação */}
+              {!isPro && <JZReferralCard />}
+
+              {/* Botão Logout (Moved & Redesigned) */}
+              <div className="pt-6">
                 <button
                   onClick={async () => {
                     await supabase.auth.signOut();
                     navigate('/login');
                   }}
-                  className="w-full h-16 border border-rose-500/10 text-rose-500 rounded-[24px] font-black flex items-center justify-center gap-4 text-[10px] uppercase tracking-[0.3em] active:bg-rose-50 transition-colors"
+                  className="w-full bg-white p-5 rounded-[24px] border border-gray-100 shadow-xl shadow-gray-100/50 flex items-center justify-between group active:scale-[0.98] transition-all hover:border-rose-100"
                 >
-                  <span className="material-symbols-outlined text-sm">logout</span>
-                  Encerrar Sessão
+                  <div className="flex items-center gap-4">
+                    <div className="size-10 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center group-hover:bg-rose-100 transition-colors">
+                      <span className="material-symbols-outlined !text-xl">logout</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-display font-bold text-primary group-hover:text-rose-600 transition-colors">Sair do App</p>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Encerrar sessão atual</p>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined text-gray-300 group-hover:text-rose-400 transition-colors">chevron_right</span>
                 </button>
+                <div className="mt-6 text-center">
+                  <p className="text-[9px] text-gray-300 font-bold uppercase tracking-widest">Studio Julia Zenaro App</p>
+                  <p className="text-[8px] text-gray-300 font-medium mt-0.5">Versão 2.1.0 • JZ Privé</p>
+                </div>
               </div>
             </section>
           )}

@@ -19,16 +19,16 @@ interface Post {
 
 const Feed: React.FC = () => {
   const navigate = useNavigate();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // 1. Fetch Posts
+        const { data: postsData } = await supabase
           .from('posts')
           .select(`
             id,
@@ -40,42 +40,60 @@ const Feed: React.FC = () => {
             profiles (name, profile_pic),
             services (name)
           `)
-          .eq('active', true)
-          .order('created_at', { ascending: false });
+          .eq('active', true);
 
-        if (error) throw error;
+        // 2. Fetch Approved Testimonials
+        const { data: testimonialsData } = await supabase
+          .from('testimonials')
+          .select(`
+            id,
+            message,
+            photo_url,
+            rating,
+            created_at,
+            profiles (name, profile_pic),
+            professionals (name)
+          `)
+          .or('status.eq.approved,show_on_feed.eq.true');
 
-        if (data) {
-          const formatted: Post[] = data.map((p: any) => ({
-            id: p.id,
-            imageUrl: p.media_url,
-            caption: p.caption,
-            likes: Math.floor(Math.random() * 50) + 10,
-            comments: Math.floor(Math.random() * 10),
-            serviceId: p.service_link_id,
-            serviceName: p.services?.name,
-            authorName: p.profiles?.name || 'Studio Julia Zenaro',
-            authorAvatar: p.profiles?.profile_pic || `https://ui-avatars.com/api/?name=Studio`,
-            createdAt: p.created_at
-          }));
-          setPosts(formatted);
-        }
+        // 3. Format & Merge
+        const formattedPosts = (postsData || []).map((p: any) => ({
+          type: 'post',
+          id: p.id,
+          imageUrl: p.media_url,
+          caption: p.caption,
+          likes: Math.floor(Math.random() * 50) + 10,
+          authorName: p.profiles?.name || 'Studio Julia Zenaro',
+          authorAvatar: p.profiles?.profile_pic || `https://ui-avatars.com/api/?name=Studio`,
+          createdAt: p.created_at,
+          serviceName: p.services?.name
+        }));
+
+        const formattedTestimonials = (testimonialsData || []).map((t: any) => ({
+          type: 'testimonial',
+          id: t.id,
+          imageUrl: t.photo_url, // Might be null
+          caption: t.message,
+          rating: t.rating,
+          authorName: t.profiles?.name || 'Cliente',
+          authorAvatar: t.profiles?.profile_pic,
+          createdAt: t.created_at,
+          professionalName: t.professionals?.name
+        }));
+
+        const combined = [...formattedPosts, ...formattedTestimonials].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        setItems(combined);
       } catch (err) {
         console.error('Error fetching feed:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchPosts();
+    fetchData();
   }, []);
-
-  const toggleLike = (id: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    const newLiked = new Set(likedPosts);
-    if (newLiked.has(id)) newLiked.delete(id);
-    else newLiked.add(id);
-    setLikedPosts(newLiked);
-  };
 
   if (loading) {
     return (
@@ -92,29 +110,56 @@ const Feed: React.FC = () => {
           <button onClick={() => navigate('/home')} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
           <div>
             <h2 className="font-display font-bold text-lg text-primary tracking-tight">Feed Geral</h2>
-            <p className="text-[9px] uppercase tracking-widest text-accent-gold font-black">Inspirações Reais</p>
+            <p className="text-[9px] uppercase tracking-widest text-accent-gold font-black">Inspirações & Love</p>
           </div>
         </div>
       </header>
 
       <main className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-10">
-        {posts.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4">
-            {posts.map(post => (
+        {items.length > 0 ? (
+          <div className="columns-2 gap-4 space-y-4">
+            {items.map(item => (
               <div
-                key={post.id}
-                onClick={() => setSelectedPost(post)}
-                className="group relative rounded-[32px] overflow-hidden shadow-sm aspect-square border border-gray-50 cursor-pointer active:scale-95 transition-all"
+                key={item.id}
+                onClick={() => setSelectedItem(item)}
+                className="break-inside-avoid group relative rounded-[32px] overflow-hidden shadow-sm border border-gray-50 cursor-pointer active:scale-95 transition-all bg-white"
               >
-                <img
-                  src={post.imageUrl}
-                  className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
-                  alt="post"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                  <img src={post.authorAvatar} className="size-8 rounded-full border-2 border-white shadow-lg" alt="avatar" />
-                  <span className="text-[8px] text-white font-black uppercase tracking-widest">{post.authorName.split(' ')[0]}</span>
-                </div>
+                {item.type === 'post' || (item.type === 'testimonial' && item.imageUrl) ? (
+                  <>
+                    <img
+                      src={item.imageUrl}
+                      className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-110"
+                      alt="content"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                      {item.type === 'testimonial' && (
+                        <div className="flex text-[#C5A059] mb-2">
+                          {[...Array(item.rating || 5)].map((_, i) => <span key={i} className="material-symbols-outlined !text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>)}
+                        </div>
+                      )}
+                      <span className="text-[8px] text-white font-black uppercase tracking-widest">{item.authorName.split(' ')[0]}</span>
+                    </div>
+                  </>
+                ) : (
+                  // Testimonial without image (Text Card)
+                  <div className="p-6 flex flex-col justify-between min-h-[160px] bg-gradient-to-br from-[#f8f7f4] to-white">
+                    <span className="material-symbols-outlined text-[#C5A059] text-2xl mb-2">format_quote</span>
+                    <p className="text-xs text-[#1a1c1a]/80 italic font-medium line-clamp-4">"{item.caption}"</p>
+                    <div className="flex justify-between items-end mt-4">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-primary/40">{item.authorName.split(' ')[0]}</span>
+                      <div className="flex text-[#C5A059]">
+                        {[...Array(item.rating || 5)].map((_, i) => <span key={i} className="material-symbols-outlined !text-[8px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Type Badge */}
+                {item.type === 'testimonial' && (
+                  <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 backdrop-blur rounded-lg shadow-sm z-10">
+                    <span className="material-symbols-outlined text-[#C5A059] !text-[10px]">favorite</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

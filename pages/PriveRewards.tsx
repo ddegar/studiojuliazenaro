@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import JZReferralCard from '../components/JZReferralCard';
 
 const PriveRewards: React.FC = () => {
     const navigate = useNavigate();
@@ -10,10 +11,16 @@ const PriveRewards: React.FC = () => {
     const [points, setPoints] = useState(0);
     const [categories, setCategories] = useState<any[]>([]);
     const [activeCategory, setActiveCategory] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [activating, setActivating] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchData();
-        fetchCategories();
+        const init = async () => {
+            setLoading(true);
+            await Promise.all([fetchData(), fetchCategories()]);
+            setLoading(false);
+        };
+        init();
     }, []);
 
     const fetchCategories = async () => {
@@ -54,88 +61,179 @@ const PriveRewards: React.FC = () => {
         }
     };
 
+    const handleActivate = async (reward: any) => {
+        if (points < reward.points_cost) {
+            alert('Saldo insuficiente para ativar este benefício.');
+            return;
+        }
+
+        setActivating(reward.id);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // 1. CHECK IF ALREADY ACTIVATED (BEFORE any point deduction)
+            const { data: existingBenefit } = await supabase
+                .from('activated_benefits')
+                .select('id')
+                .eq('user_id', user.id)
+                .eq('reward_id', reward.id)
+                .is('used_at', null) // Only check active (unused) benefits
+                .single();
+
+            if (existingBenefit) {
+                alert('Você já possui este benefício ativo! Acesse sua Seleção Privé para utilizá-lo.');
+                setActivating(null);
+                return;
+            }
+
+            // 2. Check current points again to be safe
+            const { data: profile } = await supabase.from('profiles').select('lash_points').eq('id', user.id).single();
+            if (!profile || profile.lash_points < reward.points_cost) {
+                alert('Saldo insuficiente.');
+                setActivating(null);
+                return;
+            }
+
+            // 3. Insert into activated_benefits
+            const { error: activateError } = await supabase
+                .from('activated_benefits')
+                .insert({
+                    user_id: user.id,
+                    reward_id: reward.id,
+                    expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                });
+
+            if (activateError) throw activateError;
+
+            // 3. Subtract points
+            const newPoints = profile.lash_points - reward.points_cost;
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ lash_points: newPoints })
+                .eq('id', user.id);
+
+            if (updateError) throw updateError;
+
+            // 4. Log transaction
+            await supabase.from('lash_points').insert({
+                client_id: user.id,
+                points: -reward.points_cost,
+                source: `Resgate: ${reward.title}`,
+                reference_id: reward.id
+            });
+
+            setPoints(newPoints);
+            alert('Benefício ativado com sucesso! Ele já está disponível na sua Seleção Privé.');
+            navigate('/prive/selection');
+        } catch (error) {
+            console.error('Error activating benefit:', error);
+            alert('Ocorreu um erro ao ativar o benefício. Tente novamente.');
+        } finally {
+            setActivating(null);
+        }
+    };
+
+    if (loading) return (
+        <div className="min-h-screen bg-[#050d0a] flex flex-col items-center justify-center gap-4">
+            <div className="w-12 h-12 border-4 border-[#C9A961] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-[#C9A961] font-display font-medium animate-pulse text-xs uppercase tracking-widest text-center">Abrindo Catálogo de Luxo...</p>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 font-sans antialiased pb-12">
-            <header className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
-                <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-full bg-white dark:bg-card-dark shadow-sm">
-                    <span className="material-symbols-outlined text-xl">arrow_back_ios_new</span>
+        <div className="min-h-screen bg-[#050d0a] text-white font-sans antialiased pb-32 relative overflow-hidden">
+            {/* Header */}
+            <header className="fixed top-0 left-0 right-0 z-50 px-6 py-8 flex items-center justify-between bg-[#050d0a]/80 backdrop-blur-xl border-b border-white/5">
+                <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-[#C9A961] shadow-lg">
+                    <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
                 </button>
-                <h1 className="font-display italic text-xl tracking-tight text-primary dark:text-gold-light">JZ Privé Club</h1>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-card-dark rounded-full shadow-sm border border-slate-100 dark:border-slate-800">
-                    <span className="material-symbols-outlined text-accent-gold text-sm">stars</span>
-                    <span className="text-sm font-semibold text-accent-gold">{points.toLocaleString()} <span className="text-[10px] uppercase opacity-60">Balance</span></span>
+
+                <h1 className="font-serif italic text-xl tracking-tight text-[#C9A961]">JZ Privé Club</h1>
+
+                <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-[#C9A961]/20 shadow-inner">
+                    <span className="material-symbols-outlined text-[#C9A961] !text-sm">stars</span>
+                    <span className="text-sm font-bold text-[#C9A961]">{points.toLocaleString()}</span>
                 </div>
             </header>
 
-            <main className="pt-20 px-6 max-w-md mx-auto">
-                <section className="mt-8 mb-10">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-accent-gold font-bold mb-2">Catálogo Exclusivo</p>
-                    <h2 className="font-display text-4xl leading-tight">Mimos & Experiências</h2>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-3 font-light leading-relaxed">Transforme seus pontos em momentos de beleza e autocuidado de luxo.</p>
+            <main className="pt-40 px-8 max-w-md mx-auto relative z-10">
+                <section className="mb-12">
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-[#C9A961] font-black mb-3 text-center">Standardized Collection</p>
+                    <h2 className="font-display text-4xl font-bold leading-tight mb-4 text-center">Experiências Privé</h2>
+                    <p className="text-white/40 text-sm font-medium leading-relaxed text-center">Seu privilégio traduzido em experiências de luxo e bem-estar.</p>
                 </section>
 
-                <div className="flex items-center gap-8 border-b border-slate-200 dark:border-white/5 mb-10 overflow-x-auto no-scrollbar">
+                {/* Categories centered */}
+                <div className="flex items-center justify-center gap-8 border-b border-white/5 mb-14 overflow-x-auto no-scrollbar scroll-smooth">
                     {categories.map((cat) => (
                         <button
                             key={cat.id}
                             onClick={() => setActiveCategory(cat.name)}
-                            className={`pb-4 text-xs font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${activeCategory === cat.name ? 'text-gold-dark dark:text-gold-light' : 'text-slate-400 dark:text-slate-600'}`}
+                            className={`pb-5 text-[10px] font-black uppercase tracking-[0.3em] transition-all relative whitespace-nowrap ${activeCategory === cat.name ? 'text-[#C9A961]' : 'text-white/20'}`}
                         >
                             {cat.name}
-                            {activeCategory === cat.name && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold-dark dark:bg-gold-light"></div>}
+                            {activeCategory === cat.name && (
+                                <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#C9A961] shadow-[0_0_10px_#C9A961]"></div>
+                            )}
                         </button>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-8">
+                {/* Rewards Grid */}
+                <div className="grid grid-cols-2 gap-x-6 gap-y-12 mb-20">
                     {filteredRewards.length > 0 ? (
                         filteredRewards.map((reward) => (
-                            <button
-                                key={reward.id}
-                                className={`flex flex-col group text-left ${reward.stock <= 0 ? 'opacity-60' : ''}`}
-                                onClick={() => reward.stock > 0 && navigate(`/prive/rewards/${reward.id}`)}
-                                disabled={reward.stock <= 0}
-                            >
-                                <div className="relative aspect-[4/5] rounded-[24px] overflow-hidden mb-4 bg-slate-100 dark:bg-zinc-900 w-full shadow-sm">
-                                    <img alt={reward.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src={reward.image_url} />
-                                    {reward.points_cost <= points && reward.stock > 0 && (
-                                        <div className="absolute top-3 left-3 px-2 py-1 bg-white/90 dark:bg-gold-dark/80 backdrop-blur rounded-lg shadow-sm">
-                                            <span className="text-[8px] font-black tracking-widest text-gold-dark dark:text-white uppercase italic">Disponível</span>
-                                        </div>
-                                    )}
+                            <div key={reward.id} className="flex flex-col group">
+                                <div className="relative aspect-[4/5] rounded-[24px] overflow-hidden mb-6 bg-white/5 w-full shadow-2xl group-hover:shadow-[#C9A961]/5 transition-all">
+                                    <img alt={reward.title} className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" src={reward.image_url} />
                                     {reward.stock <= 0 && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
-                                            <span className="text-[10px] font-black text-white uppercase tracking-widest border border-white px-3 py-1">Esgotado</span>
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-[2px]">
+                                            <span className="text-[10px] font-black text-white uppercase tracking-widest border border-white/30 px-4 py-2 rounded-lg text-center">Coming Soon</span>
+                                        </div>
+                                    )}
+                                    {activating === reward.id && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[4px]">
+                                            <div className="size-8 border-2 border-[#C9A961] border-t-transparent rounded-full animate-spin"></div>
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="font-display text-xl leading-tight mb-1">{reward.title}</h3>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 italic">{reward.category}</p>
-                                <div className="flex items-center gap-1">
-                                    <span className="text-sm font-bold text-gold-dark dark:text-gold-light">{reward.points_cost.toLocaleString()}</span>
-                                    <span className="text-[10px] text-gold-dark/60 dark:text-gold-light/60 font-black tracking-widest uppercase">pts</span>
+
+                                <h3 className="text-xl font-bold leading-none mb-2">{reward.title}</h3>
+                                <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-3">Special Selection</p>
+
+                                <div className="flex items-center gap-2 mb-6">
+                                    <span className="text-sm font-black text-[#C9A961]">{reward.points_cost.toLocaleString()}</span>
+                                    <span className="text-[9px] text-white/20 font-black tracking-widest uppercase">pontos</span>
                                 </div>
-                            </button>
+
+                                <button
+                                    onClick={() => handleActivate(reward)}
+                                    disabled={reward.stock <= 0 || !!activating || points < reward.points_cost}
+                                    className={`w-full py-4 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] transition-all ${points >= reward.points_cost && reward.stock > 0
+                                        ? 'bg-white text-zinc-950 shadow-xl active:scale-95 hover:bg-[#C9A961]'
+                                        : 'bg-white/5 text-white/20 border border-white/5 cursor-not-allowed'
+                                        }`}
+                                >
+                                    {points >= reward.points_cost ? 'Ativar Benefício' : 'Saldo Insuficiente'}
+                                </button>
+                            </div>
                         ))
                     ) : (
-                        <div className="col-span-2 py-20 text-center opacity-40">
-                            <span className="material-symbols-outlined text-4xl mb-3">card_giftcard</span>
-                            <p className="text-sm italic">Nenhum mimo nesta categoria no momento.</p>
+                        <div className="col-span-2 py-32 text-center opacity-30">
+                            <span className="material-symbols-outlined text-4xl mb-6 font-light">shopping_bag</span>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhum item disponível</p>
                         </div>
                     )}
                 </div>
 
-                <div className="mt-16 p-8 rounded-[32px] bg-emerald-900 dark:bg-emerald-950 text-white relative overflow-hidden shadow-2xl">
-                    <div className="relative z-10">
-                        <h4 className="font-display text-2xl mb-2">Indique e Ganhe</h4>
-                        <p className="text-sm text-emerald-100/80 mb-8 max-w-[220px] font-light leading-relaxed">Sua jornada de beleza fica melhor com amigas. Ganhe 200 pontos por nova indicação.</p>
-                        <button onClick={() => navigate('/profile/refer')} className="bg-gold-dark text-white px-8 py-3.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg shadow-black/20 hover:scale-105 transition-transform active:scale-95">
-                            Indicar Agora
-                        </button>
-                    </div>
-                    <span className="material-symbols-outlined absolute -right-6 -bottom-6 text-white/5 text-[180px] rotate-12 select-none group-hover:scale-110 transition-transform duration-1000">card_giftcard</span>
-                </div>
+                {/* Shared Referral Card at the end */}
+                <JZReferralCard />
             </main>
+
+            {/* Ambient Background */}
+            <div className="fixed top-0 left-0 w-full h-full bg-[#050d0a] z-[-2]"></div>
+            <div className="fixed top-[-20%] left-[-20%] w-[80%] h-[80%] bg-[#C9A961]/5 rounded-full blur-[150px] pointer-events-none z-[-1]"></div>
         </div>
     );
 };

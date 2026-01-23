@@ -77,18 +77,20 @@ const Login: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
   return (
     <div className="flex flex-col min-h-screen bg-background-light font-sans overflow-y-auto no-scrollbar">
       {/* Header Area */}
-      <header className="w-full flex flex-col items-center pt-16 pb-12 px-10">
-        <Logo size="lg" className="w-full" />
+      <header className="w-full flex flex-col items-center pt-10 pb-0 px-4">
+        <div className="w-full max-w-[400px] transform scale-125 origin-bottom">
+          <Logo size="xl" className="w-full" />
+        </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full max-w-[420px] mx-auto px-8 flex-1 flex flex-col">
-        <div className="mb-14 text-center">
+      <main className="w-full max-w-[420px] mx-auto px-8 flex-1 flex flex-col -mt-4">
+        <div className="mb-10 text-center">
           <h2 className="font-display text-[#0f3e29] text-[42px] font-normal leading-tight italic">
-            Bem-vinda
+            Seu momento começa aqui
           </h2>
           <p className="text-[#0f3e29]/40 text-[10px] font-black tracking-[0.25em] uppercase mt-2">
-            Identifique-se para continuar
+            Identifique-se para continuar sua experiência
           </p>
         </div>
 
@@ -126,7 +128,7 @@ const Login: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-0 text-[#C9A961]/40 hover:text-[#C9A961] transition-colors focus:outline-none"
+                className="absolute right-0 top-1/2 -translate-y-1/2 bg-transparent p-2 text-[#C9A961]/40 hover:text-[#C9A961] transition-colors focus:outline-none"
               >
                 <span className="material-symbols-outlined !text-xl">
                   {showPassword ? 'visibility_off' : 'visibility'}
@@ -149,12 +151,12 @@ const Login: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#0f3e29] h-16 rounded-sm flex items-center justify-between px-8 hover:bg-[#0a2b1d] transition-all active:scale-[0.98] shadow-xl shadow-[#0f3e29]/20 disabled:opacity-50"
+              className="w-full bg-[#0f3e29] h-16 rounded-[32px] flex items-center justify-between px-8 hover:bg-[#0a2b1d] transition-all active:scale-[0.98] shadow-xl shadow-[#0f3e29]/20 disabled:opacity-50 group"
             >
               <span className="text-[#C9A961] font-bold uppercase tracking-[0.3em] text-[11px]">
-                {loading ? 'Entrando...' : 'Entrar'}
+                {loading ? 'Entrando...' : 'Iniciar sessão'}
               </span>
-              <span className="material-symbols-outlined text-[#C9A961] !text-xl">arrow_right_alt</span>
+              <span className="material-symbols-outlined text-[#C9A961] !text-xl group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
             </button>
           </div>
         </form>

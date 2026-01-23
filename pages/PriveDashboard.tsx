@@ -2,11 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import JZReferralCard from '../components/JZReferralCard';
 
 const PriveDashboard: React.FC = () => {
     const navigate = useNavigate();
     const [points, setPoints] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [userName, setUserName] = useState('Membro');
     const [memberSince, setMemberSince] = useState('');
     const [levels, setLevels] = useState<any[]>([]);
 
@@ -18,9 +20,8 @@ const PriveDashboard: React.FC = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            // Parallel fetch
             const [profileRes, levelsRes] = await Promise.all([
-                user ? supabase.from('profiles').select('lash_points, created_at').eq('id', user.id).single() : Promise.resolve({ data: null, error: null }),
+                user ? supabase.from('profiles').select('name, lash_points, created_at').eq('id', user.id).single() : Promise.resolve({ data: null, error: null }),
                 supabase.from('loyalty_tiers').select('*').order('min_points', { ascending: true })
             ]);
 
@@ -30,11 +31,33 @@ const PriveDashboard: React.FC = () => {
 
             if (profileRes.data) {
                 setPoints(profileRes.data.lash_points || 0);
+                if (profileRes.data.name) {
+                    setUserName(profileRes.data.name.split(' ')[0]);
+                }
                 if (profileRes.data.created_at) {
                     const date = new Date(profileRes.data.created_at);
-                    const month = date.toLocaleString('pt-BR', { month: 'short' });
-                    const year = date.getFullYear();
-                    setMemberSince(`${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`);
+                    const month = date.toLocaleString('pt-BR', { month: 'short' }).toUpperCase().replace('.', '');
+                    setMemberSince(`${month} ${date.getFullYear()}`);
+                }
+
+                // Proactive Evaluation Notification Check (50 Points Milestone)
+                const currentPts = profileRes.data.lash_points || 0;
+                if (currentPts >= 50 && user) {
+                    const [{ data: evaluationNotif }, { data: existingTestimonial }] = await Promise.all([
+                        supabase.from('notifications').select('id').eq('user_id', user.id).eq('type', 'evaluation').limit(1).single(),
+                        supabase.from('testimonials').select('id').eq('user_id', user.id).limit(1).single()
+                    ]);
+
+                    if (!evaluationNotif && !existingTestimonial) {
+                        await supabase.from('notifications').insert({
+                            user_id: user.id,
+                            title: 'Sua Experiência ✨',
+                            message: 'Você atingiu seus primeiros 50 pontos! Que tal nos contar o que está achando e ganhar ainda mais mimos?',
+                            link: '/evaluation',
+                            icon: 'auto_awesome',
+                            type: 'evaluation'
+                        });
+                    }
                 }
             }
         } catch (error) {
@@ -44,202 +67,207 @@ const PriveDashboard: React.FC = () => {
         }
     };
 
-    const calculateTier = (pts: number) => {
-        if (levels.length === 0) return { name: 'Select', color: 'text-gray-500', bg: 'bg-gray-50' }; // Fallback
+    // Correct Logic: Use min_points property
+    const sortedLevels = [...levels].sort((a, b) => a.min_points - b.min_points);
+    const currentTierIdx = sortedLevels.findIndex((t, i) => points >= t.min_points && (i === sortedLevels.length - 1 || points < sortedLevels[i + 1].min_points));
 
-        const sortedLevels = [...levels].sort((a, b) => b.min_points - a.min_points);
-        const match = sortedLevels.find(l => pts >= l.min_points);
+    // Ensure we handle the "not found" or "below first tier" case properly
+    const safeTierIdx = currentTierIdx === -1 ? 0 : currentTierIdx;
+    const currentLevel = sortedLevels[safeTierIdx] || sortedLevels[0];
+    const nextLevel = sortedLevels[safeTierIdx + 1];
 
-        if (!match) return { name: 'Select', color: 'text-gray-500', bg: 'bg-gray-50' };
-
-        // Visual mapping based on name content (since DB doesn't store Tailwind objects yet, or we use name map)
-        // Simplification: Using name for Logic, preserving existing visual map logic for now based on name match
-        const nameUpper = match.name.toUpperCase();
-        if (nameUpper.includes('PRIV')) return { name: match.name, color: 'text-white', bg: 'bg-primary' };
-        if (nameUpper.includes('SIGNATURE')) return { name: match.name, color: 'text-gold-dark', bg: 'bg-white' };
-        if (nameUpper.includes('PRIME')) return { name: match.name, color: 'text-gray-800', bg: 'bg-gray-100' };
-        return { name: match.name, color: 'text-gray-500', bg: 'bg-gray-50' };
+    const getTierStyle = (tierName: string) => {
+        const name = tierName?.toUpperCase() || '';
+        if (name.includes('PRIV')) return { bg: 'bg-zinc-950', accent: 'text-[#C9A961]', label: 'Privé Member' };
+        if (name.includes('SIGNATURE')) return { bg: 'bg-[#0a2e1f]', accent: 'text-[#4ade80]', label: 'Signature Member' };
+        if (name.includes('PRIME')) return { bg: 'bg-[#C9A961]', accent: 'text-zinc-950', label: 'Prime Member' };
+        return { bg: 'bg-gradient-to-br from-zinc-300 to-zinc-400', accent: 'text-zinc-950', label: 'Select Member' };
     };
 
-    const currentTier = calculateTier(points);
-
-    // Calculate Next Tier
-    const sortedAsc = [...levels].sort((a, b) => a.min_points - b.min_points);
-    const nextLevel = sortedAsc.find(l => l.min_points > points);
-
-    const nextTierPoints = nextLevel ? nextLevel.min_points : points;
-    const nextTierName = nextLevel ? nextLevel.name : 'Nível Máximo';
-    const isMaxLevel = !nextLevel;
-
-    const pointsToNext = isMaxLevel ? 0 : Math.max(0, nextTierPoints - points);
-
-    // Calculate Progress % correctly relative to current bracket could be complex, 
-    // but simplify to absolute ratio of max level points for the bar visualization?
-    // The original code was: Math.min(100, (points / nextTierPoints) * 100); which is relative to "reaching next tier" from 0? 
-    // No, it was absolute. let's stick to absolute mapping for the bar if possible, 
-    // OR create a linear progress between levels. 
-    // Let's keep specific logic: 
-    // If Max Level (Privé 3000), 100%. 
-    // Else, points / nextTierPoints * 100.
-    const progressPercent = isMaxLevel ? 100 : Math.min(100, (points / nextTierPoints) * 100);
-
-    // Dynamic Checkpoints for Progress Bar
-    const renderCheckpoints = () => {
-        if (levels.length === 0) return null;
-        return (
-            <div className="flex mb-2 items-center justify-between text-[8px] font-semibold text-gray-400 uppercase tracking-tighter w-full">
-                {levels.map((l, idx) => (
-                    <span key={l.id} className={points >= l.min_points ? 'text-primary font-bold' : ''}>{l.name}</span>
-                ))}
-            </div>
-        );
-    };
+    const tierStyle = getTierStyle(currentLevel?.name);
 
     if (loading) return (
-        <div className="min-h-screen bg-background-light dark:bg-zinc-950 flex flex-col items-center justify-center gap-4">
-            <div className="w-12 h-12 border-4 border-gold border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gold-dark font-display font-medium animate-pulse">Carregando JZ Privé...</p>
+        <div className="min-h-screen bg-[#050d0a] flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-[#C9A961] border-t-transparent rounded-full animate-spin"></div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-background-light dark:bg-background-dark text-primary dark:text-gray-100 font-sans selection:bg-gold/30 pb-12 relative overflow-hidden">
-            {/* Progress Section */}
-            <section className="px-6 -mt-12 relative z-10">
-                <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 shadow-xl border border-gray-100 dark:border-zinc-800">
-                    <div className="flex flex-col items-center text-center">
-                        <div className="w-20 h-20 rounded-full bg-gold/10 flex items-center justify-center mb-4">
-                            <span className="material-symbols-outlined text-4xl text-gold-dark">diamond</span>
-                        </div>
-                        <h2 className="text-3xl font-display font-bold text-primary dark:text-white capitalize">{currentTier.name}</h2>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 font-bold mt-1">Nível Atual JZ Privé</p>
+        <div className="min-h-screen bg-[#050d0a] text-white font-sans selection:bg-[#C9A961]/30 pb-32 relative overflow-hidden">
+            {/* Header */}
+            <header className="px-6 py-8 flex justify-between items-center relative z-10">
+                <button onClick={() => navigate('/home')} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-[#C9A961]">
+                    <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+                </button>
+                <h2 className="font-serif italic text-xl tracking-tight text-[#C9A961]">JZ Privé Club</h2>
+                <button onClick={() => navigate('/profile')} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-[#C9A961]">
+                    <span className="material-symbols-outlined !text-xl">person</span>
+                </button>
+            </header>
 
-                        <div className="mt-8 w-full space-y-6">
-                            <div className="flex justify-between items-end">
-                                <div className="text-left">
-                                    <p className="text-[10px] uppercase tracking-widest text-gray-400 font-black mb-1">Seu Balance</p>
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-display font-bold text-primary dark:text-white">{points.toLocaleString()}</span>
-                                        <span className="text-[10px] font-bold text-gray-400">PTS</span>
+            <div className="px-6 pt-2 pb-6 space-y-1 relative z-10">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Loyalty & Excellence</p>
+                <h1 className="text-3xl font-display font-bold leading-none">Olá, {userName}</h1>
+            </div>
+
+            {/* Decreased Balance Card */}
+            <section className="px-6 mb-10 relative z-10">
+                <div className={`${tierStyle.bg} rounded-[40px] px-8 py-8 shadow-2xl relative overflow-hidden border border-white/5`}>
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="space-y-0.5">
+                            <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${tierStyle.bg === 'bg-white' || tierStyle.bg === 'bg-[#C9A961]' ? 'text-zinc-950/40' : 'text-white/30'}`}>Seu Saldo</p>
+                            <div className="flex items-baseline gap-2">
+                                <span className={`text-4xl font-display font-bold ${tierStyle.bg === 'bg-white' || tierStyle.bg === 'bg-[#C9A961]' ? 'text-zinc-950' : 'text-white'}`}>{points.toLocaleString()}</span>
+                                <span className={`text-sm font-bold opacity-60`}>PTS</span>
+                            </div>
+                        </div>
+                        <div className={`px-3 py-1.5 rounded-lg border ${tierStyle.bg === 'bg-white' || tierStyle.bg === 'bg-[#C9A961]' ? 'bg-zinc-950/5 border-zinc-950/10 text-zinc-950' : 'bg-white/5 border-white/10 text-[#C9A961]'} text-[8px] font-black uppercase tracking-widest`}>
+                            {tierStyle.label}
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between items-end relative z-10">
+                        <div className="space-y-0.5">
+                            <p className={`text-[9px] font-black uppercase tracking-widest ${tierStyle.bg === 'bg-white' || tierStyle.bg === 'bg-[#C9A961]' ? 'text-zinc-950/40' : 'text-white/30'}`}>Membro Desde</p>
+                            <p className={`text-xs font-bold ${tierStyle.bg === 'bg-white' || tierStyle.bg === 'bg-[#C9A961]' ? 'text-zinc-950' : 'text-white'}`}>{memberSince || '---'}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className={`text-[9px] font-black uppercase tracking-widest ${tierStyle.bg === 'bg-white' || tierStyle.bg === 'bg-[#C9A961]' ? 'text-zinc-950/40' : 'text-white/30'}`}>JZ ID</p>
+                            <p className={`text-xs font-bold leading-none ${tierStyle.bg === 'bg-white' || tierStyle.bg === 'bg-[#C9A961]' ? 'text-zinc-950' : 'text-white'}`}>#{userName.split('')[0]}{points}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Glowing Journey Progress Line */}
+            <section className="px-8 mb-12 relative z-10">
+                <div onClick={() => navigate('/prive/journey')} className="flex justify-between items-center mb-6 py-2 border-b border-white/5 group cursor-pointer">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#C9A961]">Sua Jornada Elite</h3>
+                    <span className="material-symbols-outlined text-white/20 group-hover:text-[#C9A961] transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </div>
+
+                <div className="relative pt-6 px-1">
+                    {/* Glowing Track */}
+                    <div className="absolute top-[30px] left-0 right-0 h-[3px] bg-white/5 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-gradient-to-r from-[#C9A961]/40 to-[#C9A961] shadow-[0_0_15px_#C9A961]"
+                            style={{
+                                width: points >= 3000 ? '100%' :
+                                    points >= 1500 ? '75%' :
+                                        points >= 500 ? '45%' : '15%'
+                            }}
+                        />
+                    </div>
+
+                    {/* Nodes */}
+                    <div className="flex justify-between relative z-10">
+                        {['Select', 'Prime', 'Signature', 'Privé'].map((name, i) => {
+                            const nodePoints = [0, 500, 1500, 3000][i];
+                            const isAchieved = points >= nodePoints;
+                            const isCurrent = currentLevel?.name.toUpperCase().includes(name.toUpperCase());
+
+                            return (
+                                <div key={i} className="flex flex-col items-center gap-6">
+                                    <div className={`size-5 rounded-full border-2 transition-all duration-700 flex items-center justify-center ${isAchieved
+                                        ? 'bg-[#C9A961] border-[#C9A961] shadow-[0_0_15px_#C9A961]'
+                                        : 'bg-[#050d0a] border-white/20'
+                                        } ${isCurrent ? 'ring-4 ring-[#C9A961]/20 scale-125' : ''}`}>
                                     </div>
+                                    <span className={`text-[8px] font-black uppercase tracking-widest ${isAchieved ? 'text-white' : 'text-white/20'
+                                        }`}>{name}</span>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] uppercase tracking-widest text-gray-400 font-black mb-1">Membro Desde</p>
-                                    <p className="text-sm font-bold text-primary dark:text-white">{memberSince || '---'}</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                {renderCheckpoints()}
-                                <div className="h-2 w-full bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gold transition-all duration-1000 ease-out"
-                                        style={{ width: `${progressPercent}%` }}
-                                    ></div>
-                                </div>
-                                {!isMaxLevel && (
-                                    <p className="text-[10px] text-gray-500 font-medium">
-                                        Faltam <span className="text-primary dark:text-white font-bold">{pointsToNext} pontos</span> para o nível <span className="text-gold-dark font-bold">{nextTierName}</span>
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+                            );
+                        })}
                     </div>
+
+                    {nextLevel && (
+                        <div className="mt-8 text-center">
+                            <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em]">
+                                Faltam <span className="text-[#C9A961]">{Math.max(0, nextLevel.min_points - points)} pontos</span> para o nível <span className="text-white">{nextLevel.name}</span>
+                            </p>
+                        </div>
+                    )}
                 </div>
             </section>
 
-            {/* Experiences Section */}
-            <section className="mt-10 relative z-10">
-                <div className="px-6 flex justify-between items-baseline mb-6">
-                    <h3 className="text-lg font-display font-bold">Experiências Privé</h3>
-                    <button onClick={() => navigate('/prive/rewards')} className="text-xs font-semibold text-gold-dark dark:text-gold-light uppercase tracking-widest">Ver Todas</button>
-                </div>
-
-                <div className="flex overflow-x-auto gap-5 px-6 pb-4 no-scrollbar">
-                    {/* Exemplo 1 */}
-                    <div onClick={() => navigate('/prive/rewards')} className="flex-shrink-0 w-64 rounded-xl overflow-hidden shadow-lg border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 group cursor-pointer">
-                        <div className="h-48 relative overflow-hidden">
-                            <img alt="Rito Diamond Glow" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                            <div className="absolute bottom-4 left-4 right-4 text-white">
-                                <span className="text-[9px] uppercase tracking-widest font-bold bg-gold px-2 py-0.5 rounded text-black">Exclusivo</span>
-                                <h4 className="mt-1 font-display font-bold text-base">Rito Diamond Glow</h4>
-                            </div>
-                        </div>
-                        <div className="p-4 flex justify-between items-center">
-                            <span className="text-xs text-gray-500 font-medium">900 pontos</span>
-                            <span className="material-symbols-outlined text-lg text-gold-dark">favorite_border</span>
-                        </div>
-                    </div>
-
-                    {/* Exemplo 2 */}
-                    <div onClick={() => navigate('/prive/rewards')} className="flex-shrink-0 w-64 rounded-xl overflow-hidden shadow-lg border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 group cursor-pointer">
-                        <div className="h-48 relative overflow-hidden">
-                            <img alt="Luxury Lounge" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://images.unsplash.com/photo-1560624052-449f5ddf0c31?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                            <div className="absolute bottom-4 left-4 right-4 text-white">
-                                <span className="text-[9px] uppercase tracking-widest font-bold bg-primary px-2 py-0.5 rounded text-white">Apenas Membros</span>
-                                <h4 className="mt-1 font-display font-bold text-base">Acesso VIP Signature</h4>
-                            </div>
-                        </div>
-                        <div className="p-4 flex justify-between items-center">
-                            <span className="text-xs text-gray-500 font-medium">1,200 pontos</span>
-                            <span className="material-symbols-outlined text-lg text-gold-dark">favorite_border</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Benefícios List */}
-            <section className="px-6 mt-10 space-y-3 pb-8 relative z-10">
-                <h3 className="text-sm font-display font-bold uppercase tracking-widest mb-4">Seus Privilégios</h3>
-
-                <div className="flex items-center p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm" onClick={() => navigate('/prive/journey')}>
-                    <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center mr-4">
-                        <span className="material-symbols-outlined text-primary dark:text-gray-300">event_available</span>
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-bold">Agendamento Prioritário</p>
-                        <p className="text-[10px] text-gray-500">Acesso antecipado a horários nobres</p>
-                    </div>
-                    <span className="material-symbols-outlined text-gray-400 text-sm">chevron_right</span>
-                </div>
-
-                <div className="flex items-center p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm" onClick={() => navigate('/prive/journey')}>
-                    <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center mr-4">
-                        <span className="material-symbols-outlined text-primary dark:text-gray-300">workspace_premium</span>
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-bold">Mimo de Aniversário</p>
-                        <p className="text-[10px] text-gray-500">Resgate seu presente especial no mês</p>
-                    </div>
-                    <span className="material-symbols-outlined text-gray-400 text-sm">chevron_right</span>
-                </div>
-
-                <div className="flex items-center p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm" onClick={() => navigate('/prive/journey')}>
-                    <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center mr-4">
-                        <span className="material-symbols-outlined text-primary dark:text-gray-300">face</span>
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-bold">Concierge Estético Pessoal</p>
-                        <p className="text-[10px] text-gray-500">Consultoria VIP dedicada</p>
-                    </div>
-                    <span className="material-symbols-outlined text-gray-400 text-sm">chevron_right</span>
-                </div>
-
-                {/* Extrato Link Rapido */}
+            {/* Quick Actions Grid */}
+            <section className="px-6 mb-12 grid grid-cols-2 gap-4 relative z-10">
                 <button
-                    onClick={() => navigate('/prive/history')}
-                    className="w-full mt-6 py-4 rounded-xl border border-dashed border-gray-200 dark:border-zinc-800 text-xs font-bold text-gray-400 dark:text-zinc-600 uppercase tracking-widest hover:bg-gray-50 dark:hover:bg-zinc-900/50 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => navigate('/prive/selection')}
+                    className="bg-[#0a1611] border border-white/5 p-6 rounded-[32px] text-left space-y-3 group active:scale-95 transition-all"
                 >
-                    <span className="material-symbols-outlined text-sm">list_alt</span>
-                    Ver Extrato Completo de Pontos
+                    <div className="size-12 bg-white/5 group-hover:bg-[#C9A961]/10 rounded-2xl flex items-center justify-center text-[#C9A961] transition-colors">
+                        <span className="material-symbols-outlined !text-2xl">auto_awesome_motion</span>
+                    </div>
+                    <div>
+                        <p className="text-[13px] font-bold">Seleção Privé</p>
+                        <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">Meus Ativados</p>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => navigate('/prive/journey')}
+                    className="bg-[#0a1611] border border-white/5 p-6 rounded-[32px] text-left space-y-3 group active:scale-95 transition-all"
+                >
+                    <div className="size-12 bg-white/5 group-hover:bg-[#C9A961]/10 rounded-2xl flex items-center justify-center text-[#C9A961] transition-colors">
+                        <span className="material-symbols-outlined !text-2xl">featured_seasonal_and_gifts</span>
+                    </div>
+                    <div>
+                        <p className="text-[13px] font-bold">Mimo Birthday</p>
+                        <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">Seu Presente</p>
+                    </div>
                 </button>
             </section>
 
-            {/* Ambient Glows */}
-            <div className="fixed top-0 right-0 w-64 h-64 bg-gold/5 rounded-full blur-[100px] pointer-events-none z-0"></div>
-            <div className="fixed bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none z-0"></div>
+            {/* Experiences Carousel - RENAMED */}
+            <section className="mb-14 relative z-10">
+                <div className="px-8 flex justify-between items-baseline mb-8">
+                    <h3 className="text-2xl font-display font-bold">Experiências Privé</h3>
+                    <button onClick={() => navigate('/prive/rewards')} className="text-[10px] font-black text-[#C9A961] uppercase tracking-[0.3em] border-b border-[#C9A961]/20">Ver Todas</button>
+                </div>
+
+                <div className="flex overflow-x-auto gap-6 px-8 pb-8 no-scrollbar snap-x">
+                    <div onClick={() => navigate('/prive/rewards')} className="flex-shrink-0 w-[240px] snap-center group cursor-pointer">
+                        <div className="relative rounded-[40px] overflow-hidden aspect-[4/5] shadow-2xl border border-white/5">
+                            <img alt="Reward" className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                            <div className="absolute bottom-8 left-8 right-8">
+                                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#C9A961] mb-2">Exclusive</p>
+                                <h4 className="text-xl font-display font-bold text-white leading-tight">Botox Aesthetic</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div onClick={() => navigate('/prive/rewards')} className="flex-shrink-0 w-[240px] snap-center group cursor-pointer">
+                        <div className="relative rounded-[40px] overflow-hidden aspect-[4/5] shadow-2xl border border-white/5">
+                            <img alt="Reward" className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" src="https://images.unsplash.com/photo-1560624052-449f5ddf0c31?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                            <div className="absolute bottom-8 left-8 right-8">
+                                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[#C9A961] mb-2">Signature</p>
+                                <h4 className="text-xl font-display font-bold text-white leading-tight">Limpeza de Pele</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Extrato Button */}
+            <section className="px-6 mb-4 relative z-10">
+                <button
+                    onClick={() => navigate('/prive/history')}
+                    className="w-full py-6 rounded-[32px] bg-[#0a1611] border border-white/5 text-[10px] font-black text-white/40 uppercase tracking-[0.4em] flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                >
+                    <span className="material-symbols-outlined !text-lg text-[#C9A961]">list_alt</span>
+                    Extrato de Pontos
+                </button>
+            </section>
+
+            {/* Shared Referral Card at the end */}
+            <JZReferralCard />
+
+            {/* Background Effects */}
+            <div className="fixed top-[-10%] right-[-10%] w-[80%] h-[80%] bg-[#C9A961]/5 rounded-full blur-[150px] pointer-events-none z-[-1]"></div>
+            <div className="fixed bottom-[-5%] left-[-5%] w-[60%] h-[60%] bg-[#0f3e29]/10 rounded-full blur-[120px] pointer-events-none z-[-1]"></div>
         </div>
     );
 };

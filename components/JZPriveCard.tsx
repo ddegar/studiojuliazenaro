@@ -44,28 +44,28 @@ const JZPriveCard: React.FC<JZPriveCardProps> = ({ variant = 'compact' }) => {
 
     const getTier = (pts: number): TierInfo => {
         if (pts >= 3000) return {
-            name: 'Privé Elite',
-            color: 'from-[#064e3b] to-[#01261d]',
+            name: 'Privé',
+            color: 'from-zinc-900 to-zinc-950',
             textColor: 'text-white',
-            gradient: 'bg-gradient-to-br from-[#064e3b] to-[#01261d]'
+            gradient: 'bg-gradient-to-br from-zinc-900 to-zinc-950'
         };
         if (pts >= 1500) return {
             name: 'Signature',
-            color: 'from-[#C5A059] to-[#B8860B]',
+            color: 'from-[#0a2e1f] to-[#05170f]',
             textColor: 'text-white',
-            gradient: 'bg-gradient-to-br from-[#C5A059] to-[#B8860B]'
+            gradient: 'bg-gradient-to-br from-[#0a2e1f] to-[#05170f]'
         };
         if (pts >= 500) return {
             name: 'Prime',
-            color: 'from-slate-700 to-slate-800',
-            textColor: 'text-white',
-            gradient: 'bg-gradient-to-br from-slate-700 to-slate-800'
+            color: 'from-[#C9A961] to-[#a88a4a]',
+            textColor: 'text-zinc-950',
+            gradient: 'bg-gradient-to-br from-[#C9A961] to-[#a88a4a]'
         };
         return {
             name: 'Select',
-            color: 'from-slate-500 to-slate-600',
-            textColor: 'text-white',
-            gradient: 'bg-gradient-to-br from-slate-500 to-slate-600'
+            color: 'from-zinc-300 to-zinc-400',
+            textColor: 'text-zinc-950',
+            gradient: 'bg-gradient-to-br from-zinc-300 to-zinc-400'
         };
     };
 

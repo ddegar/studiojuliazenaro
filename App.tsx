@@ -51,6 +51,8 @@ import FidelityLevels from './pages/FidelityLevels';
 import FAQ from './pages/FAQ';
 import Coupons from './pages/Coupons';
 import CheckIn from './pages/CheckIn';
+import CheckInFilter from './pages/CheckInFilter';
+import CheckInShare from './pages/CheckInShare';
 import CheckInSuccess from './pages/CheckInSuccess';
 import Evaluation from './pages/Evaluation';
 import AppointmentDetails from './pages/AppointmentDetails';
@@ -60,6 +62,7 @@ import PriveRewards from './pages/PriveRewards';
 import PriveRewardDetail from './pages/PriveRewardDetail';
 import PriveHowToEarn from './pages/PriveHowToEarn';
 import PriveHistory from './pages/PriveHistory';
+import PriveSelection from './pages/PriveSelection';
 import AdminPriveDashboard from './pages/AdminPriveDashboard';
 import AdminPriveMembers from './pages/AdminPriveMembers';
 import AdminPriveLevels from './pages/AdminPriveLevels';
@@ -115,6 +118,7 @@ const App: React.FC = () => {
           <Route path="/prive/rewards/:id" element={<PriveRewardDetail />} />
           <Route path="/prive/earn" element={<PriveHowToEarn />} />
           <Route path="/prive/history" element={<PriveHistory />} />
+          <Route path="/prive/selection" element={<PriveSelection />} />
 
           {/* Cliente Cuidado & Ajuda */}
           <Route path="/care/pre" element={<PreCare />} />
@@ -125,6 +129,8 @@ const App: React.FC = () => {
 
           {/* Fluxo de Presença */}
           <Route path="/checkin" element={<CheckIn />} />
+          <Route path="/checkin/filter" element={<CheckInFilter />} />
+          <Route path="/checkin/share" element={<CheckInShare />} />
           <Route path="/checkin/success" element={<CheckInSuccess />} />
           <Route path="/evaluation" element={<Evaluation />} />
 

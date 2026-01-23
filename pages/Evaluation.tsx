@@ -80,8 +80,18 @@ const Evaluation: React.FC = () => {
             photoUrl = 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&q=80&w=400'; // Simulation
          }
 
-         // 2. Save Testimonial
+         // 2. Get user name for the testimonial
+         const { data: profileData } = await supabase.from('profiles').select('name').eq('id', user.id).single();
+
+         // 3. Save Testimonial (includes both legacy and new fields)
          const { error: testError } = await supabase.from('testimonials').insert({
+            // Legacy fields (required by table constraint)
+            name: profileData?.name || 'Anônima',
+            text: testimonial,
+            stars: rating,
+            date: new Date().toISOString().split('T')[0],
+            approved: allowFeed,
+            // New relational fields
             user_id: user.id,
             professional_id: lastAppointment?.professional_id,
             appointment_id: lastAppointment?.id,
@@ -89,7 +99,7 @@ const Evaluation: React.FC = () => {
             message: testimonial,
             photo_url: photoUrl,
             show_on_feed: allowFeed,
-            status: 'approved'
+            status: 'pending' // Requires master admin approval before showing on feed
          });
 
          if (testError) throw testError;

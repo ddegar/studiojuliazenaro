@@ -45,8 +45,11 @@ const AdminStudioDetails: React.FC = () => {
             for (const update of updates) {
                 await supabase
                     .from('studio_config')
-                    .update({ value: update.value, updated_at: update.updated_at })
-                    .eq('key', update.key);
+                    .upsert({
+                        key: update.key,
+                        value: update.value,
+                        updated_at: update.updated_at
+                    }, { onConflict: 'key' });
             }
 
             alert('Configurações salvas com sucesso! ✨');
@@ -108,6 +111,35 @@ const AdminStudioDetails: React.FC = () => {
                         </div>
                     </div>
 
+
+
+                    <div className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-6">
+                        <div className="flex items-center gap-4 mb-2">
+                            <div className="size-12 rounded-2xl bg-white/10 flex items-center justify-center text-white">
+                                <span className="material-symbols-outlined">location_on</span>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-base">Localização</h3>
+                                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">Endereço do Estúdio</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest pl-1">Endereço Completo</label>
+                                <textarea
+                                    placeholder="Rua das Orquídeas, 123 • Jardins, São Paulo - SP"
+                                    className="w-full min-h-[80px] bg-white/5 border border-white/10 rounded-2xl p-5 text-sm focus:ring-1 focus:ring-accent-gold outline-none leading-relaxed resize-none"
+                                    value={configs.studio_address || ''}
+                                    onChange={e => setConfigs({ ...configs, studio_address: e.target.value })}
+                                />
+                                <p className="text-[9px] text-gray-600 italic px-1">
+                                    Este endereço aparecerá no rodapé do e-mail e na tela de confirmação de agendamento.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-6">
                         <div className="flex items-center gap-4 mb-2">
                             <div className="size-12 rounded-2xl bg-accent-gold/10 flex items-center justify-center text-accent-gold">
@@ -164,7 +196,7 @@ const AdminStudioDetails: React.FC = () => {
                         </button>
                     </div>
                 </div>
-            </main>
+            </main >
 
             <div className="p-6 fixed bottom-0 inset-x-0 glass-nav !bg-background-dark/90 border-t border-white/5 z-50">
                 <button
@@ -175,7 +207,7 @@ const AdminStudioDetails: React.FC = () => {
                     {saving ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'SALVAR ALTERAÇÕES'}
                 </button>
             </div>
-        </div>
+        </div >
     );
 };
 

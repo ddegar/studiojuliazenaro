@@ -15,6 +15,7 @@ const Register: React.FC = () => {
   const [birthdate, setBirthdate] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Mask CPF: 000.000.000-00
@@ -29,6 +30,12 @@ const Register: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    if (password !== confirmPassword) {
+      alert('As senhas não coincidem. Por favor, verifique.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -93,7 +100,7 @@ const Register: React.FC = () => {
           <span className="material-symbols-outlined text-lg">chevron_left</span>
         </button>
 
-        <Logo size="md" className="mt-2" />
+        <Logo size="lg" className="mt-2" />
 
         <div className="w-10"></div>
       </header>
@@ -200,6 +207,21 @@ const Register: React.FC = () => {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Crie uma senha segura"
+              className="w-full text-primary text-base bg-transparent border-none outline-none placeholder:text-gray-300"
+            />
+          </div>
+
+          {/* Confirmar Senha */}
+          <div className="bg-white rounded-[24px] border border-gray-100 px-6 py-4 shadow-sm focus-within:border-primary/30 transition-colors">
+            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60 block mb-1">
+              Confirmar Senha
+            </label>
+            <input
+              required
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="Digite a senha novamente"
               className="w-full text-primary text-base bg-transparent border-none outline-none placeholder:text-gray-300"
             />
           </div>

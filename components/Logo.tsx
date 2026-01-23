@@ -21,7 +21,7 @@ const Logo: React.FC<LogoProps> = ({ className = "", size = 'md', forceLight = f
     useEffect(() => {
         const fetchLogo = async () => {
             try {
-                const cached = sessionStorage.getItem('studio_official_logo');
+                const cached = sessionStorage.getItem('studio_official_logo_v2');
                 if (cached) {
                     setLogoUrl(cached);
                     setLoading(false);
@@ -36,7 +36,7 @@ const Logo: React.FC<LogoProps> = ({ className = "", size = 'md', forceLight = f
 
                 if (data?.value) {
                     setLogoUrl(data.value);
-                    sessionStorage.setItem('studio_official_logo', data.value);
+                    sessionStorage.setItem('studio_official_logo_v2', data.value);
                 }
             } catch (err) {
                 console.error('Error fetching logo:', err);
