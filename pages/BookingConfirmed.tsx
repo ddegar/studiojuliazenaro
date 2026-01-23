@@ -146,6 +146,32 @@ const BookingConfirmed: React.FC = () => {
                </div>
             </div>
 
+            {/* Address Highlight Card - ULTRA PROMINENT */}
+            <div className="w-full bg-[#0f3e29] border border-accent-gold/20 rounded-[40px] p-8 mb-10 text-center space-y-5 shadow-2xl shadow-[#0f3e29]/20 relative overflow-hidden">
+               {/* Decorative Background */}
+               <div className="absolute -top-10 -right-10 size-32 bg-accent-gold/5 rounded-full blur-2xl"></div>
+
+               <div className="flex flex-col items-center relative z-10">
+                  <div className="size-12 rounded-2xl bg-accent-gold/10 text-accent-gold flex items-center justify-center mb-4 border border-accent-gold/30">
+                     <span className="material-symbols-outlined !text-2xl">location_on</span>
+                  </div>
+                  <h3 className="text-[10px] font-black text-accent-gold uppercase tracking-[0.3em] mb-2">Local do seu Atendimento</h3>
+                  <p className="text-xl font-display font-medium text-white leading-tight">
+                     {studioAddress || 'Carregando endereço...'}
+                  </p>
+               </div>
+
+               {studioAddress && (
+                  <button
+                     onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(studioAddress)}`, '_blank')}
+                     className="inline-flex items-center gap-3 text-[11px] font-black text-[#0f3e29] uppercase tracking-widest bg-accent-gold py-4 px-8 rounded-2xl shadow-lg active:scale-95 transition-all w-full justify-center"
+                  >
+                     <span className="material-symbols-outlined !text-lg">directions</span>
+                     Ver no Google Maps (GPS)
+                  </button>
+               )}
+            </div>
+
             {/* Actions */}
             <div className="w-full space-y-4">
                <button
@@ -162,14 +188,6 @@ const BookingConfirmed: React.FC = () => {
                >
                   Ver meus agendamentos
                </button>
-            </div>
-
-            {/* Footer Address */}
-            <div className="mt-auto pt-8 flex items-center gap-2 text-gray-300">
-               <span className="material-symbols-outlined !text-sm">location_on</span>
-               <p className="text-[10px] font-medium text-center max-w-[200px] leading-tight">
-                  {studioAddress || 'Carregando endereço...'}
-               </p>
             </div>
          </main>
       </div>

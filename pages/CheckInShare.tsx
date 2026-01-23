@@ -7,8 +7,49 @@ const CheckInShare: React.FC = () => {
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleInstagramShare = () => {
-        // Open Instagram (simulated)
+    const [pointsEarned, setPointsEarned] = useState<{ amount: number, type: 'INSTAGRAM' | 'APP' } | null>(null);
+
+    const processRewards = async (actionCode: string, description: string) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: rule } = await supabase
+            .from('loyalty_actions')
+            .select('points_reward, is_active')
+            .eq('code', actionCode)
+            .single();
+
+        if (!rule || !rule.is_active) return;
+
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const { data: recentTx } = await supabase
+            .from('point_transactions')
+            .select('*')
+            .eq('user_id', user.id)
+            .in('source', ['STORY_INSTA', 'STORY_STUDIO', 'STORY_SHARE', 'APP_STORY_SHARE'])
+            .gt('created_at', twentyFourHoursAgo)
+            .limit(1);
+
+        if (recentTx && recentTx.length > 0) return;
+
+        const amount = rule.points_reward;
+        await supabase.from('point_transactions').insert({
+            user_id: user.id,
+            amount: amount,
+            source: actionCode,
+            description: description
+        });
+
+        await supabase.rpc('increment_lash_points', {
+            user_id_param: user.id,
+            amount_param: amount
+        });
+
+        setPointsEarned({ amount, type: actionCode === 'STORY_INSTA' ? 'INSTAGRAM' : 'APP' });
+    };
+
+    const handleInstagramShare = async () => {
+        await processRewards('STORY_INSTA', 'Compartilhamento Instagram (Check-in)');
         setTimeout(() => {
             window.open('instagram://story-camera', '_blank');
         }, 300);
@@ -27,7 +68,7 @@ const CheckInShare: React.FC = () => {
             // 1. Upload Image
             const fileExt = file.name.split('.').pop();
             const fileName = `${user.id}_${Date.now()}.${fileExt}`;
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from('stories')
                 .upload(fileName, file);
 
@@ -38,16 +79,12 @@ const CheckInShare: React.FC = () => {
                 .from('stories')
                 .getPublicUrl(fileName);
 
-            // 3. Insert into Stories Table (Expires in 24h)
+            // 3. Insert into Stories Table
             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
             const { error: dbError } = await supabase
                 .from('stories')
                 .insert({
-                    user_id: user.id, // Depending on schema, might be user_id or profile_id linked automatically? 
-                    // Based on Feed.tsx viewing, stories table has profiles relation. 
-                    // Usually RLS handles user_id, but let's check if we need to pass it explicitly if policies allow.
-                    // Assuming column is 'image_url' based on Stories.tsx select.
+                    user_id: user.id,
                     image_url: publicUrl,
                     expires_at: expiresAt,
                     type: 'image'
@@ -55,8 +92,13 @@ const CheckInShare: React.FC = () => {
 
             if (dbError) throw dbError;
 
-            alert('Seu momento foi compartilhado no App JZ Privé e ficará visível por 24h! ✨');
-            navigate('/stories'); // Redirect to stories to see it
+            // 4. Award Points
+            await processRewards('STORY_STUDIO', 'Storie no App (Check-in)');
+
+            setTimeout(() => {
+                alert('Seu momento foi compartilhado no App JZ Privé e ficará visível por 24h! ✨');
+                navigate('/stories');
+            }, 1000);
 
         } catch (error: any) {
             console.error('Error sharing story:', error);
@@ -166,7 +208,32 @@ const CheckInShare: React.FC = () => {
 
             </main>
 
-            <div className="fixed top-[-20%] left-[-20%] w-[80%] h-[50%] bg-[#C9A961]/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+            {/* Reward Feedback Overlay */}
+            {pointsEarned && (
+                <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center animate-fade-in p-8">
+                    <div className="text-center space-y-6">
+                        <div className="size-32 mx-auto rounded-full bg-[#C9A961]/20 flex items-center justify-center ring-4 ring-[#C9A961]/10">
+                            <span className="material-symbols-outlined !text-6xl text-[#C9A961] animate-bounce-slow">stars</span>
+                        </div>
+                        <div>
+                            <h2 className="text-4xl font-display font-bold text-[#C9A961] mb-2">+{pointsEarned.amount}</h2>
+                            <p className="text-xl text-white font-medium">JZ Privé Balance</p>
+                        </div>
+                        <p className="text-white/60 text-sm leading-relaxed max-w-[200px] mx-auto">
+                            {pointsEarned.type === 'INSTAGRAM' ? 'Seu momento agora faz parte do JZ Privé Club.' : 'Sua beleza está brilhando no nosso App!'}
+                        </p>
+                        <button
+                            onClick={() => {
+                                setPointsEarned(null);
+                                if (pointsEarned.type === 'APP') navigate('/stories');
+                            }}
+                            className="px-8 py-3 bg-white text-black rounded-full font-bold uppercase tracking-widest text-xs mt-4"
+                        >
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

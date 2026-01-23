@@ -106,7 +106,7 @@ const CheckInFilter: React.FC = () => {
         setLoading(true);
 
         try {
-            await processRewards('STORY_SHARE', 50, 'Compartilhamento Stories JZ Privé');
+            await processRewards('STORY_INSTA', 'Compartilhamento Stories Instagram');
 
             const blob = await (await fetch(processedImage)).blob();
             const file = new File([blob], 'jz-prive-story.png', { type: 'image/png' });
@@ -174,8 +174,8 @@ const CheckInFilter: React.FC = () => {
 
             if (dbError) throw dbError;
 
-            // 4. Award Points (+30)
-            await processRewards('APP_STORY_SHARE', 30, 'Storie no App JZ Privé');
+            // 4. Award Points
+            await processRewards('STORY_STUDIO', 'Storie no App JZ Privé');
 
             setTimeout(() => {
                 alert('Seu momento foi compartilhado no App JZ Privé e ficará visível por 24h! ✨');
@@ -190,36 +190,51 @@ const CheckInFilter: React.FC = () => {
         }
     };
 
-    const processRewards = async (source: string, amount: number, description: string) => {
+    const processRewards = async (actionCode: string, description: string) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // 1. Get rule from Admin
+        const { data: rule } = await supabase
+            .from('loyalty_actions')
+            .select('points_reward, is_active')
+            .eq('code', actionCode)
+            .single();
+
+        if (!rule || !rule.is_active) return;
+
+        // 2. Anti-fraud check: Only ONE reward per 24 hours for ANY story sharing action
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const { data: recentTx } = await supabase
             .from('point_transactions')
             .select('*')
             .eq('user_id', user.id)
-            .eq('source', source)
+            .in('source', ['STORY_INSTA', 'STORY_STUDIO', 'STORY_SHARE', 'APP_STORY_SHARE']) // Legacy and new codes
             .gt('created_at', twentyFourHoursAgo)
             .limit(1);
 
-        if (recentTx && recentTx.length > 0) return;
+        if (recentTx && recentTx.length > 0) {
+            console.log('Reward already claimed in the last 24h');
+            return;
+        }
 
+        const amount = rule.points_reward;
+
+        // 3. Register Transaction
         await supabase.from('point_transactions').insert({
             user_id: user.id,
             amount: amount,
-            source: source,
+            source: actionCode,
             description: description
         });
 
-        const { data: profile } = await supabase.from('profiles').select('lash_points').eq('id', user.id).single();
-        const current = profile?.lash_points || 0;
+        // 4. Update Balance via RPC
+        await supabase.rpc('increment_lash_points', {
+            user_id_param: user.id,
+            amount_param: amount
+        });
 
-        await supabase.from('profiles')
-            .update({ lash_points: current + amount })
-            .eq('id', user.id);
-
-        setPointsEarned({ amount, type: source === 'STORY_SHARE' ? 'INSTAGRAM' : 'APP' });
+        setPointsEarned({ amount, type: actionCode === 'STORY_INSTA' ? 'INSTAGRAM' : 'APP' });
     };
 
     return (

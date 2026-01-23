@@ -489,106 +489,124 @@ const Booking: React.FC = () => {
         )}
 
         {step === 'CONFIRM' && (
-          <div className="p-8 space-y-12 animate-fade-in">
-            <div className="bg-white rounded-[48px] p-8 border border-gray-100 premium-shadow space-y-10">
-              <div className="text-center space-y-3">
-                <h3 className="text-4xl font-display font-bold text-primary">Tudo certo 💖</h3>
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.25em]">Sua reserva está quase concluída</p>
+          <div className="px-8 pt-4 pb-12 space-y-10 animate-fade-in flex flex-col items-center">
+
+            <div className="w-full bg-white rounded-[48px] p-10 shadow-xl shadow-black/5 border border-gray-100/50 flex flex-col items-center">
+              <div className="text-center space-y-2 mb-10">
+                <h3 className="text-4xl font-display font-normal text-primary italic">Tudo certo 💛</h3>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">Sua reserva está quase concluída</p>
               </div>
 
-              <div className="space-y-6 pt-6 border-t border-gray-50">
-                <div className="flex justify-between items-center">
-                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Especialista</p>
-                  <p className="text-sm font-bold text-primary">{selection.professional?.name}</p>
+              <div className="w-full space-y-8">
+                <div className="flex justify-between items-center group">
+                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Especialista</p>
+                  <p className="text-base font-bold text-primary">{selection.professional?.name}</p>
                 </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Procedimento</p>
-                  <p className="text-sm font-bold text-primary">{selection.service?.name}</p>
+
+                <div className="flex justify-between items-center group">
+                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Procedimento</p>
+                  <p className="text-base font-bold text-primary">{selection.service?.name}</p>
                 </div>
-                <div className="flex justify-between items-center">
-                  <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Data & Hora</p>
-                  <p className="text-sm font-bold text-primary">{selection.date?.split('-').reverse().join('/')} • {selection.time}</p>
+
+                <div className="flex justify-between items-center group">
+                  <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Data & Hora</p>
+                  <p className="text-base font-bold text-primary">{selection.date?.split('-').reverse().join('/')} • {selection.time}</p>
                 </div>
-                <div className="flex justify-between pt-6 border-t border-dashed border-gray-100">
-                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Investimento</p>
-                  <p className="text-3xl font-black text-primary">R$ {selection.service?.price}</p>
+
+                <div className="pt-8 border-t border-dashed border-gray-100 flex justify-between items-end">
+                  <div>
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1">Investimento</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-sm font-bold text-gray-400">R$</span>
+                      <span className="text-5xl font-display font-medium text-primary leading-none tracking-tighter">
+                        {selection.service?.price}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <button
-              onClick={async () => {
-                try {
-                  const { data: { user } } = await supabase.auth.getUser();
-                  if (!user) {
-                    alert('Sessão expirada. Por favor, faça login novamente.');
-                    navigate('/login');
-                    return;
-                  }
-
-                  if (!selection.professional?.id || !selection.service?.id || !selection.date || !selection.time) {
-                    alert('Por favor, preencha todos os campos obrigatórios.');
-                    return;
-                  }
-
-                  const startDate = new Date(`${selection.date}T${selection.time}:00`);
-                  if (isNaN(startDate.getTime())) {
-                    alert("Erro na data selecionada.");
-                    return;
-                  }
-
-                  const duration = selection.service.duration || 30;
-                  const endDate = new Date(startDate.getTime() + duration * 60000);
-
-                  const payload = {
-                    user_id: user.id,
-                    service_id: selection.service.id,
-                    professional_id: selection.professional.id,
-                    date: selection.date,
-                    time: selection.time,
-                    duration: duration,
-                    start_time: startDate.toISOString(),
-                    end_time: endDate.toISOString(),
-                    price: selection.service.price,
-                    status: 'scheduled',
-                    service_name: selection.service.name,
-                    professional_name: selection.professional.name
-                  };
-
-                  const { error } = await supabase.from('appointments').insert(payload);
-
-                  if (error) {
-                    if (error.message.includes('overlap') || error.message.includes('no_overlap')) {
-                      alert("Este horário já está ocupado ou entra em conflito com outro agendamento. Por favor, escolha outro horário.");
-                    } else {
-                      throw error;
-                    }
-                    return;
-                  }
-
-                  // Notify
+            <div className="w-full space-y-6">
+              <button
+                onClick={async () => {
                   try {
-                    await supabase.from('notifications').insert([
-                      {
-                        user_id: selection.professional.id,
-                        title: 'Novo Agendamento',
-                        message: `Nova cliente confirmada: ${selection.service.name} as ${selection.time}`,
-                        type: 'scheduled'
-                      }
-                    ]);
-                  } catch (e) {
-                    console.log('Notification error silent catch');
-                  }
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) {
+                      alert('Sessão expirada. Por favor, faça login novamente.');
+                      navigate('/login');
+                      return;
+                    }
 
-                  navigate('/booking/confirmed', { state: { selection } });
-                } catch (e: any) {
-                  alert('Erro ao confirmar: ' + e.message);
-                }
-              }}
-              className="w-full h-18 bg-primary text-white rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl active:scale-95 transition-transform"
-            >
-              Confirmar Agendamento ✨
-            </button>
+                    if (!selection.professional?.id || !selection.service?.id || !selection.date || !selection.time) {
+                      alert('Por favor, preencha todos os campos obrigatórios.');
+                      return;
+                    }
+
+                    const startDate = new Date(`${selection.date}T${selection.time}:00`);
+                    if (isNaN(startDate.getTime())) {
+                      alert("Erro na data selecionada.");
+                      return;
+                    }
+
+                    const duration = selection.service.duration || 30;
+                    const endDate = new Date(startDate.getTime() + duration * 60000);
+
+                    const payload = {
+                      user_id: user.id,
+                      service_id: selection.service.id,
+                      professional_id: selection.professional.id,
+                      date: selection.date,
+                      time: selection.time,
+                      duration: duration,
+                      start_time: startDate.toISOString(),
+                      end_time: endDate.toISOString(),
+                      price: selection.service.price,
+                      status: 'scheduled',
+                      service_name: selection.service.name,
+                      professional_name: selection.professional.name
+                    };
+
+                    const { error } = await supabase.from('appointments').insert(payload);
+
+                    if (error) {
+                      if (error.message.includes('overlap') || error.message.includes('no_overlap')) {
+                        alert("Este horário já está ocupado ou entra em conflito com outro agendamento. Por favor, escolha outro horário.");
+                      } else {
+                        throw error;
+                      }
+                      return;
+                    }
+
+                    // Notify
+                    try {
+                      await supabase.from('notifications').insert([
+                        {
+                          user_id: selection.professional.id,
+                          title: 'Novo Agendamento',
+                          message: `Nova cliente confirmada: ${selection.service.name} as ${selection.time}`,
+                          type: 'scheduled'
+                        }
+                      ]);
+                    } catch (e) {
+                      console.log('Notification error silent catch');
+                    }
+
+                    navigate('/booking/confirmed', { state: { selection } });
+                  } catch (e: any) {
+                    alert('Erro ao confirmar: ' + e.message);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-3 bg-[#0f3e29] text-[#C9A961] h-20 rounded-[32px] font-bold uppercase tracking-[0.2em] text-xs shadow-2xl shadow-[#0f3e29]/20 active:scale-95 transition-all"
+              >
+                <span>Confirmar Agendamento</span>
+                <span className="material-symbols-outlined !text-xl">auto_awesome</span>
+              </button>
+
+              <p className="text-[10px] text-gray-400 text-center font-medium leading-relaxed max-w-[240px] mx-auto">
+                Ao confirmar, você concorda com nossos termos de reserva.
+              </p>
+            </div>
           </div>
         )}
       </main>

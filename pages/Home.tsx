@@ -30,7 +30,7 @@ const Home: React.FC = () => {
               type,
               profiles (name, profile_pic)
             `)
-            .gt('expires_at', new Date().toISOString())
+            .gt('expires_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
             .order('created_at', { ascending: false }),
           user ? supabase.from('profiles').select('name, profile_pic').eq('id', user.id).single() : Promise.resolve({ data: null })
         ]);

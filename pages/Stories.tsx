@@ -13,12 +13,15 @@ interface StoryItem {
 }
 
 const Stories: React.FC = () => {
+  const navigate = useNavigate();
   const [items, setItems] = useState<StoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const navigate = useNavigate();
+  const [liked, setLiked] = useState(false);
+  const [likeLoading, setLikeLoading] = useState(false);
 
+  // Fetching Logic
   useEffect(() => {
     const fetchStories = async () => {
       setLoading(true);
@@ -35,24 +38,27 @@ const Stories: React.FC = () => {
           .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Stories DB Error:', error);
+          throw error;
+        }
 
         if (data && data.length > 0) {
           const formatted: StoryItem[] = data.map((s: any) => ({
             id: s.id,
             url: s.image_url,
-            type: 'image', // Default to image for now
+            type: 'image',
             authorName: s.profiles?.name || 'Studio Julia Zenaro',
             authorAvatar: s.profiles?.profile_pic || `https://ui-avatars.com/api/?name=Studio`,
             createdAt: s.created_at
           }));
           setItems(formatted);
         } else {
-          // If no stories, go back home
+          console.log('No active stories found, redirecting home.');
           navigate('/home');
         }
       } catch (err) {
-        console.error('Error fetching stories:', err);
+        console.error('Critical Fetch Error:', err);
         navigate('/home');
       } finally {
         setLoading(false);
@@ -61,38 +67,66 @@ const Stories: React.FC = () => {
     fetchStories();
   }, [navigate]);
 
+  // Timer Logic
   useEffect(() => {
-    if (items.length === 0) return;
+    if (items.length === 0 || loading) return;
 
     const timer = setInterval(() => {
       setProgress(p => {
         if (p >= 100) {
           if (currentIndex < items.length - 1) {
-            setCurrentIndex(currentIndex + 1);
+            setCurrentIndex(prev => prev + 1);
             return 0;
           } else {
             navigate('/home');
             return 100;
           }
         }
-        return p + 1.2; // Adjusted speed
+        return p + 1.2;
       });
     }, 50);
 
     return () => clearInterval(timer);
-  }, [currentIndex, items, navigate]);
+  }, [currentIndex, items.length, loading, navigate]);
+
+  // Like Check Logic
+  useEffect(() => {
+    const checkLike = async () => {
+      if (items.length === 0 || !items[currentIndex]) return;
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from('story_likes')
+          .select('id')
+          .eq('story_id', items[currentIndex].id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        setLiked(!!data);
+      } catch (e) {
+        console.error('Error checking like:', e);
+      }
+    };
+
+    if (!loading && items.length > 0) {
+      checkLike();
+    }
+  }, [currentIndex, items, loading]);
 
   const handleTouch = (e: React.MouseEvent) => {
     const { clientX } = e;
     const width = window.innerWidth;
     if (clientX < width / 3) {
       if (currentIndex > 0) {
-        setCurrentIndex(currentIndex - 1);
+        setCurrentIndex(prev => prev - 1);
         setProgress(0);
       }
     } else {
       if (currentIndex < items.length - 1) {
-        setCurrentIndex(currentIndex + 1);
+        setCurrentIndex(prev => prev + 1);
         setProgress(0);
       } else {
         navigate('/home');
@@ -100,7 +134,64 @@ const Stories: React.FC = () => {
     }
   };
 
-  if (loading || items.length === 0) {
+  const handleLike = async () => {
+    if (liked || likeLoading || !items[currentIndex]) return;
+    setLikeLoading(true);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const currentStory = items[currentIndex];
+
+      const { data: rule } = await supabase
+        .from('loyalty_actions')
+        .select('points_reward, is_active')
+        .eq('code', 'STORY_LIKE')
+        .single();
+
+      const { data: storyData } = await supabase
+        .from('stories')
+        .select('user_id')
+        .eq('id', currentStory.id)
+        .single();
+
+      if (!storyData) throw new Error('Story not found');
+
+      const { error: likeError } = await supabase
+        .from('story_likes')
+        .insert({
+          story_id: currentStory.id,
+          user_id: user.id
+        });
+
+      if (likeError) throw likeError;
+
+      if (rule?.is_active && storyData.user_id !== user.id) {
+        const points = rule.points_reward;
+        await supabase.from('point_transactions').insert({
+          user_id: storyData.user_id,
+          amount: points,
+          description: `Curtida no Story: ${currentStory.authorName}`,
+          source: 'STORY_LIKE'
+        });
+
+        await supabase.rpc('increment_lash_points', {
+          user_id_param: storyData.user_id,
+          amount_param: points
+        });
+      }
+
+      setLiked(true);
+    } catch (err) {
+      console.error('Error liking story:', err);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  // Rendering States
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-black">
         <div className="size-12 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
@@ -108,7 +199,12 @@ const Stories: React.FC = () => {
     );
   }
 
+  if (items.length === 0) {
+    return <div className="h-screen bg-black"></div>; // Fast blank before redirect
+  }
+
   const current = items[currentIndex];
+  if (!current) return null;
 
   return (
     <div className="flex flex-col h-screen bg-black relative overflow-hidden select-none">
@@ -117,7 +213,7 @@ const Stories: React.FC = () => {
         {items.map((item, idx) => (
           <div key={item.id} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden backdrop-blur-md">
             <div
-              className="h-full bg-white transition-all duration-50"
+              className={`h-full bg-white transition-all duration-50 ${idx === currentIndex ? '' : 'duration-0'}`}
               style={{ width: `${idx < currentIndex ? 100 : idx === currentIndex ? progress : 0}%` }}
             ></div>
           </div>
@@ -127,8 +223,8 @@ const Stories: React.FC = () => {
       {/* Header */}
       <div className="absolute top-12 left-0 w-full flex items-center justify-between px-6 z-[60]">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-white/30 overflow-hidden shadow-2xl">
-            <img src={current.authorAvatar} alt="author" className="w-full h-full object-cover" />
+          <div className="w-12 h-12 rounded-full border-2 border-white/30 overflow-hidden shadow-2xl bg-gray-800">
+            {current.authorAvatar && <img src={current.authorAvatar} alt="author" className="w-full h-full object-cover" />}
           </div>
           <div className="text-white drop-shadow-lg">
             <p className="text-sm font-black tracking-wide">{current.authorName}</p>
@@ -140,24 +236,26 @@ const Stories: React.FC = () => {
 
       {/* Content */}
       <div
-        className="flex-1 w-full bg-cover bg-center bg-no-repeat transition-all duration-500 animate-fade-in"
+        className="flex-1 w-full bg-cover bg-center bg-no-repeat transition-all duration-500 animate-fade-in relative"
         style={{ backgroundImage: `url(${current.url})` }}
         onClick={handleTouch}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none"></div>
       </div>
 
       {/* Footer */}
-      <div className="p-8 pb-12 flex items-center gap-6 absolute bottom-0 inset-x-0 z-[60] backdrop-blur-sm bg-black/10">
-        <div className="flex-1 relative">
-          <input
-            type="text"
-            placeholder="Responder carinhosamente..."
-            className="w-full bg-white/10 border border-white/20 text-white rounded-[24px] h-14 px-8 text-sm placeholder:text-white/40 focus:ring-accent-gold outline-none italic transition-all"
-          />
-          <button className="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-white/40">send</button>
-        </div>
-        <button className="material-symbols-outlined text-white text-3xl active:scale-125 transition-transform text-rose-500" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</button>
+      <div className="p-8 pb-12 flex items-center justify-center absolute bottom-0 inset-x-0 z-[60] backdrop-blur-sm bg-black/10">
+        <button
+          onClick={(e) => { e.stopPropagation(); handleLike(); }}
+          disabled={liked || likeLoading}
+          className={`
+            material-symbols-outlined text-4xl active:scale-150 transition-all duration-300
+            ${liked ? 'text-rose-500 scale-110' : 'text-white/60 hover:text-white'}
+          `}
+          style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
+        >
+          favorite
+        </button>
       </div>
     </div>
   );

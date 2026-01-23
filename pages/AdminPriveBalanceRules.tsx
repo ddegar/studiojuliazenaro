@@ -99,6 +99,11 @@ const AdminPriveBalanceRules: React.FC = () => {
             case 'BIRTHDAY': return 'card_giftcard';
             case 'REFERRAL': return 'person_add';
             case 'CHECKIN': return 'location_on';
+            case 'STORY_LIKE': return 'favorite';
+            case 'STORY_INSTA': return 'camera_alt';
+            case 'STORY_STUDIO': return 'add_a_photo';
+            case 'STORY': return 'alternate_email';
+            case 'BOOKING_REAL': return 'payments';
             default: return 'stars';
         }
     };
