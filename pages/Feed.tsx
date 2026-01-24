@@ -1,199 +1,300 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import { Service } from '../types';
 
-interface Post {
+interface FeedItem {
+  type: 'SERVICE' | 'TESTIMONIAL';
+  data: any;
   id: string;
-  imageUrl: string;
-  title?: string;
-  caption: string;
-  likes: number;
-  comments: number;
-  serviceId?: string;
-  serviceName?: string;
-  authorName: string;
-  authorAvatar: string;
-  createdAt: string;
 }
 
 const Feed: React.FC = () => {
   const navigate = useNavigate();
-  const [items, setItems] = useState<any[]>([]);
+  const [view, setView] = useState('Geral');
+  const [heroItem, setHeroItem] = useState<Service | null>(null);
+  const [popularServices, setPopularServices] = useState<Service[]>([]);
+  const [feedGrid, setFeedGrid] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
+    const fetchFeedData = async () => {
       try {
-        // 1. Fetch Posts
-        const { data: postsData } = await supabase
-          .from('posts')
-          .select(`
-            id,
-            media_url,
-            caption,
-            created_at,
-            active,
-            service_link_id,
-            profiles (name, profile_pic),
-            services (name)
-          `)
+        setLoading(true);
+        // Fetch Services
+        const { data: services } = await supabase
+          .from('services')
+          .select('*')
           .eq('active', true);
 
-        // 2. Fetch Approved Testimonials
-        const { data: testimonialsData } = await supabase
+        // Fetch Testimonials
+        const { data: testimonials } = await supabase
           .from('testimonials')
-          .select(`
-            id,
-            message,
-            photo_url,
-            rating,
-            created_at,
-            profiles (name, profile_pic),
-            professionals (name)
-          `)
-          .or('status.eq.approved,show_on_feed.eq.true');
+          .select('*, profiles(name)')
+          .eq('status', 'approved')
+          .limit(5);
 
-        // 3. Format & Merge
-        const formattedPosts = (postsData || []).map((p: any) => ({
-          type: 'post',
-          id: p.id,
-          imageUrl: p.media_url,
-          caption: p.caption,
-          likes: Math.floor(Math.random() * 50) + 10,
-          authorName: p.profiles?.name || 'Studio Julia Zenaro',
-          authorAvatar: p.profiles?.profile_pic || `https://ui-avatars.com/api/?name=Studio`,
-          createdAt: p.created_at,
-          serviceName: p.services?.name
-        }));
+        if (services) {
+          // Map Services to CamelCase
+          const mappedServices = services.map((s: any) => ({
+            ...s,
+            imageUrl: s.image_url || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=800',
+            professionalIds: s.professional_ids,
+            pointsReward: s.points_reward,
+            isPopular: s.is_popular
+          }));
 
-        const formattedTestimonials = (testimonialsData || []).map((t: any) => ({
-          type: 'testimonial',
-          id: t.id,
-          imageUrl: t.photo_url, // Might be null
-          caption: t.message,
-          rating: t.rating,
-          authorName: t.profiles?.name || 'Cliente',
-          authorAvatar: t.profiles?.profile_pic,
-          createdAt: t.created_at,
-          professionalName: t.professionals?.name
-        }));
+          // 1. Hero Item (Random Popular or First)
+          const popular = mappedServices.filter((s: any) => s.isPopular);
+          setPopularServices(popular);
 
-        const combined = [...formattedPosts, ...formattedTestimonials].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+          if (popular.length > 0) {
+            setHeroItem(popular[0]); // First popular as Hero
+          } else if (mappedServices.length > 0) {
+            setHeroItem(mappedServices[0]);
+          }
 
-        setItems(combined);
+          // 2. Build Grid (Services + Testimonials)
+          const serviceItems: FeedItem[] = mappedServices.map((s: any) => ({
+            type: 'SERVICE',
+            data: s,
+            id: s.id
+          }));
+
+          const reviewItems: FeedItem[] = (testimonials || []).map((t: any) => ({
+            type: 'TESTIMONIAL',
+            data: t,
+            id: t.id
+          }));
+
+          // Interleave: 3 Services then 1 Testimonial
+          const mixed: FeedItem[] = [];
+          let sIdx = 0, rIdx = 0;
+          while (sIdx < serviceItems.length) {
+            mixed.push(serviceItems[sIdx++]);
+            if (sIdx < serviceItems.length) mixed.push(serviceItems[sIdx++]);
+            if (sIdx < serviceItems.length) mixed.push(serviceItems[sIdx++]);
+            if (rIdx < reviewItems.length) mixed.push(reviewItems[rIdx++]);
+          }
+
+          setFeedGrid(mixed);
+        }
       } catch (err) {
-        console.error('Error fetching feed:', err);
+        console.error('Feed fetch error:', err);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+
+    fetchFeedData();
   }, []);
+
+  const toggleLike = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newLiked = new Set(likedItems);
+    if (newLiked.has(id)) newLiked.delete(id);
+    else newLiked.add(id);
+    setLikedItems(newLiked);
+  };
+
+  const handleShare = async (title: string) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Studio Julia Zenaro',
+          text: `Confira ${title} no Studio Julia Zenaro!`,
+          url: window.location.href
+        });
+      } catch (err) {
+        console.log('Share cancelled');
+      }
+    } else {
+      alert('Link copiado para a área de transferência!');
+    }
+  };
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background-light">
+      <div className="flex flex-col h-screen bg-background-light items-center justify-center">
         <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-primary font-bold animate-pulse uppercase text-[10px] tracking-widest">Carregando Feed...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-background-light pb-24">
-      <header className="sticky top-0 z-50 glass-nav p-6 flex items-center justify-between border-b border-gray-100">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/home')} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
-          <div>
-            <h2 className="font-display font-bold text-lg text-primary tracking-tight">Feed Geral</h2>
-            <p className="text-[9px] uppercase tracking-widest text-accent-gold font-black">Inspirações & Love</p>
-          </div>
-        </div>
+    <div className="bg-background-light min-h-screen pb-32 font-sans text-primary">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-background-light/95 backdrop-blur-md border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+        <button className="text-primary/70">
+          <span className="material-symbols-outlined">menu</span>
+        </button>
+        <h1 className="font-display text-xl font-bold tracking-tight text-primary">Studio Julia Zenaro</h1>
+        <button onClick={() => navigate('/booking')} className="text-[#c5a059]">
+          <span className="material-symbols-outlined">event_note</span>
+        </button>
       </header>
 
-      <main className="flex-1 overflow-y-auto no-scrollbar p-6 space-y-10">
-        {items.length > 0 ? (
-          <div className="columns-2 gap-4 space-y-4">
-            {items.map(item => (
-              <div
-                key={item.id}
-                onClick={() => setSelectedItem(item)}
-                className="break-inside-avoid group relative rounded-[32px] overflow-hidden shadow-sm border border-gray-50 cursor-pointer active:scale-95 transition-all bg-white"
-              >
-                {item.type === 'post' || (item.type === 'testimonial' && item.imageUrl) ? (
-                  <>
-                    <img
-                      src={item.imageUrl}
-                      className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-110"
-                      alt="content"
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                      {item.type === 'testimonial' && (
-                        <div className="flex text-[#C5A059] mb-2">
-                          {[...Array(item.rating || 5)].map((_, i) => <span key={i} className="material-symbols-outlined !text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>)}
-                        </div>
-                      )}
-                      <span className="text-[8px] text-white font-black uppercase tracking-widest">{item.authorName.split(' ')[0]}</span>
+      {/* Category Nav */}
+      <nav className="flex overflow-x-auto no-scrollbar px-6 py-4 gap-6 items-center bg-background-light">
+        {['Geral', 'Cílios', 'Sobrancelhas', 'Lábios'].map(cat => (
+          <button
+            key={cat}
+            onClick={() => setView(cat)}
+            className={`relative flex-shrink-0 text-sm font-semibold pb-1 transition-colors ${view === cat ? 'text-primary' : 'text-gray-400'}`}
+          >
+            Feed {cat}
+            {view === cat && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary"></span>}
+          </button>
+        ))}
+      </nav>
+
+      <main className="px-5 space-y-8">
+        {/* Hero Section */}
+        {heroItem && (
+          <section className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer group" onClick={() => navigate(`/service/${heroItem.id}`, { state: { service: heroItem } })}>
+            <div className="relative h-64 overflow-hidden">
+              <img alt={heroItem.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={heroItem.imageUrl} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            </div>
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-3">
+                <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400">Destaque da Semana</span>
+                <span className="material-symbols-outlined text-[#D4AF37] text-lg">verified</span>
+              </div>
+              <h2 className="font-display text-2xl font-bold mb-2 text-primary">{heroItem.name}</h2>
+              <p className="text-gray-500 text-sm leading-relaxed mb-6 font-light line-clamp-2">
+                {heroItem.description}
+              </p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 text-gray-400">
+                  <button onClick={(e) => toggleLike(heroItem.id, e)} className="flex items-center gap-1 hover:text-rose-500 transition-colors">
+                    <span className={`material-symbols-outlined text-sm ${likedItems.has(heroItem.id) ? 'text-rose-500 fill-current' : ''}`} style={{ fontVariationSettings: likedItems.has(heroItem.id) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                    <span className="text-xs font-medium">1.2k</span>
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); handleShare(heroItem.name); }} className="flex items-center gap-1 hover:text-primary transition-colors">
+                    <span className="material-symbols-outlined text-sm">share</span>
+                    <span className="text-xs font-medium">Share</span>
+                  </button>
+                </div>
+                <button className="bg-primary text-white text-xs font-bold px-6 py-3 rounded-md tracking-widest uppercase hover:bg-opacity-90 transition-all shadow-lg shadow-primary/20">
+                  Ver Detalhes
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Popular Services 'Reels' */}
+        {popularServices.length > 0 && (
+          <section className="space-y-3">
+            <h3 className="text-xs uppercase font-black tracking-widest text-primary pl-1">Mais Amados do Studio</h3>
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 snap-x">
+              {popularServices.map(service => (
+                <div
+                  key={service.id}
+                  onClick={() => navigate(`/service/${service.id}`, { state: { service } })}
+                  className="relative flex-shrink-0 w-40 h-64 rounded-xl overflow-hidden snap-center active:scale-95 transition-transform shadow-md"
+                >
+                  <img src={service.imageUrl} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80"></div>
+                  <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <p className="text-[10px] font-bold leading-tight">{service.name}</p>
+                    <p className="text-[9px] opacity-70 mt-0.5">R$ {service.price}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Mixed Grid */}
+        <div className="grid grid-cols-2 gap-4">
+          {feedGrid.map((item, idx) => {
+            if (item.type === 'SERVICE') {
+              return (
+                <div key={item.id} className="space-y-2 group cursor-pointer" onClick={() => navigate(`/service/${item.data.id}`, { state: { service: item.data } })}>
+                  <div className="relative rounded-xl overflow-hidden aspect-[4/5] bg-gray-100 shadow-sm border border-gray-100">
+                    <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-primary text-[9px] font-bold px-2 py-1 rounded-sm tracking-tighter uppercase z-10 shadow-sm">
+                      {item.data.category || 'Serviço'}
+                    </span>
+                    <img alt={item.data.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src={item.data.imageUrl} />
+                  </div>
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-xs font-medium text-gray-600 truncate max-w-[80%]">{item.data.name}</span>
+                    <button onClick={(e) => toggleLike(item.id, e)} className="text-gray-300 hover:text-rose-500 transition-colors">
+                      <span className={`material-symbols-outlined text-sm ${likedItems.has(item.id) ? 'text-rose-500 fill-current' : ''}`} style={{ fontVariationSettings: likedItems.has(item.id) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            } else {
+              // Testimonial Card
+              return (
+                <div key={item.id} className="col-span-2 bg-white rounded-xl p-5 border border-gray-100 shadow-sm space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="size-8 rounded-full bg-primary/5 flex items-center justify-center text-[#c5a059] font-bold text-xs ring-2 ring-white shadow-sm">
+                      {item.data.profiles?.name?.[0] || 'C'}
                     </div>
-                  </>
-                ) : (
-                  // Testimonial without image (Text Card)
-                  <div className="p-6 flex flex-col justify-between min-h-[160px] bg-gradient-to-br from-[#f8f7f4] to-white">
-                    <span className="material-symbols-outlined text-[#C5A059] text-2xl mb-2">format_quote</span>
-                    <p className="text-xs text-[#1a1c1a]/80 italic font-medium line-clamp-4">"{item.caption}"</p>
-                    <div className="flex justify-between items-end mt-4">
-                      <span className="text-[8px] font-black uppercase tracking-widest text-primary/40">{item.authorName.split(' ')[0]}</span>
-                      <div className="flex text-[#C5A059]">
-                        {[...Array(item.rating || 5)].map((_, i) => <span key={i} className="material-symbols-outlined !text-[8px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>)}
+                    <div>
+                      <p className="text-xs font-bold text-primary">{item.data.profiles?.name || 'Cliente'}</p>
+                      <div className="flex text-[#c5a059]">
+                        {[...Array(item.data.rating || 5)].map((_, i) => (
+                          <span key={i} className="material-symbols-outlined !text-[10px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                        ))}
                       </div>
                     </div>
+                    <span className="ml-auto material-symbols-outlined text-gray-300 !text-lg">format_quote</span>
                   </div>
-                )}
-
-                {/* Type Badge */}
-                {item.type === 'testimonial' && (
-                  <div className="absolute top-3 right-3 px-2 py-1 bg-white/90 backdrop-blur rounded-lg shadow-sm z-10">
-                    <span className="material-symbols-outlined text-[#C5A059] !text-[10px]">favorite</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-30">
-            <span className="material-symbols-outlined !text-6xl">grid_off</span>
-            <p className="font-display italic text-lg">Nenhuma publicação ainda...</p>
-          </div>
-        )}
+                  <p className="text-sm text-gray-500 italic leading-relaxed">"{item.data.message}"</p>
+                  {item.data.photo_url && (
+                    <div className="h-40 rounded-lg overflow-hidden mt-2">
+                      <img src={item.data.photo_url} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              );
+            }
+          })}
+        </div>
       </main>
 
-      {/* Nav */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav border-t border-gray-100 flex justify-around items-center py-6 px-4 z-50 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-        <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1.5 text-gray-400">
-          <span className="material-symbols-outlined !text-3xl">home</span>
-          <span className="text-[9px] font-black uppercase tracking-widest">Início</span>
+      {/* Quick Schedule Button (Fixed) */}
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-full max-w-xs px-6">
+        <button
+          onClick={() => navigate('/booking')}
+          className="w-full bg-primary text-white shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 py-4 rounded-full font-bold tracking-widest text-xs uppercase active:scale-95 transition-transform border border-white/10"
+        >
+          <span className="material-symbols-outlined text-lg">calendar_today</span>
+          Agendar Agora
         </button>
-        <button onClick={() => navigate('/feed')} className="flex flex-col items-center gap-1.5 text-primary">
-          <span className="material-symbols-outlined !text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>grid_view</span>
-          <span className="text-[9px] font-black uppercase tracking-widest">Feed</span>
+      </div>
+
+      {/* Bottom Nav (App Standard) */}
+      <nav className="fixed bottom-0 left-0 right-0 glass-nav px-8 pt-4 pb-10 flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-50 bg-[#fdfcf9]/80 backdrop-blur-xl border-t border-[#d4af37]/10">
+        <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
+          <span className="material-symbols-outlined !text-2xl">home</span>
+          <span className="text-[9px] uppercase tracking-tighter font-bold">Início</span>
         </button>
-        <button onClick={() => navigate('/services')} className="flex flex-col items-center gap-1.5 text-gray-400">
-          <span className="material-symbols-outlined !text-3xl">content_cut</span>
-          <span className="text-[9px] font-black uppercase tracking-widest">Serviços</span>
+        <button className="flex flex-col items-center gap-1 text-primary">
+          <span className="material-symbols-outlined !text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>grid_view</span>
+          <span className="text-[9px] uppercase tracking-tighter font-bold">Feed</span>
         </button>
-        <button onClick={() => navigate('/history')} className="flex flex-col items-center gap-1.5 text-gray-400">
-          <span className="material-symbols-outlined !text-3xl">calendar_today</span>
-          <span className="text-[9px] font-black uppercase tracking-widest">Agenda</span>
+        <button onClick={() => navigate('/services')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-[#c5a059] transition-colors">
+          <span className="material-symbols-outlined !text-3xl">diamond</span>
+          <span className="text-[9px] uppercase tracking-tighter font-bold">Serviços</span>
         </button>
-        <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1.5 text-gray-400">
-          <span className="material-symbols-outlined !text-3xl">person</span>
-          <span className="text-[9px] font-black uppercase tracking-widest">Perfil</span>
+        <button onClick={() => navigate('/history')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
+          <span className="material-symbols-outlined !text-2xl">calendar_today</span>
+          <span className="text-[9px] uppercase tracking-tighter font-bold">Agenda</span>
+        </button>
+        <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
+          <span className="material-symbols-outlined !text-2xl">person_outline</span>
+          <span className="text-[9px] uppercase tracking-tighter font-bold">Perfil</span>
         </button>
       </nav>
+      <div className="fixed bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-primary/5 rounded-full z-[60]"></div>
     </div>
   );
 };

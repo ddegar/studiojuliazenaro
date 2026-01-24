@@ -39,6 +39,14 @@ export interface Service {
   price: number;
   duration: number;
   points_reward?: number;
+  imageUrl?: string;
+  category?: string;
+  professionalIds?: string[];
+  isPopular?: boolean;
+  active?: boolean;
+  carePremium?: string;
+  biosafety?: string;
+  features?: { title: string; description: string; icon?: string }[];
 }
 
 export interface Appointment {

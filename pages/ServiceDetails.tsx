@@ -1,73 +1,147 @@
-
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Service, Professional } from '../types';
 
 const ServiceDetails: React.FC = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
+   const navigate = useNavigate();
+   const location = useLocation();
+   const { service, professional } = location.state as { service: Service; professional: Professional | null } || {};
 
-  return (
-    <div className="flex flex-col h-full bg-background-light">
-      <div className="relative h-96 shrink-0">
-         <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiUm0OZLOAP3cwAd_kNhaySJIszM9lcCyidOrD36A0RJ6cgwHJtfgn-lnpXqaAtE8iKs_YU3tXlcSsuZ0boGn5bLhQ__y8m82EMKH2DKzjgEEHyZ1pmUPWmW5KqZdNlIbHCMNfZlZgTLPjH7QSoYmAh-qkuUgWkfB1bLAL9lAqTIGQXxHt2HZaaS8wd9pc6vbCGoTliddw2HMZP_26xr-73B0_wHcoCtg2hiy8ZRQqd_0azA75gvWqpOx-6c3PBhvPgsS5zz4Ckuc" className="w-full h-full object-cover" alt="service" />
-         <div className="absolute inset-0 bg-gradient-to-t from-background-light via-transparent to-transparent"></div>
-         <button onClick={() => navigate(-1)} className="absolute top-10 left-6 size-12 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center text-primary shadow-sm border border-white">
-            <span className="material-symbols-outlined">arrow_back_ios_new</span>
-         </button>
-      </div>
-
-      <main className="flex-1 -mt-16 relative z-10 px-8 space-y-10 bg-background-light rounded-t-[48px] pt-12 overflow-y-auto no-scrollbar pb-32">
-         <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <span className="text-accent-gold text-[10px] font-black uppercase tracking-[0.3em]">Um toque de cuidado ✨</span>
-                <h1 className="text-4xl font-display font-bold text-primary leading-tight">Lash Lifting <br/>Premium</h1>
-              </div>
-              <div className="bg-primary/5 p-4 rounded-2xl">
-                 <span className="material-symbols-outlined text-primary !text-3xl">spa</span>
-              </div>
+   if (!service) {
+      return (
+         <div className="min-h-screen bg-background-light flex items-center justify-center p-6 text-center">
+            <div className="space-y-4">
+               <p className="text-primary font-bold">Serviço não encontrado.</p>
+               <button onClick={() => navigate('/services')} className="text-accent-gold underline uppercase text-xs font-black tracking-widest">
+                  Voltar ao Catálogo
+               </button>
             </div>
-            
-            <div className="flex items-center gap-6 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-               <span className="flex items-center gap-2"><span className="material-symbols-outlined !text-base text-accent-gold">schedule</span> 1h 30min</span>
-               <span className="flex items-center gap-2"><span className="material-symbols-outlined !text-base text-accent-gold">payments</span> R$ 180,00</span>
+         </div>
+      );
+   }
+
+   return (
+      <div className="min-h-screen bg-background-light font-sans text-primary animate-fade-in relative pb-32">
+         {/* Hero Section */}
+         <div className="relative h-[50vh] w-full">
+            <img
+               src={service.imageUrl}
+               alt={service.name}
+               className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-background-light"></div>
+
+            {/* Navigation Header */}
+            <div className="absolute top-0 left-0 right-0 p-6 pt-10 flex justify-between items-center z-10">
+               <button
+                  onClick={() => navigate(-1)}
+                  className="size-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-all active:scale-95"
+               >
+                  <span className="material-symbols-outlined">arrow_back</span>
+               </button>
+               <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/30">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white">{service.category}</span>
+               </div>
             </div>
          </div>
 
-         <div className="space-y-5">
-            <h3 className="font-display font-bold text-xl text-primary">Sobre o procedimento</h3>
-            <p className="text-gray-500 text-sm leading-relaxed font-medium italic">
-               "Técnicas seguras, resultado elegante e duradouro. Pensado em cada detalhe para realçar seu brilho natural."
-            </p>
-            <p className="text-gray-500 text-sm leading-relaxed">
-               A técnica Clássica é ideal para quem busca naturalidade e elegância. Aplicamos um fio sintético sobre cada fio natural, proporcionando alongamento e curvatura sem sobrecarregar o olhar.
-            </p>
-         </div>
+         {/* Content Body - Overlapping the image */}
+         <div className="-mt-12 relative z-10 bg-background-light rounded-t-[40px] px-8 pt-10 space-y-8 min-h-[50vh] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] border-t border-white/50">
+            <div className="space-y-2 text-center">
+               <h1 className="text-3xl font-display font-bold text-primary leading-tight text-shadow-sm">
+                  {service.name}
+               </h1>
+               {professional && (
+                  <p className="text-[10px] font-black uppercase tracking-widest text-accent-gold flex items-center justify-center gap-2">
+                     <span className="material-symbols-outlined !text-sm">verified</span>
+                     Com {professional.name}
+                  </p>
+               )}
+            </div>
 
-         <section className="space-y-6">
-            <h3 className="font-display font-bold text-xl text-primary">Sua Experiência inclui</h3>
-            <div className="grid grid-cols-1 gap-4">
-               {['Higienização Profunda', 'Mapeamento Personalizado', 'Aplicação Fio a Fio', 'Nano-mist para secagem rápida'].map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-50 shadow-sm">
-                     <span className="material-symbols-outlined text-accent-gold !text-xl">check_circle</span>
-                     <span className="text-sm font-bold text-primary/80">{item}</span>
+            <div className="flex justify-center gap-8 py-6 border-y border-primary/5">
+               <div className="text-center space-y-1">
+                  <div className="size-12 mx-auto bg-primary/5 rounded-full flex items-center justify-center text-primary mb-2">
+                     <span className="material-symbols-outlined">payments</span>
                   </div>
-               ))}
+                  <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Investimento</p>
+                  <p className="text-xl font-display font-bold text-primary">R$ {service.price}</p>
+               </div>
+               <div className="w-px bg-primary/10"></div>
+               <div className="text-center space-y-1">
+                  <div className="size-12 mx-auto bg-primary/5 rounded-full flex items-center justify-center text-primary mb-2">
+                     <span className="material-symbols-outlined">schedule</span>
+                  </div>
+                  <p className="text-[9px] uppercase tracking-widest text-gray-400 font-bold">Duração</p>
+                  <p className="text-xl font-display font-bold text-primary">{service.duration} min</p>
+               </div>
             </div>
-         </section>
-      </main>
 
-      <div className="fixed bottom-0 inset-x-0 p-8 glass-nav border-t border-gray-100 flex items-center justify-between gap-8 rounded-t-[40px] shadow-[0_-15px_40px_rgba(0,0,0,0.05)]">
-         <div className="space-y-1">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Seu Investimento</p>
-            <p className="text-2xl font-black text-primary tracking-tight">R$ 180,00</p>
+            <div className="space-y-4">
+               <h3 className="text-lg font-display font-bold text-primary flex items-center gap-2">
+                  <span className="h-px w-8 bg-accent-gold/50"></span>
+                  Sobre a Experiência
+               </h3>
+               <p className="text-sm text-gray-500 leading-relaxed font-light text-justify">
+                  {service.description}
+               </p>
+               {/* Placeholder for future specific details (benefits, steps) */}
+               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                  {(service.features && service.features.length > 0) ? (
+                     service.features.map((feat, idx) => (
+                        <div key={idx} className="flex gap-4 items-start">
+                           <span className="material-symbols-outlined text-accent-gold shrink-0 bg-accent-gold/5 p-1.5 rounded-xl">{feat.icon || 'stars'}</span>
+                           <div>
+                              <h4 className="font-bold text-primary text-xs uppercase tracking-wide mb-1">{feat.title}</h4>
+                              <p className="text-[10px] text-gray-400 leading-relaxed">
+                                 {feat.description}
+                              </p>
+                           </div>
+                        </div>
+                     ))
+                  ) : (
+                     <>
+                        <div className="flex gap-4 items-start">
+                           <span className="material-symbols-outlined text-accent-gold shrink-0">spa</span>
+                           <div>
+                              <h4 className="font-bold text-primary text-xs uppercase tracking-wide mb-1">Cuidado Premium</h4>
+                              <p className="text-[10px] text-gray-400 leading-relaxed">
+                                 {service.carePremium || "Utilizamos apenas produtos de alta performance para garantir resultados duradouros e a saúde da sua beleza."}
+                              </p>
+                           </div>
+                        </div>
+                        <div className="flex gap-4 items-start">
+                           <span className="material-symbols-outlined text-accent-gold shrink-0">verified_user</span>
+                           <div>
+                              <h4 className="font-bold text-primary text-xs uppercase tracking-wide mb-1">Biossegurança</h4>
+                              <p className="text-[10px] text-gray-400 leading-relaxed">
+                                 {service.biosafety || "Todo material é esterilizado e descartável, seguindo rigorosos protocolos sanitários."}
+                              </p>
+                           </div>
+                        </div>
+                     </>
+                  )}
+               </div>
+            </div>
          </div>
-         <button onClick={() => navigate('/booking')} className="flex-1 h-16 bg-primary text-white rounded-[20px] font-black text-[11px] uppercase tracking-[0.25em] shadow-2xl shadow-primary/30 active:scale-95 transition-transform">
-            AGENDAR AGORA ✨
-         </button>
+
+         {/* Bottom Floating Action Button */}
+         <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-gray-100 z-50">
+            <div className="max-w-md mx-auto flex items-center justify-between gap-6">
+               <div className="flex-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total</p>
+                  <p className="text-2xl font-display font-bold text-primary">R$ {service.price}</p>
+               </div>
+               <button
+                  onClick={() => navigate('/booking', { state: { service, professional } })}
+                  className="bg-[#D4AF37] text-[#0A2118] py-4 px-8 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-[#D4AF37]/20 active:scale-95 transition-all hover:brightness-110"
+               >
+                  Agendar
+               </button>
+            </div>
+         </div>
       </div>
-    </div>
-  );
+   );
 };
 
 export default ServiceDetails;

@@ -57,7 +57,10 @@ const ServiceManagement: React.FC = () => {
                professionalIds: s.professional_ids || [],
                pointsReward: s.points_reward,
                active: s.active,
-               isPopular: s.is_popular
+               isPopular: s.is_popular,
+               carePremium: s.care_premium,
+               biosafety: s.biosafety,
+               features: s.features || []
             })));
          }
       } catch (e) {
@@ -93,7 +96,10 @@ const ServiceManagement: React.FC = () => {
             points_reward: editingService.pointsReward || 50,
             active: true,
             professional_ids: editingService.professionalIds,
-            is_popular: editingService.isPopular || false
+            is_popular: editingService.isPopular || false,
+            care_premium: editingService.carePremium,
+            biosafety: editingService.biosafety,
+            features: editingService.features || []
          };
 
          let error;
@@ -157,7 +163,7 @@ const ServiceManagement: React.FC = () => {
                   </div>
                </div>
                {(isMaster || (currentUser as any)?.permissions?.canManageOwnServices) && (
-                  <button onClick={() => { setEditingService({ professionalIds: isMaster ? [] : [currentUser!.id], category: 'Procedimento', pointsReward: 50 }); setShowModal(true); }} className="size-11 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/20 ring-4 ring-primary/5 active:scale-95 transition-transform">
+                  <button onClick={() => { setEditingService({ professionalIds: isMaster ? [] : [currentUser!.id], category: 'Procedimento', pointsReward: 50, features: [] }); setShowModal(true); }} className="size-11 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/20 ring-4 ring-primary/5 active:scale-95 transition-transform">
                      <span className="material-symbols-outlined">add</span>
                   </button>
                )}
@@ -294,6 +300,82 @@ const ServiceManagement: React.FC = () => {
                         <textarea placeholder="Explique os benefícios e o resultado final..." value={editingService?.description || ''} onChange={e => setEditingService({ ...editingService, description: e.target.value })} className="w-full h-32 bg-white/5 border border-white/10 rounded-3xl p-6 text-sm focus:ring-primary outline-none italic" />
                      </div>
 
+                     <div className="space-y-4">
+                        <div className="flex justify-between items-center px-2">
+                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em]">Diferenciais do Serviço</label>
+                           <button
+                              type="button"
+                              onClick={() => {
+                                 const current = editingService?.features || [];
+                                 setEditingService({ ...editingService, features: [...current, { title: '', description: '', icon: 'stars' }] });
+                              }}
+                              className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest flex items-center gap-1"
+                           >
+                              <span className="material-symbols-outlined !text-sm">add_circle</span>
+                              Adicionar
+                           </button>
+                        </div>
+                        <div className="space-y-3">
+                           {editingService?.features?.map((feat, idx) => (
+                              <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3 relative group">
+                                 <button
+                                    type="button"
+                                    onClick={() => {
+                                       const current = editingService?.features || [];
+                                       setEditingService({ ...editingService, features: current.filter((_, i) => i !== idx) });
+                                    }}
+                                    className="absolute top-2 right-2 text-rose-500 opacity-50 hover:opacity-100 p-1"
+                                 >
+                                    <span className="material-symbols-outlined !text-lg">delete</span>
+                                 </button>
+                                 <div className="flex gap-3">
+                                    <div className="space-y-1 flex-1">
+                                       <label className="text-[9px] text-gray-500 font-bold uppercase">Título (Gera ícone auto)</label>
+                                       <input
+                                          placeholder="Ex: Biossegurança"
+                                          value={feat.title}
+                                          onChange={e => {
+                                             const val = e.target.value;
+                                             let icon = 'stars';
+                                             const t = val.toLowerCase();
+                                             if (t.includes('bio') || t.includes('seguran') || t.includes('material')) icon = 'verified_user';
+                                             else if (t.includes('premium') || t.includes('cuidado') || t.includes('alta')) icon = 'spa';
+                                             else if (t.includes('conforto') || t.includes('relax')) icon = 'chair';
+                                             else if (t.includes('tempo') || t.includes('dura') || t.includes('resist')) icon = 'timelapse';
+                                             else if (t.includes('volume') || t.includes('olhar')) icon = 'visibility';
+
+                                             const current = [...(editingService?.features || [])];
+                                             current[idx] = { ...current[idx], title: val, icon };
+                                             setEditingService({ ...editingService, features: current });
+                                          }}
+                                          className="w-full h-10 bg-black/20 rounded-xl px-3 text-xs text-white border border-white/10"
+                                       />
+                                    </div>
+                                    <div className="w-10 flex flex-col items-center justify-end pb-1">
+                                       <span className="material-symbols-outlined text-accent-gold">{feat.icon || 'stars'}</span>
+                                    </div>
+                                 </div>
+                                 <div className="space-y-1">
+                                    <label className="text-[9px] text-gray-500 font-bold uppercase">Descrição</label>
+                                    <textarea
+                                       placeholder="Descreva o diferencial..."
+                                       value={feat.description}
+                                       onChange={e => {
+                                          const current = [...(editingService?.features || [])];
+                                          current[idx] = { ...current[idx], description: e.target.value };
+                                          setEditingService({ ...editingService, features: current });
+                                       }}
+                                       className="w-full h-16 bg-black/20 rounded-xl p-3 text-xs text-white border border-white/10 italic resize-none"
+                                    />
+                                 </div>
+                              </div>
+                           ))}
+                           {(!editingService?.features || editingService.features.length === 0) && (
+                              <p className="text-center text-xs text-gray-600 italic py-4">Nenhum diferencial adicionado.</p>
+                           )}
+                        </div>
+                     </div>
+
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                            <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Duração (Min)</label>
@@ -327,12 +409,12 @@ const ServiceManagement: React.FC = () => {
                      <button type="submit" className="flex-[2] h-18 bg-primary text-white rounded-3xl font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-primary/30 active:scale-95 transition-all">SALVAR SERVIÇO</button>
                   </div>
                </form>
-            </div>
+            </div >
          )}
          <div className="lg:hidden">
             <AdminBottomNav />
          </div>
-      </div>
+      </div >
    );
 };
 
