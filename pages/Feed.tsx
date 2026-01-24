@@ -4,7 +4,7 @@ import { supabase } from '../services/supabase';
 import { Service } from '../types';
 
 interface FeedItem {
-  type: 'SERVICE' | 'TESTIMONIAL';
+  type: 'SERVICE' | 'TESTIMONIAL' | 'POST';
   data: any;
   id: string;
 }
@@ -238,6 +238,25 @@ const Feed: React.FC = () => {
                   </div>
                 </div>
               );
+            } else if (item.type === 'POST') {
+              return (
+                <div key={item.id} className="space-y-2 group cursor-pointer">
+                  <div className="relative rounded-xl overflow-hidden aspect-[4/5] bg-gray-100 shadow-sm border border-gray-100">
+                    {item.data.caption && (
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/60 p-2 text-[10px] text-white backdrop-blur-sm truncate">
+                        {item.data.caption}
+                      </span>
+                    )}
+                    <img alt="Post" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src={item.data.image_url} />
+                  </div>
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Feed</span>
+                    <button onClick={(e) => toggleLike(item.id, e)} className="text-gray-300 hover:text-rose-500 transition-colors">
+                      <span className={`material-symbols-outlined text-sm ${likedItems.has(item.id) ? 'text-rose-500 fill-current' : ''}`} style={{ fontVariationSettings: likedItems.has(item.id) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                    </button>
+                  </div>
+                </div>
+              );
             } else {
               // Testimonial Card
               return (
@@ -269,19 +288,10 @@ const Feed: React.FC = () => {
         </div>
       </main>
 
-      {/* Quick Schedule Button (Fixed) */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-full max-w-xs px-6">
-        <button
-          onClick={() => navigate('/booking')}
-          className="w-full bg-primary text-white shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 py-4 rounded-full font-bold tracking-widest text-xs uppercase active:scale-95 transition-transform border border-white/10"
-        >
-          <span className="material-symbols-outlined text-lg">calendar_today</span>
-          Agendar Agora
-        </button>
-      </div>
+
 
       {/* Bottom Nav (App Standard) */}
-      <nav className="fixed bottom-0 left-0 right-0 glass-nav px-8 pt-4 pb-10 flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-50 bg-[#fdfcf9]/80 backdrop-blur-xl border-t border-[#d4af37]/10">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav px-8 pt-4 pb-10 flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-50 bg-[#fdfcf9]/80 backdrop-blur-xl border-t border-[#d4af37]/10 rounded-t-[32px]">
         <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
           <span className="material-symbols-outlined !text-2xl">home</span>
           <span className="text-[9px] uppercase tracking-tighter font-bold">Início</span>

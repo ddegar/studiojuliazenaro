@@ -49,10 +49,9 @@ const AdminContentCreator: React.FC = () => {
             });
             if (dbError) throw dbError;
          } else {
-            const { error: dbError } = await supabase.from('posts').insert({
-               user_id: user.id,
-               type: contentType,
-               media_url: publicUrl,
+            const { error: dbError } = await supabase.from('feed_posts').insert({
+               type: 'image', // Default to image type
+               image_url: publicUrl,
                caption: caption,
                service_link_id: selectedServiceId || null,
                active: true
@@ -120,20 +119,20 @@ const AdminContentCreator: React.FC = () => {
                </button>
             </div>
 
-            <div className="aspect-[3/4] bg-white/5 border-2 border-dashed border-white/10 rounded-[40px] flex flex-col items-center justify-center gap-4 group cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden shadow-2xl">
+            <div className="h-64 w-full max-w-sm mx-auto bg-white/5 border-2 border-dashed border-white/10 rounded-[32px] flex flex-col items-center justify-center gap-4 group cursor-pointer active:scale-[0.98] transition-all relative overflow-hidden shadow-xl hover:border-primary/30">
                <input type="file" accept="image/*" onChange={e => e.target.files && setFile(e.target.files[0])} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
                {file ? (
                   <div className="absolute inset-0">
-                     <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" alt="Preview" />
+                     <img src={URL.createObjectURL(file)} className="w-full h-full object-contain bg-black/20" alt="Preview" />
                   </div>
                ) : (
                   <>
-                     <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-lg shadow-black/20">
-                        <span className="material-symbols-outlined !text-4xl">add_a_photo</span>
+                     <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-lg shadow-black/20">
+                        <span className="material-symbols-outlined !text-3xl">add_a_photo</span>
                      </div>
                      <div className="text-center">
-                        <p className="text-sm font-bold">Upload da Mídia</p>
-                        <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Até 10MB • JPG, PNG</p>
+                        <p className="text-xs font-bold text-white">Upload da Mídia</p>
+                        <p className="text-[9px] text-gray-500 mt-1 uppercase tracking-widest">Toque para selecionar</p>
                      </div>
                   </>
                )}

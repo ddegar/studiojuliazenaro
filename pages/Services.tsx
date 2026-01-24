@@ -234,7 +234,7 @@ const Services: React.FC = () => {
       )}
 
       {/* Bottom Nav (Light/Glass to match Home) */}
-      <nav className="fixed bottom-0 left-0 right-0 glass-nav px-8 pt-4 pb-10 flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-50 bg-[#fdfcf9]/80 backdrop-blur-xl border-t border-[#d4af37]/10">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav px-8 pt-4 pb-10 flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-50 bg-[#fdfcf9]/80 backdrop-blur-xl border-t border-[#d4af37]/10 rounded-t-[32px]">
         <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
           <span className="material-symbols-outlined !text-2xl">home</span>
           <span className="text-[9px] uppercase tracking-tighter font-bold">Início</span>

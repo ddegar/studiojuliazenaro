@@ -178,28 +178,29 @@ const History: React.FC = () => {
             )}
          </main>
 
-         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav border-t border-gray-100 flex justify-around items-center py-6 px-4 z-50 rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1.5 text-gray-400">
-               <span className="material-symbols-outlined !text-3xl">home</span>
-               <span className="text-[9px] font-black uppercase tracking-widest">Início</span>
+         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav px-8 pt-4 pb-10 flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-50 bg-[#fdfcf9]/80 backdrop-blur-xl border-t border-[#d4af37]/10 rounded-t-[32px]">
+            <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
+               <span className="material-symbols-outlined !text-2xl">home</span>
+               <span className="text-[9px] uppercase tracking-tighter font-bold">Início</span>
             </button>
-            <button onClick={() => navigate('/feed')} className="flex flex-col items-center gap-1.5 text-gray-400">
-               <span className="material-symbols-outlined !text-3xl">grid_view</span>
-               <span className="text-[9px] font-black uppercase tracking-widest">Feed</span>
+            <button onClick={() => navigate('/feed')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
+               <span className="material-symbols-outlined !text-2xl">grid_view</span>
+               <span className="text-[9px] uppercase tracking-tighter font-bold">Feed</span>
             </button>
-            <button onClick={() => navigate('/services')} className="flex flex-col items-center gap-1.5 text-gray-400">
-               <span className="material-symbols-outlined !text-3xl">content_cut</span>
-               <span className="text-[9px] font-black uppercase tracking-widest">Serviços</span>
+            <button onClick={() => navigate('/services')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-[#c5a059] transition-colors">
+               <span className="material-symbols-outlined !text-3xl">diamond</span>
+               <span className="text-[9px] uppercase tracking-tighter font-bold">Serviços</span>
             </button>
-            <button className="flex flex-col items-center gap-1.5 text-primary">
-               <span className="material-symbols-outlined !text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_today</span>
-               <span className="text-[9px] font-black uppercase tracking-widest">Agenda</span>
+            <button className="flex flex-col items-center gap-1 text-primary">
+               <span className="material-symbols-outlined !text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_today</span>
+               <span className="text-[9px] uppercase tracking-tighter font-bold">Agenda</span>
             </button>
-            <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1.5 text-gray-400">
-               <span className="material-symbols-outlined !text-3xl">person</span>
-               <span className="text-[9px] font-black uppercase tracking-widest">Perfil</span>
+            <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
+               <span className="material-symbols-outlined !text-2xl">person_outline</span>
+               <span className="text-[9px] uppercase tracking-tighter font-bold">Perfil</span>
             </button>
          </nav>
+         <div className="fixed bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-primary/5 rounded-full z-[60]"></div>
       </div>
    );
 };
