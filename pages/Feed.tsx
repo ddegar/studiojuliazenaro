@@ -46,7 +46,13 @@ const Feed: React.FC = () => {
           }));
 
           // 1. Hero Item (Random Popular or First)
-          const popular = mappedServices.filter((s: any) => s.isPopular);
+          let popular = mappedServices.filter((s: any) => s.isPopular);
+
+          // Fallback: If no popular services, take the first 5
+          if (popular.length === 0) {
+            popular = mappedServices.slice(0, 5);
+          }
+
           setPopularServices(popular);
 
           if (popular.length > 0) {
@@ -188,20 +194,23 @@ const Feed: React.FC = () => {
 
         {/* Popular Services 'Reels' */}
         {popularServices.length > 0 && (
-          <section className="space-y-3">
-            <h3 className="text-xs uppercase font-black tracking-widest text-primary pl-1">Mais Amados do Studio</h3>
-            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 snap-x">
+          <section className="space-y-4 pt-2">
+            <div className="flex justify-between items-end px-1">
+              <h3 className="font-display text-xl font-bold text-primary">Experiências Privé</h3>
+              <button onClick={() => navigate('/services')} className="text-[10px] font-black tracking-[0.2em] text-[#c5a059] uppercase mb-1">Ver Todas</button>
+            </div>
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-8 snap-x px-1">
               {popularServices.map(service => (
                 <div
                   key={service.id}
                   onClick={() => navigate(`/service/${service.id}`, { state: { service } })}
-                  className="relative flex-shrink-0 w-40 h-64 rounded-xl overflow-hidden snap-center active:scale-95 transition-transform shadow-md"
+                  className="relative flex-shrink-0 w-36 h-48 rounded-[32px] overflow-hidden snap-center active:scale-95 transition-transform shadow-lg shadow-black/5"
                 >
                   <img src={service.imageUrl} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80"></div>
-                  <div className="absolute bottom-3 left-3 right-3 text-white">
-                    <p className="text-[10px] font-bold leading-tight">{service.name}</p>
-                    <p className="text-[9px] opacity-70 mt-0.5">R$ {service.price}</p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <p className="text-[8px] font-black text-[#c5a059] uppercase tracking-[0.2em] mb-1">Signature</p>
+                    <p className="font-display text-base font-bold leading-tight">{service.name}</p>
                   </div>
                 </div>
               ))}
