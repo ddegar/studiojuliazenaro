@@ -6,28 +6,37 @@ const JZReferralCard: React.FC = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="mt-4 mb-8 mx-4 p-8 rounded-[32px] bg-zinc-950 text-white relative overflow-hidden shadow-2xl border border-[#C9A961]/10 group">
-            <div className="relative z-10 flex flex-col items-center text-center">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#C9A961] mb-2 block">Exclusive Invitation</span>
-                <h4 className="font-display text-2xl font-bold mb-2 leading-tight text-white group-hover:text-[#C9A961] transition-colors">Indique uma Amiga</h4>
-                <div className="text-center mb-8 space-y-1">
-                    <p className="text-[14px] text-white/60 font-bold">Ganhe</p>
-                    <p className="text-[#4ade80] font-black text-xl">200 JZ Privé Balance</p>
-                    <p className="text-[10px] text-white/40 font-medium uppercase tracking-widest">por indicação ativa</p>
-                </div>
-                <button
-                    onClick={() => navigate('/profile/refer')}
-                    className="w-full h-14 bg-[#0f2c22] border border-[#C9A961]/30 text-[#C9A961] rounded-2xl text-[10px] font-black tracking-[0.2em] uppercase shadow-2xl hover:bg-[#C9A961] hover:text-zinc-950 transition-all active:scale-95"
-                >
-                    Indicar Agora
-                </button>
+        <div className="mt-4 mb-8 mx-4 p-8 rounded-[48px] bg-surface-dark/40 backdrop-blur-xl text-white relative overflow-hidden shadow-hugest border border-white/5 group">
+            {/* Clipping Shell */}
+            <div className="absolute inset-0 rounded-[48px] overflow-hidden">
+                {/* Design Elements */}
+                <div className="absolute top-[-20%] right-[-20%] w-72 h-72 bg-[#4ade80]/10 rounded-full blur-[80px] pointer-events-none group-hover:scale-150 transition-transform duration-[3s]"></div>
+                <span className="material-symbols-outlined absolute -right-6 -bottom-6 text-accent-gold/5 text-[180px] rotate-[-15deg] select-none pointer-events-none group-hover:scale-110 transition-transform duration-[2s]">
+                    diamond
+                </span>
             </div>
 
-            {/* Design Elements */}
-            <div className="absolute top-[-20%] right-[-20%] w-72 h-72 bg-[#4ade80]/5 rounded-full blur-[100px] pointer-events-none"></div>
-            <span className="material-symbols-outlined absolute -right-6 -bottom-6 text-[#C9A961]/5 text-[180px] rotate-[-15deg] select-none pointer-events-none group-hover:scale-110 transition-transform duration-[2s]">
-                diamond
-            </span>
+            <div className="relative z-10 flex flex-col items-center text-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-gold mb-2 block animate-pulse">Exclusive Invitation</span>
+                <h4 className="font-display text-3xl font-bold mb-4 leading-tight text-white group-hover:text-accent-gold transition-colors italic">Indique uma Amiga</h4>
+
+                <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 w-full mb-8 space-y-2 group-hover:bg-white/10 transition-colors shadow-inner">
+                    <p className="text-[12px] text-white/40 font-black uppercase tracking-widest">Sua Recompensa</p>
+                    <p className="text-accent-gold font-display italic text-2xl font-bold">200 JZ Credits</p>
+                    <p className="text-[9px] text-white/20 font-black uppercase tracking-[0.3em]">por indicação ativa</p>
+                </div>
+
+                <button
+                    onClick={() => navigate('/profile/refer')}
+                    className="group/btn relative w-full h-18 bg-primary text-white rounded-[24px] overflow-hidden shadow-xl active:scale-95 transition-all"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-[1.5s]"></div>
+                    <span className="relative z-10 flex items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[0.4em] text-accent-gold group-hover/btn:text-white transition-colors">
+                        Indicar Agora
+                        <span className="material-symbols-outlined !text-xl group-hover/btn:translate-x-2 transition-transform">east</span>
+                    </span>
+                </button>
+            </div>
         </div>
     );
 };

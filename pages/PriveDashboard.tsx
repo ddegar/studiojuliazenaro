@@ -128,38 +128,42 @@ const PriveDashboard: React.FC = () => {
 
                 {/* Prestige Balance Card */}
                 <section className="mb-12 animate-reveal">
-                    <div className={`relative rounded-[48px] p-10 shadow-hugest overflow-hidden border border-white/5 group ${tierStyle.bg.includes('zinc-950') ? 'bg-zinc-950 border-white/10' : tierStyle.bg}`}>
-                        {/* Decorative Elements inside card */}
-                        <div className="absolute top-0 right-0 p-8 opacity-10 blur-sm group-hover:blur-none transition-all duration-[2s]">
-                            <span className="material-symbols-outlined !text-7xl text-white">loyalty</span>
+                    <div className={`relative rounded-[48px] shadow-hugest border border-white/5 group ${tierStyle.bg.includes('zinc-950') ? 'bg-zinc-950 border-white/10' : tierStyle.bg}`}>
+                        {/* Clipping Shell for internal aesthetics */}
+                        <div className="absolute inset-0 rounded-[48px] overflow-hidden">
+                            {/* Decorative Elements inside card */}
+                            <div className="absolute top-0 right-0 p-8 opacity-10 blur-sm group-hover:blur-none transition-all duration-[2s]">
+                                <span className="material-symbols-outlined !text-7xl text-white">loyalty</span>
+                            </div>
+                            {/* Background Aura */}
+                            <div className="absolute -bottom-20 -left-20 size-64 bg-white/10 blur-[80px] rounded-full pointer-events-none"></div>
                         </div>
 
-                        <div className="flex justify-between items-start mb-10 relative z-10">
-                            <div className="space-y-1">
-                                <p className={`text-[10px] font-black uppercase tracking-[0.3em] font-outfit opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Seu Saldo Ativo</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className={`text-6xl font-display font-medium leading-none tracking-tighter ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950' : 'text-white'}`}>{points.toLocaleString()}</span>
-                                    <span className={`text-[10px] font-black uppercase tracking-widest opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Credits</span>
+                        <div className="p-10 relative z-10">
+                            <div className="flex justify-between items-start mb-10">
+                                <div className="space-y-1">
+                                    <p className={`text-[10px] font-black uppercase tracking-[0.3em] font-outfit opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Seu Saldo Ativo</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <span className={`text-6xl font-display font-medium leading-none tracking-tighter ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950' : 'text-white'}`}>{points.toLocaleString()}</span>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Credits</span>
+                                    </div>
+                                </div>
+                                <div className={`px-5 h-10 rounded-2xl flex items-center justify-center border font-outfit text-[9px] font-black uppercase tracking-[0.2em] shadow-lg ${tierStyle.bg.includes('C9A961') ? 'bg-zinc-950 text-white border-zinc-950' : 'bg-white/10 border-white/10 text-white backdrop-blur-md'}`}>
+                                    {tierStyle.label}
                                 </div>
                             </div>
-                            <div className={`px-5 h-10 rounded-2xl flex items-center justify-center border font-outfit text-[9px] font-black uppercase tracking-[0.2em] shadow-lg ${tierStyle.bg.includes('C9A961') ? 'bg-zinc-950 text-white border-zinc-950' : 'bg-white/10 border-white/10 text-white backdrop-blur-md'}`}>
-                                {tierStyle.label}
+
+                            <div className="flex justify-between items-end">
+                                <div className="space-y-1">
+                                    <p className={`text-[9px] font-black uppercase tracking-widest font-outfit opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Membro Desde</p>
+                                    <p className={`text-base font-display italic ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950' : 'text-white'}`}>{memberSince || '---'}</p>
+                                </div>
+                                <div className="text-right space-y-1">
+                                    <p className={`text-[9px] font-black uppercase tracking-widest font-outfit opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Protocolo</p>
+                                    <p className={`text-base font-outfit font-black ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950' : 'text-white'}`}>#{userName.slice(0, 1).toUpperCase()}{points}</p>
+                                </div>
                             </div>
                         </div>
-
-                        <div className="flex justify-between items-end relative z-10">
-                            <div className="space-y-1">
-                                <p className={`text-[9px] font-black uppercase tracking-widest font-outfit opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Membro Desde</p>
-                                <p className={`text-base font-display italic ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950' : 'text-white'}`}>{memberSince || '---'}</p>
-                            </div>
-                            <div className="text-right space-y-1">
-                                <p className={`text-[9px] font-black uppercase tracking-widest font-outfit opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Protocolo</p>
-                                <p className={`text-base font-outfit font-black ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950' : 'text-white'}`}>#{userName.slice(0, 1).toUpperCase()}{points}</p>
-                            </div>
-                        </div>
-
-                        {/* Background Aura */}
-                        <div className="absolute -bottom-20 -left-20 size-64 bg-white/10 blur-[80px] rounded-full pointer-events-none"></div>
                     </div>
                 </section>
 

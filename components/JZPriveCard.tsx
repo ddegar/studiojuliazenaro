@@ -87,8 +87,8 @@ const JZPriveCard: React.FC<JZPriveCardProps> = ({ variant = 'compact' }) => {
 
     if (loading) {
         return (
-            <div className={`${currentTier.gradient} rounded-2xl p-4 animate-pulse`}>
-                <div className="h-16 bg-white/10 rounded-xl"></div>
+            <div className={`${currentTier.gradient} rounded-[32px] p-8 animate-pulse shadow-hugest border border-white/10`}>
+                <div className="h-24 bg-white/5 rounded-2xl w-full"></div>
             </div>
         );
     }
@@ -98,16 +98,19 @@ const JZPriveCard: React.FC<JZPriveCardProps> = ({ variant = 'compact' }) => {
         return (
             <div
                 onClick={() => navigate('/prive')}
-                className={`animate-reveal stagger-2 group relative overflow-hidden rounded-[32px] aspect-[1.6/1] w-full max-w-sm mx-auto shadow-2xl transition-all duration-700 cursor-pointer active:scale-95 ${currentTier.gradient} border border-white/10`}
+                className={`animate-reveal stagger-2 group relative rounded-[32px] aspect-[1.6/1] w-full max-w-sm mx-auto shadow-hugest transition-all duration-700 cursor-pointer active:scale-95 ${currentTier.gradient} border border-white/10`}
             >
-                {/* Holographic Shimmer Effect - Enhanced Contrast */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.08] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s] ease-in-out"></div>
+                {/* Internal container to clip blurs without clipping the parent shadow */}
+                <div className="absolute inset-0 rounded-[32px] overflow-hidden">
+                    {/* Holographic Shimmer Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.08] to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s] ease-in-out"></div>
 
-                {/* Visual Textures */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 organic-shape-1 blur-[80px] opacity-30 group-hover:scale-150 transition-transform duration-[3s]"></div>
-                <div className="absolute bottom-[-20%] left-[-10%] w-48 h-48 bg-accent-gold/10 organic-shape-2 blur-[60px] opacity-40"></div>
+                    {/* Optimized Visual Textures */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 organic-shape-1 blur-[60px] opacity-30 group-hover:scale-150 transition-transform duration-[3s]"></div>
+                    <div className="absolute bottom-[-20%] left-[-10%] w-48 h-48 bg-accent-gold/10 organic-shape-2 blur-[40px] opacity-40"></div>
+                </div>
 
-                <div className="relative h-full flex flex-col justify-between p-8">
+                <div className="relative h-full flex flex-col justify-between p-8 z-10">
                     <div className="flex justify-between items-start">
                         <div className="space-y-1">
                             <p className="text-[9px] font-outfit font-black uppercase tracking-[0.4em] text-white/40 leading-none mb-1">Elite Identifier</p>
@@ -141,7 +144,7 @@ const JZPriveCard: React.FC<JZPriveCardProps> = ({ variant = 'compact' }) => {
                 </div>
 
                 {/* Aesthetic Watermark */}
-                <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-white/[0.03] text-8xl select-none pointer-events-none rotate-12">
+                <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-white/[0.03] text-8xl select-none pointer-events-none rotate-12 z-0">
                     workspace_premium
                 </span>
             </div>
@@ -150,10 +153,13 @@ const JZPriveCard: React.FC<JZPriveCardProps> = ({ variant = 'compact' }) => {
 
     // Full variant for Prive Dashboard
     return (
-        <div className={`relative overflow-hidden rounded-[48px] p-8 shadow-2xl transition-all duration-700 ${currentTier.gradient}`}>
-            {/* Immersive Background */}
-            <div className="absolute top-[-20%] right-[-10%] w-[60%] aspect-square bg-white/5 organic-shape-1 blur-[80px] animate-float"></div>
-            <div className="absolute bottom-[-20%] left-[-10%] w-[50%] aspect-square bg-accent-gold/10 organic-shape-2 blur-[60px] animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className={`relative rounded-[48px] p-8 shadow-hugest transition-all duration-700 ${currentTier.gradient} border border-white/5`}>
+            {/* Internal container to clip blurs without clipping the parent shadow */}
+            <div className="absolute inset-0 rounded-[48px] overflow-hidden">
+                {/* Immersive Background */}
+                <div className="absolute top-[-20%] right-[-10%] w-[60%] aspect-square bg-white/5 organic-shape-1 blur-[60px] animate-float"></div>
+                <div className="absolute bottom-[-20%] left-[-10%] w-[50%] aspect-square bg-accent-gold/10 organic-shape-2 blur-[40px] animate-float" style={{ animationDelay: '2s' }}></div>
+            </div>
 
             <div className="relative z-10 flex flex-col items-center text-center gap-10">
                 <div className="space-y-2">

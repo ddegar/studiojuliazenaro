@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import JZReferralCard from '../components/JZReferralCard';
+import Logo from '../components/Logo';
 
 interface Tier {
     id: string;
@@ -40,7 +41,8 @@ const PriveJourney: React.FC = () => {
             } catch (error) {
                 console.error('Error fetching journey data:', error);
             } finally {
-                setLoading(false);
+                // Short artificial delay to ensure smooth transition from logo loader
+                setTimeout(() => setLoading(false), 500);
             }
         };
         fetchData();
@@ -56,37 +58,44 @@ const PriveJourney: React.FC = () => {
     const currentTierIdx = getCurrentTierIndex();
 
     const getTierDescription = (tierName: string) => {
-        switch (tierName) {
-            case 'Select': return 'O início da sua experiência personalizada conosco.';
-            case 'Prime': return 'Conforto e prioridade para quem nos inspira todos os dias.';
-            case 'Signature': return 'A máxima expressão do luxo, conforto e prestígio absoluto.';
-            case 'Privé': return 'O ápice de personalização. Apenas para conhecedores e sonhar membros.';
-            default: return '';
-        }
+        const name = tierName?.toUpperCase() || '';
+        if (name.includes('SELECT')) return 'O início da sua experiência personalizada conosco.';
+        if (name.includes('PRIME')) return 'Conforto e prioridade para quem nos inspira todos os dias.';
+        if (name.includes('SIGNATURE')) return 'A máxima expressão do luxo, conforto e prestígio absoluto.';
+        if (name.includes('PRIVÉ') || name.includes('PRIVE')) return 'O ápice de personalização. Apenas para conhecedores e membros elite.';
+        return 'Uma etapa fundamental em sua jornada de beleza e sofisticação.';
     };
 
     const getTierIcon = (tierName: string) => {
-        switch (tierName) {
-            case 'Select': return 'shield';
-            case 'Prime': return 'stars';
-            case 'Signature': return 'verified';
-            case 'Privé': return 'diamond';
-            default: return 'workspace_premium';
-        }
+        const name = tierName?.toUpperCase() || '';
+        if (name.includes('SELECT')) return 'shield';
+        if (name.includes('PRIME')) return 'stars';
+        if (name.includes('SIGNATURE')) return 'verified';
+        if (name.includes('PRIVÉ') || name.includes('PRIVE')) return 'diamond';
+        return 'workspace_premium';
     };
 
     if (loading) return (
-        <div className="min-h-screen bg-[#050d0a] flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-[#C9A961] border-t-transparent rounded-full animate-spin"></div>
+        <div className="min-h-screen bg-background-dark flex flex-col items-center justify-center space-y-8 animate-reveal">
+            <div className="relative">
+                <Logo size="lg" variant="gold" className="animate-pulse" />
+                <div className="absolute inset-0 border-2 border-accent-gold/20 rounded-full animate-ping scale-150 opacity-0"></div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-accent-gold/40 animate-pulse">Sincronizando Jornada</p>
+                <div className="h-0.5 w-12 bg-accent-gold/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-accent-gold w-1/2 animate-shimmer"></div>
+                </div>
+            </div>
         </div>
     );
 
     return (
         <div className="flex flex-col h-full bg-background-dark text-white overflow-hidden selection:bg-accent-gold/20 relative">
-            {/* Dynamic Background Elements */}
-            <div className="fixed inset-0 pointer-events-none opacity-15 overflow-hidden">
-                <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/20 blur-[120px] animate-float"></div>
-                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/20 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+            {/* Optimized Dynamic Background Elements */}
+            <div className="fixed inset-0 pointer-events-none opacity-10 overflow-hidden">
+                <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/20 blur-[80px] animate-float"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/20 blur-[60px] animate-float" style={{ animationDelay: '2s' }}></div>
             </div>
 
             <header className="sticky top-0 z-[100] premium-nav-dark p-6 border-b border-white/5 flex flex-col gap-6">
@@ -115,7 +124,12 @@ const PriveJourney: React.FC = () => {
                 </div>
 
                 <div className="space-y-12 max-w-lg mx-auto pb-20">
-                    {tiers.map((tier, idx) => {
+                    {tiers.length === 0 ? (
+                        <div className="p-12 rounded-[48px] bg-white/2 border border-white/5 text-center space-y-4 opacity-50">
+                            <span className="material-symbols-outlined !text-5xl text-accent-gold/40">auto_awesome</span>
+                            <p className="text-sm font-display italic">Prepare-se. Novos privilégios estão sendo desenhados para você.</p>
+                        </div>
+                    ) : tiers.map((tier, idx) => {
                         const isConquered = points >= tier.min_points;
                         const isCurrent = idx === currentTierIdx;
                         const isLocked = points < tier.min_points;
@@ -124,11 +138,11 @@ const PriveJourney: React.FC = () => {
                         return (
                             <div
                                 key={tier.id}
-                                className={`group relative rounded-[56px] p-10 border transition-all duration-1000 animate-reveal shadow-hugest overflow-hidden ${isCurrent ? 'bg-surface-dark border-accent-gold/30 ring-1 ring-accent-gold/10' :
+                                className={`group relative rounded-[56px] p-10 border transition-all duration-700 animate-reveal shadow-hugest overflow-hidden ${isCurrent ? 'bg-surface-dark border-accent-gold/30 ring-1 ring-accent-gold/10' :
                                     isConquered ? 'bg-surface-dark/40 border-white/10' :
-                                        'bg-surface-dark/20 border-white/5 opacity-50 grayscale'
+                                        'bg-surface-dark/20 border-white/5 opacity-50'
                                     }`}
-                                style={{ animationDelay: `${idx * 0.1}s` }}
+                                style={{ animationDelay: `${idx * 0.05}s` }}
                             >
                                 {/* Status Ribbon */}
                                 {isCurrent && (
@@ -157,7 +171,7 @@ const PriveJourney: React.FC = () => {
                                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-gold/60">Privilégios da Categoria</p>
                                             </div>
                                             <div className="grid grid-cols-1 gap-3">
-                                                {tier.benefits.map((benefit, bIdx) => (
+                                                {(tier.benefits || []).map((benefit, bIdx) => (
                                                     <div key={bIdx} className="flex items-start gap-4 p-4 rounded-2xl bg-white/2 border border-white/5 group-hover:border-white/10 transition-colors">
                                                         <span className="material-symbols-outlined !text-lg text-accent-gold/40 group-hover:text-accent-gold transition-colors" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                                                         <span className="text-[12px] font-outfit text-white/60 group-hover:text-white transition-colors">{benefit}</span>
@@ -172,17 +186,17 @@ const PriveJourney: React.FC = () => {
                                                 disabled={isLocked}
                                                 className={`w-full h-18 rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] font-outfit transition-all active:scale-95 shadow-huge ${isCurrent ? 'bg-accent-gold text-primary' :
                                                     isConquered ? 'bg-white/5 border border-white/10 text-white' :
-                                                        'bg-white/2 border border-white/5 text-white/20 cursor-not-allowed'
+                                                        'bg-white/2 border border-white/5 text-white/10 cursor-not-allowed backdrop-blur-sm'
                                                     }`}
                                             >
-                                                {isLocked ? `Bloqueado ao atingir ${tier.min_points.toLocaleString()} PTS` : 'Explorar Detalhes'}
+                                                {isLocked ? `Atingir ${tier.min_points.toLocaleString()} PTS` : 'Explorar Detalhes'}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Background Aura */}
-                                <div className={`absolute -bottom-20 -right-20 size-64 blur-[80px] rounded-full pointer-events-none opacity-20 transition-all duration-1000 ${isCurrent ? 'bg-accent-gold/40' : 'bg-primary/20'
+                                {/* Optimized Background Aura */}
+                                <div className={`absolute -bottom-20 -right-20 size-64 blur-[60px] rounded-full pointer-events-none opacity-20 transition-all duration-1000 ${isCurrent ? 'bg-accent-gold/40' : 'bg-primary/20'
                                     }`}></div>
                             </div>
                         );
@@ -201,7 +215,7 @@ const PriveJourney: React.FC = () => {
                         className="w-full max-w-lg bg-surface-dark border border-white/10 rounded-[56px] p-10 pb-12 relative overflow-hidden shadow-hugest"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/5 blur-[60px] rounded-full pointer-events-none"></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/5 blur-[40px] rounded-full pointer-events-none"></div>
 
                         <div className="flex justify-between items-start mb-10">
                             <div className="space-y-4">
@@ -231,7 +245,7 @@ const PriveJourney: React.FC = () => {
                             <div className="space-y-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-accent-gold/40 px-4">Benefícios Completos</p>
                                 <div className="space-y-3">
-                                    {selectedTier.benefits.map((benefit, idx) => (
+                                    {(selectedTier.benefits || []).map((benefit, idx) => (
                                         <div key={idx} className="flex items-center gap-5 p-5 rounded-3xl bg-white/2 border border-white/5 hover:bg-white/5 transition-all">
                                             <span className="material-symbols-outlined text-accent-gold !text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                                             <span className="text-sm font-outfit text-white/80">{benefit}</span>
