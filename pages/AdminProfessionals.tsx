@@ -45,7 +45,7 @@ const AdminProfessionals: React.FC = () => {
 
          const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
          if (profile?.role !== 'MASTER_ADMIN') {
-            alert('Acesso negado. Apenas Master Admin pode gerenciar equipe.');
+            alert('Acesso restrito ao Master Admin.');
             navigate('/admin');
             return;
          }
@@ -60,9 +60,8 @@ const AdminProfessionals: React.FC = () => {
 
       try {
          const DEFAULT_PASSWORD = 'Julia@Studio2026';
-         const finalImageUrl = newPro.image_url || `https://ui-avatars.com/api/?name=${newPro.name}&background=random&color=fff`;
+         const finalImageUrl = newPro.image_url || `https://ui-avatars.com/api/?name=${newPro.name}&background=0f3e29&color=C9A961`;
 
-         // 1. Criar registro na tabela professionals primeiro para obter o ID
          const { data: proRecord, error: proError } = await supabase.from('professionals').insert({
             name: newPro.name,
             role: newPro.role,
@@ -76,26 +75,24 @@ const AdminProfessionals: React.FC = () => {
 
          if (proError) throw proError;
 
-         // 2. Chamar a Edge Function para criar o usuário no Supabase Auth e Profile
-         const { data, error: functionError } = await supabase.functions.invoke('create-professional', {
+         const { error: functionError } = await supabase.functions.invoke('create-professional', {
             body: {
                email: newPro.email,
                password: DEFAULT_PASSWORD,
                name: newPro.name,
-               role: 'PROFESSIONAL_ADMIN', // Role base para acesso ao admin
+               role: 'PROFESSIONAL_ADMIN',
                professionalId: proRecord.id
             }
          });
 
          if (functionError) throw functionError;
 
-         alert('Profissional cadastrada com SUCESSO! ✨\n\nLogin: ' + newPro.email + '\nSenha Padrão: ' + DEFAULT_PASSWORD + '\n\nEla já pode logar agora!');
+         fetchPros();
          setShowAdd(false);
          setNewPro({
             name: '', role: '', email: '', phone: '', image_url: '',
             permissions: { canManageAgenda: true, canEditServices: false, canViewGlobalFinances: false, canCreateContent: false }
          });
-         fetchPros();
       } catch (err: any) {
          alert('Erro ao criar: ' + err.message);
       } finally {
@@ -104,143 +101,156 @@ const AdminProfessionals: React.FC = () => {
    };
 
    const toggleProStatus = async (pro: Professional) => {
-      const action = pro.active ? 'desativar' : 'ativar';
-      if (!window.confirm(`Deseja ${action} esta profissional? O histórico de atendimentos e financeiro será preservado.`)) return;
-
+      if (!window.confirm(`Alterar status de disponibilidade de ${pro.name}?`)) return;
       try {
-         const { error } = await supabase
-            .from('professionals')
-            .update({ active: !pro.active })
-            .eq('id', pro.id);
-
+         const { error } = await supabase.from('professionals').update({ active: !pro.active }).eq('id', pro.id);
          if (error) throw error;
          fetchPros();
       } catch (err: any) {
-         alert('Erro ao atualizar status: ' + err.message);
+         alert('Erro: ' + err.message);
       }
    };
 
-   return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-32 lg:pb-8">
-         <header className="p-6 lg:p-8 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80 sticky top-0 z-40">
-            <div className="flex items-center gap-4">
-               <button onClick={() => navigate('/admin')} className="size-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
-                  <span className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</span>
-               </button>
-               <div>
-                  <h1 className="text-xl lg:text-2xl font-display font-bold">Gestão de Equipe</h1>
-                  <p className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest">{pros.length} Profissionais</p>
-               </div>
+   if (loading && pros.length === 0) {
+      return (
+         <div className="flex h-screen items-center justify-center bg-background-dark font-outfit">
+            <div className="relative size-16 flex items-center justify-center">
+               <div className="absolute inset-0 border-2 border-primary/5 rounded-full"></div>
+               <div className="absolute inset-0 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+               <span className="material-symbols-outlined text-accent-gold scale-75">groups</span>
             </div>
-            <button onClick={() => setShowAdd(true)} className="size-11 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/20 ring-4 ring-primary/5 active:scale-95 transition-transform">
-               <span className="material-symbols-outlined">person_add</span>
-            </button>
+         </div>
+      );
+   }
+
+   return (
+      <div className="flex flex-col min-h-screen bg-background-dark text-white font-outfit antialiased selection:bg-accent-gold/20 selection:text-white">
+         <header className="relative z-[60] premium-blur-dark sticky top-0 px-8 py-10 flex flex-col gap-6 border-b border-white/5 bg-background-dark/80 backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-6">
+                  <button
+                     onClick={() => navigate('/admin')}
+                     className="size-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-accent-gold group active:scale-95 transition-all"
+                  >
+                     <span className="material-symbols-outlined !text-xl group-hover:-translate-x-1 transition-transform">west</span>
+                  </button>
+                  <div className="space-y-1">
+                     <p className="text-[8px] font-black uppercase tracking-[0.5em] text-accent-gold/40 leading-none">Equipe Studio</p>
+                     <h1 className="font-display italic text-2xl text-white">Curadoria de Talentos</h1>
+                  </div>
+               </div>
+
+               <button
+                  onClick={() => setShowAdd(true)}
+                  className="size-12 rounded-2xl bg-accent-gold flex items-center justify-center text-primary shadow-huge active:scale-90 transition-all"
+               >
+                  <span className="material-symbols-outlined">person_add</span>
+               </button>
+            </div>
          </header>
 
-         <main className="flex-1 p-6 lg:p-6 w-full max-w-7xl mx-auto overflow-y-auto no-scrollbar">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-               {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-                     <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                     <p className="text-xs font-bold uppercase tracking-widest">Sincronizando equipe...</p>
-                  </div>
-               ) : pros.length === 0 ? (
-                  <div className="text-center py-20 space-y-4 opacity-30">
-                     <span className="material-symbols-outlined !text-6xl">group_off</span>
-                     <p className="font-display italic text-lg">Nenhum talento cadastrado.</p>
-                  </div>
-               ) : pros.map(pro => (
+         <main className="relative z-10 p-8 lg:p-12 space-y-10 pb-48 w-full max-w-screen-xl mx-auto overflow-x-hidden">
+            <div className="flex items-center justify-between group">
+               <div className="space-y-1">
+                  <h2 className="text-sm font-black uppercase tracking-[0.3em] text-white/40">Especialistas Ativas</h2>
+                  <p className="text-[10px] text-accent-gold/40 font-black uppercase tracking-[0.2em]">{pros.length} Talentos no Ecossistema</p>
+               </div>
+               <div className="size-12 rounded-2xl border border-white/5 bg-white/5 flex items-center justify-center text-white/20 group-hover:text-accent-gold transition-colors">
+                  <span className="material-symbols-outlined">stars</span>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 animate-reveal">
+               {pros.map(pro => (
                   <div
                      key={pro.id}
-                     className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-5 transition-all hover:border-white/10 group relative"
+                     className="relative group bg-surface-dark/40 border border-white/5 rounded-[40px] p-8 flex flex-col gap-8 hover:border-accent-gold/20 hover:bg-surface-dark transition-all duration-700 overflow-hidden shadow-huge"
                   >
-                     <div className="flex items-center gap-5" onClick={() => navigate(`/admin/professional/${pro.id}`)}>
-                        <div className="size-16 rounded-2xl overflow-hidden border-2 border-white/10 shadow-lg shadow-black/40">
-                           <img src={pro.image_url || `https://ui-avatars.com/api/?name=${pro.name}&background=random`} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt={pro.name} />
-                        </div>
-                        <div className="flex-1">
-                           <h4 className="font-bold text-base text-white group-hover:text-accent-gold transition-colors">{pro.name}</h4>
-                           <p className="text-[10px] text-accent-gold font-black uppercase tracking-[0.2em] mt-0.5">{pro.role}</p>
-                        </div>
-                        <div className={`px-3 py-1.5 rounded-full border-2 ${pro.active ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-gray-500/10 border-gray-500/20'}`}>
-                           <span className={`text-[8px] font-black uppercase tracking-widest ${pro.active ? 'text-emerald-500' : 'text-gray-500'}`}>{pro.active ? 'ON' : 'OFF'}</span>
-                        </div>
-                     </div>
-
-                     <div className="pt-4 border-t border-white/5 flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                           <div className="flex items-center gap-1.5 opacity-40">
-                              <span className="material-symbols-outlined !text-xs text-gray-400">mail</span>
-                              <span className="text-[9px] font-medium lowercase tracking-tight">{pro.email || 'sem email'}</span>
+                     <div className="flex justify-between items-start relative z-10">
+                        <div className="flex items-center gap-6" onClick={() => navigate(`/admin/professional/${pro.id}`)}>
+                           <div className="size-20 rounded-[28px] overflow-hidden border border-white/10 shadow-hugest group-hover:scale-105 transition-transform duration-700">
+                              <img src={pro.image_url || `https://ui-avatars.com/api/?name=${pro.name}&background=0f3e29&color=C9A961`} className="w-full h-full object-cover" alt="" />
                            </div>
-                           <div className="flex gap-1 ml-4 border-l border-white/10 pl-4">
-                              {(pro.permissions as any)?.canManageAgenda && <span title="Agenda" className="material-symbols-outlined !text-[12px] text-accent-gold">calendar_month</span>}
-                              {(pro.permissions as any)?.canViewGlobalFinances && <span title="Master Finance" className="material-symbols-outlined !text-[12px] text-primary">payments</span>}
-                              {(pro.permissions as any)?.canCreateContent && <span title="Conteúdo" className="material-symbols-outlined !text-[12px] text-blue-400">history_toggle_off</span>}
+                           <div className="space-y-1">
+                              <h4 className="font-bold text-base text-white group-hover:text-accent-gold transition-colors">{pro.name}</h4>
+                              <p className="text-[9px] text-accent-gold font-black uppercase tracking-[0.2em]">{pro.role}</p>
                            </div>
                         </div>
                         <button
-                           onClick={(e) => { e.stopPropagation(); toggleProStatus(pro); }}
-                           className={`transition-all p-2 rounded-full ${pro.active ? 'text-gray-500 hover:text-rose-500 hover:bg-rose-500/10' : 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10'}`}
-                           title={pro.active ? 'Desativar Profissional' : 'Ativar Profissional'}
+                           onClick={() => toggleProStatus(pro)}
+                           className={`size-10 rounded-2xl flex items-center justify-center transition-all ${pro.active ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white' : 'bg-white/5 text-white/20 hover:bg-white hover:text-primary'}`}
                         >
-                           <span className="material-symbols-outlined !text-lg">{pro.active ? 'person_off' : 'person_check'}</span>
+                           <span className="material-symbols-outlined !text-lg">{pro.active ? 'person_check' : 'person_off'}</span>
                         </button>
                      </div>
+
+                     <div className="pt-6 border-t border-white/5 flex justify-between items-center relative z-10">
+                        <div className="flex gap-2">
+                           {(pro.permissions as any)?.canManageAgenda && <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center text-accent-gold/40" title="Agenda Accessible"><span className="material-symbols-outlined !text-sm">calendar_month</span></div>}
+                           {(pro.permissions as any)?.canViewGlobalFinances && <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center text-primary/40" title="Finance Privileges"><span className="material-symbols-outlined !text-sm">payments</span></div>}
+                           {(pro.permissions as any)?.canCreateContent && <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center text-blue-400/40" title="Content Creator"><span className="material-symbols-outlined !text-sm">draw</span></div>}
+                        </div>
+                        <button onClick={() => navigate(`/admin/professional/${pro.id}`)} className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 hover:text-white transition-colors flex items-center gap-2 group/btn">
+                           Profile Detail
+                           <span className="material-symbols-outlined !text-sm group-hover/btn:translate-x-1 transition-transform">east</span>
+                        </button>
+                     </div>
+
+                     {/* Background Ornament */}
+                     <div className="absolute -top-12 -right-12 size-32 bg-accent-gold/5 blur-3xl rounded-full group-hover:bg-accent-gold/10 transition-all duration-700"></div>
                   </div>
                ))}
             </div>
          </main>
 
          {showAdd && (
-            <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-6 backdrop-blur-xl animate-fade-in overflow-y-auto">
-               <div className="absolute inset-0" onClick={() => setShowAdd(false)}></div>
-               <form onSubmit={handleAddProfessional} className="bg-card-dark w-full max-w-md rounded-[48px] p-8 border border-white/10 space-y-8 animate-slide-up relative z-10 shadow-2xl my-10 max-h-[90vh] overflow-y-auto no-scrollbar">
-                  <div className="flex justify-between items-center">
-                     <div>
-                        <h2 className="text-2xl font-display font-bold">Novo Talento</h2>
-                        <p className="text-[10px] text-accent-gold uppercase font-black tracking-widest mt-1">Sincronização de Conta Oficial</p>
+            <div className="fixed inset-0 z-[100] bg-background-dark/95 flex items-end justify-center backdrop-blur-2xl animate-fade-in overflow-hidden">
+               <div className="fixed inset-0" onClick={() => setShowAdd(false)}></div>
+               <form onSubmit={handleAddProfessional} className="bg-surface-dark w-full max-w-screen-md rounded-t-[64px] p-12 space-y-10 animate-slide-up border-t border-white/10 max-h-[92vh] overflow-y-auto no-scrollbar relative z-10 shadow-hugest">
+                  <div className="flex justify-between items-center px-4">
+                     <div className="space-y-1">
+                        <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none">Enrollment</p>
+                        <h2 className="text-3xl font-display italic text-white italic">Consignar Novo Talento</h2>
                      </div>
-                     <button type="button" onClick={() => setShowAdd(false)} className="size-10 flex items-center justify-center rounded-full bg-white/5 text-gray-500">
+                     <button type="button" onClick={() => setShowAdd(false)} className="size-14 flex items-center justify-center rounded-3xl bg-white/5 border border-white/10 text-white/20 hover:text-white transition-all">
                         <span className="material-symbols-outlined">close</span>
                      </button>
                   </div>
 
-                  <div className="space-y-6">
-                     <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-widest pl-1">Nome Completo</label>
-                        <input required placeholder="Ex: Julia Zenaro" className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:ring-primary outline-none" value={newPro.name} onChange={e => setNewPro({ ...newPro, name: e.target.value })} />
-                     </div>
-
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-widest pl-1">E-mail</label>
-                           <input type="email" required placeholder="julia@studio.com" className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary outline-none" value={newPro.email} onChange={e => setNewPro({ ...newPro, email: e.target.value })} />
+                  <div className="space-y-12">
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                           <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em] pl-2">Identidade Profissional</label>
+                           <input required placeholder="Nome Completo..." className="w-full h-18 bg-white/5 border border-white/5 rounded-[28px] px-8 text-base font-medium focus:border-accent-gold/60 outline-none transition-all shadow-huge" value={newPro.name} onChange={e => setNewPro({ ...newPro, name: e.target.value })} />
                         </div>
-                        <div className="space-y-2">
-                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-widest pl-1">Telefone</label>
-                           <input required placeholder="(11) 99999-9999" className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary outline-none" value={newPro.phone} onChange={e => setNewPro({ ...newPro, phone: e.target.value })} />
+                        <div className="space-y-3">
+                           <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em] pl-2">Posição / Cargo</label>
+                           <input required placeholder="Ex: Master Lash Artist" className="w-full h-18 bg-white/5 border border-white/5 rounded-[28px] px-8 text-sm font-black uppercase tracking-widest focus:border-accent-gold/60 outline-none transition-all text-accent-gold shadow-huge" value={newPro.role} onChange={e => setNewPro({ ...newPro, role: e.target.value })} />
                         </div>
                      </div>
 
-                     <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-widest pl-1">Especialidade / Cargo</label>
-                        <input required placeholder="Ex: Specialist Lash Artist" className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-primary outline-none italic text-accent-gold" value={newPro.role} onChange={e => setNewPro({ ...newPro, role: e.target.value })} />
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                           <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em] pl-2">Sync de Comunicação (E-mail)</label>
+                           <input type="email" required placeholder="talento@juliazenaro.com" className="w-full h-18 bg-white/5 border border-white/5 rounded-[28px] px-8 text-sm focus:border-accent-gold/60 outline-none transition-all shadow-huge italic text-white/40" value={newPro.email} onChange={e => setNewPro({ ...newPro, email: e.target.value })} />
+                        </div>
+                        <div className="space-y-3">
+                           <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em] pl-2">Conexão Mobile</label>
+                           <input required placeholder="Telefone Corporativo..." className="w-full h-18 bg-white/5 border border-white/5 rounded-[28px] px-8 text-sm focus:border-accent-gold/60 outline-none transition-all shadow-huge" value={newPro.phone} onChange={e => setNewPro({ ...newPro, phone: e.target.value })} />
+                        </div>
                      </div>
 
-                     <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-widest pl-1">URL da Foto (Opcional)</label>
-                        <input placeholder="https://..." className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-xs focus:ring-primary outline-none opacity-60" value={newPro.image_url} onChange={e => setNewPro({ ...newPro, image_url: e.target.value })} />
-                     </div>
-
-                     <div className="space-y-4 pt-4">
-                        <h3 className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Permissões Iniciais</h3>
-                        <div className="grid grid-cols-1 gap-3">
+                     <div className="space-y-6 pt-4">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-accent-gold/40"></span>
+                           <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em]">Privilégios de Acesso</label>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            {[
-                              { key: 'canManageAgenda', label: 'Gerenciar Agenda', desc: 'Confirmar/Reagendar atendimentos' },
-                              { key: 'canEditServices', label: 'Editar Catálogo', desc: 'Alterar preços e serviços' },
-                              { key: 'canViewGlobalFinances', label: 'Financeiro Global', desc: 'Ver faturamento total (SENSÍVEL)' },
-                              { key: 'canCreateContent', label: 'Publicar Conteúdo', desc: 'Posts e Stories no app' }
+                              { key: 'canManageAgenda', label: 'Maestria de Agenda', desc: 'Gestão de horários e reservas' },
+                              { key: 'canEditServices', label: 'Curadoria de Portfólio', desc: 'Edição de catálogo e valores' },
+                              { key: 'canViewGlobalFinances', label: 'Ecosssistema Financeiro', desc: 'Visão de faturamento global' },
+                              { key: 'canCreateContent', label: 'Criação Criativa', desc: 'Publicação de Stories e Conteúdo' }
                            ].map(perm => (
                               <button
                                  key={perm.key}
@@ -249,29 +259,47 @@ const AdminProfessionals: React.FC = () => {
                                     ...newPro,
                                     permissions: { ...newPro.permissions, [perm.key]: !newPro.permissions[perm.key as keyof typeof newPro.permissions] }
                                  })}
-                                 className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${newPro.permissions[perm.key as keyof typeof newPro.permissions] ? 'bg-primary/20 border-primary text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}
+                                 className={`group/perm flex items-center justify-between p-6 rounded-[32px] border transition-all duration-500 ${newPro.permissions[perm.key as keyof typeof newPro.permissions] ? 'bg-accent-gold text-primary border-accent-gold shadow-huge scale-[1.02]' : 'bg-white/5 border-white/5 text-white/20 hover:bg-white/10'}`}
                               >
                                  <div className="text-left">
-                                    <p className="text-xs font-bold">{perm.label}</p>
-                                    <p className="text-[8px] uppercase font-bold opacity-60">{perm.desc}</p>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.2em]">{perm.label}</p>
+                                    <p className={`text-[8px] font-medium mt-1 leading-relaxed ${newPro.permissions[perm.key as keyof typeof newPro.permissions] ? 'text-primary/60' : 'text-white/10'}`}>{perm.desc}</p>
                                  </div>
-                                 <span className="material-symbols-outlined !text-lg">{newPro.permissions[perm.key as keyof typeof newPro.permissions] ? 'check_box' : 'check_box_outline_blank'}</span>
+                                 <div className={`size-8 rounded-xl flex items-center justify-center transition-all ${newPro.permissions[perm.key as keyof typeof newPro.permissions] ? 'bg-primary/10 text-primary' : 'bg-white/5 text-white/20 group-hover/perm:text-accent-gold'}`}>
+                                    <span className="material-symbols-outlined !text-lg">{newPro.permissions[perm.key as keyof typeof newPro.permissions] ? 'verified' : 'radio_button_unchecked'}</span>
+                                 </div>
                               </button>
                            ))}
                         </div>
                      </div>
                   </div>
 
-                  <button disabled={isCreating} type="submit" className="w-full h-18 bg-primary text-white rounded-[24px] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-50">
-                     {isCreating ? <div className="size-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'FINALIZAR CADASTRO ✨'}
-                  </button>
+                  <div className="flex gap-4 pt-12">
+                     <button type="button" onClick={() => setShowAdd(false)} className="flex-1 h-20 bg-white/5 border border-white/10 text-white/20 rounded-[32px] font-black uppercase tracking-[0.4em] text-[10px] active:scale-95 transition-all">Cancel</button>
+                     <button
+                        disabled={isCreating}
+                        type="submit"
+                        className="flex-[2] h-20 bg-accent-gold text-primary rounded-[32px] font-black uppercase tracking-[0.5em] text-[11px] shadow-hugest active:scale-95 transition-all disabled:opacity-50"
+                     >
+                        {isCreating ? <div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div> : 'Confirmar Squad ✨'}
+                     </button>
+                  </div>
                </form>
+
+               {/* Design Ornaments */}
+               <div className="fixed top-0 left-0 w-[50vw] h-[50vh] bg-accent-gold/10 blur-[120px] pointer-events-none -z-0"></div>
+               <div className="fixed bottom-0 right-0 w-[40vw] h-[40vh] bg-primary/20 blur-[120px] pointer-events-none -z-0 opacity-40"></div>
             </div>
          )}
+
          <div className="lg:hidden">
             <AdminBottomNav />
          </div>
-      </div >
+
+         {/* Background Ornaments */}
+         <div className="fixed top-0 right-0 w-[40vw] h-[40vh] bg-accent-gold/5 blur-[120px] pointer-events-none z-0"></div>
+         <div className="fixed bottom-0 left-0 w-[40vw] h-[40vh] bg-primary/20 blur-[120px] pointer-events-none z-0 opacity-40"></div>
+      </div>
    );
 };
 

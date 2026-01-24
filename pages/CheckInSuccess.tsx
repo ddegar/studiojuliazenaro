@@ -3,100 +3,137 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const CheckInSuccess: React.FC = () => {
-  const navigate = useNavigate();
-  const [actions, setActions] = useState({
-    story: false,
-    instagram: false
-  });
+   const navigate = useNavigate();
+   const [actions, setActions] = useState({
+      story: false,
+      instagram: false
+   });
 
-  const handleAction = async (type: 'story' | 'instagram') => {
-    if (type === 'instagram') {
-       // Tenta abrir o Instagram e dá feedback
-       window.open('https://instagram.com', '_blank');
-       alert("Abra o Instagram, poste seu momento e marque @studiojuliazenaro para validar seus pontos! ✨");
-    } else {
-       alert("Foto enviada para a timeline do Studio! Você ganhou +20 Lash Points ✨");
-    }
-    setActions(prev => ({ ...prev, [type]: true }));
-  };
+   const handleAction = async (type: 'story' | 'instagram') => {
+      if (type === 'instagram') {
+         // Tenta abrir o Instagram e dá feedback
+         window.open('https://instagram.com', '_blank');
+         alert("Abra o Instagram, poste seu momento e marque @studiojuliazenaro para validar seus pontos! ✨");
+      } else {
+         alert("Foto enviada para a timeline do Studio! Você ganhou +20 Lash Points ✨");
+      }
+      setActions(prev => ({ ...prev, [type]: true }));
+   };
 
-  return (
-    <div className="flex flex-col h-full bg-background-dark text-white p-8 overflow-y-auto no-scrollbar pb-10">
-      <div className="mb-8 text-center animate-fade-in">
-         <div className="size-20 rounded-full bg-emerald-500 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-emerald-500/20 ring-4 ring-emerald-500/10">
-            <span className="material-symbols-outlined !text-4xl text-white">verified</span>
+   return (
+      <div className="flex flex-col h-full bg-background-dark text-white p-10 overflow-y-auto no-scrollbar selection:bg-accent-gold/20 pb-20 relative">
+         {/* Decorative Elite Silhouettes */}
+         <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+            <div className="absolute top-[-10%] left-[-20%] w-[70%] aspect-square organic-shape-1 bg-emerald-500/10 blur-[120px] animate-float"></div>
+            <div className="absolute bottom-[-5%] right-[-10%] w-[60%] aspect-square organic-shape-2 bg-accent-gold/5 blur-[100px] animate-float" style={{ animationDelay: '2s' }}></div>
          </div>
-         <h1 className="text-3xl font-display font-bold tracking-tight text-emerald-500">Check-in Realizado!</h1>
-         <p className="text-accent-gold text-lg font-display italic mt-2">Seja bem-vinda ao seu momento ✨</p>
-         <p className="text-gray-500 text-[10px] mt-4 uppercase tracking-[0.25em] font-black">Aproveite esse tempo para relaxar e se cuidar</p>
+
+         <div className="relative z-10 mb-12 text-center animate-reveal">
+            <div className="relative size-24 mx-auto mb-8">
+               <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl animate-pulse"></div>
+               <div className="relative size-24 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.3)] ring-4 ring-emerald-500/10 scale-110">
+                  <span className="material-symbols-outlined !text-5xl text-white animate-reveal">verified</span>
+               </div>
+            </div>
+
+            <div className="space-y-3">
+               <h1 className="text-3xl font-display font-medium tracking-tight text-white italic leading-tight">Chegada Confirmada.</h1>
+               <p className="text-emerald-400 font-outfit text-sm font-black uppercase tracking-[0.3em] block">Status: VIP Privé ✅</p>
+            </div>
+
+            <div className="mt-8 flex flex-col items-center gap-2 select-none">
+               <div className="h-px w-8 bg-accent-gold/30"></div>
+               <p className="text-white/40 text-[10px] uppercase font-black tracking-[0.5em]">Julia Zenaro Studio</p>
+            </div>
+         </div>
+
+         <div className="relative z-10 space-y-8">
+            <section className="bg-surface-dark/40 backdrop-blur-xl border border-white/5 rounded-[48px] p-8 space-y-8 animate-reveal" style={{ animationDelay: '0.2s' }}>
+               <div className="flex flex-col items-center gap-2">
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-gold/60">Potencialize seu brilho</h2>
+                  <p className="text-xs text-white/40 font-light italic text-center">Ações exclusivas para membros da elite</p>
+               </div>
+
+               <div className="grid gap-4">
+                  <button
+                     onClick={() => handleAction('story')}
+                     disabled={actions.story}
+                     className={`group relative p-6 rounded-3xl border transition-all duration-500 active:scale-95 ${actions.story ? 'bg-emerald-500/10 border-emerald-500/20 opacity-60' : 'bg-white/5 border-white/10 hover:border-accent-gold/30'}`}
+                  >
+                     <div className="flex items-center gap-5">
+                        <div className={`size-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform ${actions.story ? 'bg-emerald-500 text-white scale-90' : 'bg-primary text-accent-gold group-hover:scale-105'}`}>
+                           <span className="material-symbols-outlined !text-2xl">{actions.story ? 'check' : 'auto_awesome'}</span>
+                        </div>
+                        <div className="text-left flex-1">
+                           <p className={`text-sm font-outfit font-bold ${actions.story ? 'text-white/40 line-through' : 'text-white'}`}>Timeline JZ Privé</p>
+                           <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[9px] text-accent-gold font-black uppercase tracking-widest">+20 Lash Points</span>
+                           </div>
+                        </div>
+                        <span className="material-symbols-outlined text-white/10 group-hover:text-accent-gold transition-colors">east</span>
+                     </div>
+                  </button>
+
+                  <button
+                     onClick={() => handleAction('instagram')}
+                     disabled={actions.instagram}
+                     className={`group relative p-6 rounded-3xl border transition-all duration-500 active:scale-95 ${actions.instagram ? 'bg-emerald-500/10 border-emerald-500/20 opacity-60' : 'bg-white/5 border-white/10 hover:border-accent-gold/30'}`}
+                  >
+                     <div className="flex items-center gap-5">
+                        <div className={`size-12 rounded-2xl flex items-center justify-center shadow-lg transition-transform ${actions.instagram ? 'bg-emerald-500 text-white scale-90' : 'bg-gradient-to-tr from-[#f09433] via-[#e6683c] via-[#dc2743] via-[#cc2366] to-[#bc1888] text-white group-hover:scale-105'}`}>
+                           <span className="material-symbols-outlined !text-2xl">{actions.instagram ? 'check' : 'share'}</span>
+                        </div>
+                        <div className="text-left flex-1">
+                           <p className={`text-sm font-outfit font-bold ${actions.instagram ? 'text-white/40 line-through' : 'text-white'}`}>Social Presence</p>
+                           <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[9px] text-accent-gold font-black uppercase tracking-widest">+30 Lash Points</span>
+                           </div>
+                        </div>
+                        <span className="material-symbols-outlined text-white/10 group-hover:text-accent-gold transition-colors">east</span>
+                     </div>
+                  </button>
+               </div>
+            </section>
+
+            <section className="bg-surface-dark border border-white/5 rounded-[48px] p-10 flex flex-col items-center gap-8 animate-reveal shadow-huge" style={{ animationDelay: '0.4s' }}>
+               <div className="flex flex-col items-center gap-2 w-full">
+                  <div className="size-10 rounded-full bg-accent-gold/10 flex items-center justify-center text-accent-gold border border-accent-gold/20 mb-2">
+                     <span className="material-symbols-outlined !text-xl">wifi_tethering</span>
+                  </div>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/60">Conexão Digital Ilimitada</h3>
+                  <p className="text-[9px] text-white/20 font-black uppercase tracking-widest">Escaneie para conectar</p>
+               </div>
+
+               <div className="relative p-6 bg-white rounded-[32px] shadow-hugest max-w-[180px] group overflow-hidden">
+                  <div className="absolute inset-0 bg-accent-gold opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none"></div>
+                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=WIFI:S:JuliaZenaro_Studio;T:WPA;P:beleza2024;;" alt="QR WiFi" className="w-full grayscale brightness-90 hover:grayscale-0 transition-all duration-700" />
+               </div>
+
+               <div className="text-center space-y-1 select-all">
+                  <p className="text-sm font-display font-bold text-accent-gold tracking-widest italic">JuliaZenaro_Studio</p>
+                  <div className="flex items-center justify-center gap-2 text-white/30 text-[9px] font-black uppercase tracking-widest">
+                     <span className="material-symbols-outlined !text-[10px]">key</span>
+                     <span>Passe: beleza2024</span>
+                  </div>
+               </div>
+            </section>
+         </div>
+
+         <div className="mt-16 animate-reveal relative z-10" style={{ animationDelay: '0.6s' }}>
+            <button
+               onClick={() => navigate('/home')}
+               className="group relative w-full h-20 bg-white/5 border border-white/10 text-white rounded-[32px] font-outfit font-black uppercase tracking-[0.4em] text-[10px] active:scale-95 transition-all overflow-hidden hover:bg-white hover:text-primary hover:border-white"
+            >
+               <span className="relative z-10">Finalizar e Relaxar</span>
+               <div className="absolute inset-x-0 bottom-0 h-1 bg-accent-gold translate-y-full group-hover:translate-y-0 transition-transform"></div>
+            </button>
+         </div>
+
+         <div className="mt-12 text-center opacity-10 select-none animate-reveal" style={{ animationDelay: '0.8s' }}>
+            <p className="font-display italic text-base tracking-widest">Seu bem-estar é o nosso maior privilégio.</p>
+         </div>
       </div>
-
-      <div className="space-y-6">
-        <section className="bg-white/5 border border-white/10 rounded-[32px] p-6 space-y-6">
-           <div className="text-center space-y-1">
-              <h2 className="text-sm font-black uppercase tracking-widest text-white">Ganhe mais Lash Points ✨</h2>
-              <p className="text-[10px] text-gray-400 font-medium italic">Compartilhe sua experiência e ganhe benefícios</p>
-           </div>
-
-           <div className="space-y-4">
-              <button 
-                onClick={() => handleAction('story')}
-                disabled={actions.story}
-                className={`w-full p-4 rounded-2xl border flex items-center justify-between transition-all active:scale-95 ${actions.story ? 'bg-emerald-500/10 border-emerald-500/20 opacity-60' : 'bg-white/5 border-white/10'}`}
-              >
-                 <div className="flex items-center gap-4">
-                    <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-white">
-                       <span className="material-symbols-outlined">add_a_photo</span>
-                    </div>
-                    <div className="text-left">
-                       <p className="text-sm font-bold">Postar Story no App</p>
-                       <p className="text-[9px] text-accent-gold font-black uppercase">+20 Pontos</p>
-                    </div>
-                 </div>
-                 <span className="material-symbols-outlined text-gray-600">{actions.story ? 'check_circle' : 'chevron_right'}</span>
-              </button>
-
-              <button 
-                onClick={() => handleAction('instagram')}
-                disabled={actions.instagram}
-                className={`w-full p-4 rounded-2xl border flex items-center justify-between transition-all active:scale-95 ${actions.instagram ? 'bg-emerald-500/10 border-emerald-500/20 opacity-60' : 'bg-white/5 border-white/10'}`}
-              >
-                 <div className="flex items-center gap-4">
-                    <div className="size-10 rounded-xl bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 flex items-center justify-center text-white">
-                       <span className="material-symbols-outlined">share</span>
-                    </div>
-                    <div className="text-left">
-                       <p className="text-sm font-bold">Compartilhar no Instagram</p>
-                       <p className="text-[9px] text-accent-gold font-black uppercase">+30 Pontos</p>
-                    </div>
-                 </div>
-                 <span className="material-symbols-outlined text-gray-600">{actions.instagram ? 'check_circle' : 'chevron_right'}</span>
-              </button>
-           </div>
-        </section>
-
-        <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 flex flex-col items-center gap-5">
-           <div className="flex items-center gap-3 w-full">
-              <span className="material-symbols-outlined text-accent-gold">wifi</span>
-              <p className="text-xs font-bold uppercase tracking-widest">Conecte-se e relaxe 💖</p>
-           </div>
-           <div className="aspect-square bg-white p-3 rounded-2xl max-w-[140px] shadow-xl">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=WIFI:S:JuliaZenaro_Studio;T:WPA;P:beleza2024;;" alt="QR WiFi" />
-           </div>
-           <div className="text-center space-y-0.5">
-              <p className="text-xs font-bold text-white">Studio Julia Zenaro</p>
-              <p className="text-[9px] text-gray-500 font-medium">Senha: beleza2024</p>
-           </div>
-        </div>
-      </div>
-
-      <div className="mt-10">
-        <button onClick={() => navigate('/home')} className="w-full h-16 bg-white/5 border border-white/10 text-white rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] active:bg-white/10 transition-colors">
-          IR PARA INÍCIO 💖
-        </button>
-      </div>
-    </div>
-  );
+   );
 };
 
 export default CheckInSuccess;

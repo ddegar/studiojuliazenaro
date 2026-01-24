@@ -44,20 +44,10 @@ const AdminNotifications: React.FC = () => {
          // 1. Fetch audience
          let query = supabase.from('profiles').select('id').eq('role', 'CLIENT');
 
-         // Filter by JZ Privé Club level based on lash_points/zenaro_credits
-         if (audience === 'PRIVE') {
-            query = query.gte('lash_points', 2000);
-         } else if (audience === 'SIGNATURE') {
-            query = query.gte('lash_points', 1000).lt('lash_points', 2000);
-         } else if (audience === 'PRIME') {
-            query = query.gte('lash_points', 500).lt('lash_points', 1000);
-         } else if (audience === 'SELECT') {
-            query = query.lt('lash_points', 500);
-         } else if (audience === 'INACTIVE') {
-            // Filter by last appointment date - simplified approach
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-         }
+         if (audience === 'PRIVE') query = query.gte('lash_points', 2000);
+         else if (audience === 'SIGNATURE') query = query.gte('lash_points', 1000).lt('lash_points', 2000);
+         else if (audience === 'PRIME') query = query.gte('lash_points', 500).lt('lash_points', 1000);
+         else if (audience === 'SELECT') query = query.lt('lash_points', 500);
 
          const { data: targets } = await query;
 
@@ -79,7 +69,7 @@ const AdminNotifications: React.FC = () => {
          setTimeout(() => {
             setSent(false);
             navigate('/admin');
-         }, 2000);
+         }, 2500);
 
       } catch (err: any) {
          alert('Erro ao enviar: ' + err.message);
@@ -89,131 +79,193 @@ const AdminNotifications: React.FC = () => {
 
    if (sent) {
       return (
-         <div className="flex flex-col h-full bg-background-dark text-white items-center justify-center p-8 text-center animate-fade-in">
-            <div className="size-24 rounded-full bg-primary flex items-center justify-center mb-6 shadow-2xl shadow-primary/20 ring-4 ring-primary/20">
-               <span className="material-symbols-outlined !text-5xl">send_and_archive</span>
+         <div className="flex flex-col h-full bg-background-dark text-white items-center justify-center p-12 text-center animate-reveal selection:bg-accent-gold/20 relative">
+            {/* Dynamic Background */}
+            <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
+               <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+               <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-emerald-500/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
             </div>
-            <h2 className="text-3xl font-display font-bold text-accent-gold">Mensagens Disparadas!</h2>
-            <p className="text-gray-400 mt-2 text-sm">O público selecionado receberá a notificação em instantes.</p>
+
+            <div className="relative size-32 mb-10 z-10">
+               <div className="absolute inset-0 bg-accent-gold/20 rounded-full blur-3xl animate-pulse"></div>
+               <div className="relative size-32 rounded-full bg-primary flex items-center justify-center shadow-hugest ring-4 ring-primary/20">
+                  <span className="material-symbols-outlined !text-[64px] text-accent-gold">send_and_archive</span>
+               </div>
+            </div>
+            <div className="space-y-4 z-10">
+               <h2 className="text-4xl font-display italic text-white leading-tight">Comunicação Expandida.</h2>
+               <p className="text-white/40 font-outfit text-sm font-light max-w-[280px] mx-auto italic">Sua mensagem foi enviada com sucesso para o público selecionado via JZ Protocol.</p>
+            </div>
+            <div className="mt-12 opacity-20 select-none z-10">
+               <p className="text-[10px] font-black uppercase tracking-[0.5em]">Julia Zenaro Studio • Elite Admin</p>
+            </div>
          </div>
       );
    }
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white">
-         <header className="p-4 border-b border-white/5 flex items-center justify-between glass-nav !bg-background-dark/80">
-            <div className="flex items-center gap-4">
-               <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-               <h1 className="text-lg font-bold">Notificações</h1>
+      <div className="flex flex-col h-full bg-background-dark text-white overflow-hidden selection:bg-accent-gold/20 relative">
+         {/* Dynamic Background Engine */}
+         <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+            <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')] opacity-10 mix-blend-overlay"></div>
+         </div>
+
+         <header className="sticky top-0 z-[100] premium-nav-dark px-8 py-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/5 bg-background-dark/95 backdrop-blur-xl">
+            <div className="flex items-center gap-6">
+               <button onClick={() => navigate('/admin/settings')} className="size-11 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-accent-gold hover:bg-white/10 active:scale-90 transition-all shadow-huge">
+                  <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+               </button>
+               <div>
+                  <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none mb-1">Administrative Suite</p>
+                  <h1 className="text-xl font-display italic text-white tracking-tight">Comunicados de Elite</h1>
+               </div>
             </div>
-            <div className="flex bg-white/5 p-1 rounded-xl">
+            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 shadow-huge self-start md:self-center">
                <button
                   onClick={() => setActiveTab('SYSTEM')}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'SYSTEM' ? 'bg-primary text-white' : 'text-gray-500'}`}
+                  className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${activeTab === 'SYSTEM' ? 'bg-primary text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}
                >
-                  Alertas
+                  Histórico
                </button>
                <button
                   onClick={() => setActiveTab('MARKETING')}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'MARKETING' ? 'bg-primary text-white' : 'text-gray-500'}`}
+                  className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${activeTab === 'MARKETING' ? 'bg-primary text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}
                >
-                  Marketing
+                  Novo Disparo
                </button>
             </div>
          </header>
 
-         <main className="flex-1 overflow-y-auto no-scrollbar pb-32">
+         <main className="relative z-10 flex-1 overflow-y-auto no-scrollbar pb-32">
             {activeTab === 'MARKETING' ? (
-               <div className="p-6 space-y-8 animate-fade-in">
-                  <div className="space-y-4">
-                     <label className="text-[10px] uppercase font-bold text-gray-500 tracking-widest pl-1">Público Alvo</label>
-                     <div className="grid grid-cols-1 gap-3">
+               <div className="p-8 space-y-12 animate-reveal">
+                  <div className="space-y-6">
+                     <div className="flex items-center gap-3 px-2">
+                        <div className="h-px w-6 bg-accent-gold/20"></div>
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-[0.4em] font-outfit">Público Selecionado</label>
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[
-                           { id: 'ALL', label: 'Todas as Clientes', icon: 'groups' },
-                           { id: 'PRIVE', label: 'JZ Privé Club - Privé', icon: 'diamond' },
-                           { id: 'SIGNATURE', label: 'JZ Privé Club - Signature', icon: 'stars' },
-                           { id: 'PRIME', label: 'JZ Privé Club - Prime', icon: 'star' },
-                           { id: 'SELECT', label: 'JZ Privé Club - Select', icon: 'person' },
-                           { id: 'INACTIVE', label: 'Inativas (+30 dias)', icon: 'person_off' }
-                        ].map((item) => (
+                           { id: 'ALL', label: 'Todas as Clientes', icon: 'groups', desc: 'Broadcast global' },
+                           { id: 'PRIVE', label: 'Privé Club - Elite', icon: 'diamond', desc: 'Acima de 2.000 pts' },
+                           { id: 'SIGNATURE', label: 'Privé Club - Signature', icon: 'stars', desc: '1.000 a 2.000 pts' },
+                           { id: 'PRIME', label: 'Privé Club - Prime', icon: 'star', desc: '500 a 1.000 pts' },
+                           { id: 'SELECT', label: 'Privé Club - Select', icon: 'person', desc: 'Novas membras' },
+                           { id: 'INACTIVE', label: 'Status: Adormecidas', icon: 'person_off', desc: '+30 dias inativas' }
+                        ].map((item, idx) => (
                            <button
                               key={item.id}
                               onClick={() => setAudience(item.id as Audience)}
-                              className={`p-5 rounded-3xl border text-left flex items-center justify-between transition-all ${audience === item.id ? 'bg-primary/20 border-primary ring-1 ring-primary' : 'bg-white/5 border-white/10 opacity-60'}`}
+                              className={`group relative p-6 rounded-[32px] border transition-all duration-700 text-left flex items-center justify-between overflow-hidden ${audience === item.id ? 'bg-white/5 border-accent-gold/40 shadow-huge' : 'bg-surface-dark/40 border-white/5 opacity-60 hover:opacity-100 hover:border-white/10'}`}
+                              style={{ animationDelay: `${idx * 0.05}s` }}
                            >
-                              <div className="flex items-center gap-4">
-                                 <span className="material-symbols-outlined text-accent-gold">{item.icon}</span>
+                              <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                              <div className="flex items-center gap-5 relative z-10">
+                                 <div className={`size-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${audience === item.id ? 'bg-accent-gold text-primary scale-110' : 'bg-white/5 text-white/20'}`}>
+                                    <span className="material-symbols-outlined !text-2xl">{item.icon}</span>
+                                 </div>
                                  <div>
-                                    <p className="font-bold text-sm">{item.label}</p>
-                                    <p className="text-[10px] text-gray-500 uppercase">{item.count} destinatários</p>
+                                    <p className={`font-outfit font-bold text-sm ${audience === item.id ? 'text-white' : 'text-white/40 group-hover:text-white'}`}>{item.label}</p>
+                                    <p className="text-[9px] text-white/20 uppercase tracking-widest mt-0.5">{item.desc}</p>
                                  </div>
                               </div>
-                              {audience === item.id && <span className="material-symbols-outlined text-primary">check_circle</span>}
+                              {audience === item.id && (
+                                 <div className="size-6 rounded-full bg-accent-gold text-primary flex items-center justify-center animate-reveal relative z-10">
+                                    <span className="material-symbols-outlined !text-sm font-black">done</span>
+                                 </div>
+                              )}
                            </button>
                         ))}
                      </div>
                   </div>
 
-                  <div className="space-y-6">
-                     <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-gray-500 tracking-widest pl-1">Assunto do Push</label>
-                        <input type="text" placeholder="Ex: Saudades de você! ✨" className="w-full h-14 bg-white/5 border-white/10 rounded-2xl px-5 text-sm focus:ring-accent-gold outline-none" />
+                  <div className="space-y-10">
+                     <div className="space-y-4">
+                        <div className="flex items-center gap-3 px-2">
+                           <div className="h-px w-6 bg-accent-gold/20"></div>
+                           <label className="text-[10px] font-black uppercase text-white/30 tracking-[0.4em] font-outfit">Mensagem Narrativa</label>
+                        </div>
+                        <input
+                           type="text"
+                           placeholder="Ex: Seu próximo momento de beleza aguarda! ✨"
+                           className="w-full h-18 bg-surface-dark/40 border border-white/5 rounded-2xl px-8 text-sm focus:border-accent-gold/40 focus:bg-surface-dark outline-none transition-all placeholder:text-white/10 font-outfit"
+                        />
                      </div>
 
-                     <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-bold text-gray-500 tracking-widest pl-1">Corpo da Mensagem</label>
-                        <textarea placeholder="Escreva o texto da notificação..." className="w-full bg-white/5 border-white/10 rounded-3xl p-6 text-sm focus:ring-accent-gold h-40 outline-none" />
+                     <div className="space-y-4">
+                        <textarea
+                           placeholder="Escreva o conteúdo da notificação exclusiva..."
+                           className="w-full bg-surface-dark/40 border border-white/5 rounded-[40px] p-8 text-sm focus:border-accent-gold/40 focus:bg-surface-dark h-48 outline-none transition-all placeholder:text-white/10 font-outfit font-light leading-relaxed"
+                        />
                      </div>
 
-                     <div className="bg-primary/10 p-5 rounded-3xl border border-primary/20 flex gap-4">
-                        <span className="material-symbols-outlined text-primary">smart_toy</span>
-                        <p className="text-[10px] text-gray-400 leading-relaxed italic">
-                           Dica: Use emojis e uma linguagem acolhedora para aumentar a taxa de conversão em até 40%.
-                        </p>
+                     <div className="bg-primary/5 p-8 rounded-[40px] border border-primary/10 flex gap-6 items-start relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="size-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/20 shrink-0 shadow-lg relative z-10">
+                           <span className="material-symbols-outlined !text-2xl">auto_fix_high</span>
+                        </div>
+                        <div className="space-y-1 relative z-10">
+                           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 font-outfit leading-none mb-1">Dica de Gestão</p>
+                           <p className="text-[12px] text-white/30 leading-relaxed italic font-light pt-1">
+                              Utilize linguagem acolhedora e descritiva. Membros do <span className="text-accent-gold font-bold">JZ Privé Club</span> valorizam a curadoria e a exclusividade em cada contato.
+                           </p>
+                        </div>
                      </div>
                   </div>
                </div>
             ) : (
-               <div className="p-6 space-y-6 animate-fade-in">
+               <div className="p-8 space-y-10 animate-reveal">
                   <div className="flex items-center justify-between px-2">
-                     <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Últimos Alertas do Sistema</h2>
-                     <button onClick={fetchSystemNotifications} className="material-symbols-outlined text-gray-500 !text-sm">refresh</button>
+                     <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 font-outfit">Logs de Comunicação</h2>
+                     <button onClick={fetchSystemNotifications} className="group size-10 flex items-center justify-center rounded-full bg-white/5 text-white/20 hover:text-accent-gold hover:bg-white/10 transition-all duration-500">
+                        <span className="material-symbols-outlined !text-xl group-active:rotate-180 transition-transform duration-500">refresh</span>
+                     </button>
                   </div>
 
                   {loadingSystem ? (
-                     <div className="py-20 flex justify-center">
-                        <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                     <div className="py-32 flex flex-col items-center gap-6 animate-pulse">
+                        <div className="size-10 border-2 border-accent-gold/20 border-t-accent-gold rounded-full animate-spin"></div>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-white/10">Sincronizando Histórico</p>
                      </div>
                   ) : systemNotifications.length === 0 ? (
-                     <div className="py-20 text-center opacity-30 space-y-4">
-                        <span className="material-symbols-outlined !text-4xl text-gray-500">notifications_off</span>
-                        <p className="text-sm italic">Nenhum alerta recente.</p>
+                     <div className="py-32 text-center opacity-10 space-y-6">
+                        <span className="material-symbols-outlined !text-[64px]">notifications_off</span>
+                        <p className="font-display italic text-2xl">O console está em silêncio.</p>
                      </div>
                   ) : (
-                     <div className="space-y-3">
-                        {systemNotifications.map((notif) => (
-                           <div key={notif.id} className="bg-card-dark p-5 rounded-[24px] border border-white/5 flex gap-4 transition-all hover:border-white/10 relative overflow-hidden group">
-                              <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${notif.type === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' :
-                                 notif.type === 'cancelled' ? 'bg-rose-500/10 text-rose-500' :
-                                    notif.type === 'completed' ? 'bg-blue-500/10 text-blue-500' :
-                                       'bg-accent-gold/10 text-accent-gold'
+                     <div className="grid gap-6">
+                        {systemNotifications.map((notif, idx) => (
+                           <div
+                              key={notif.id}
+                              className="group relative bg-surface-dark/40 border border-white/5 p-8 rounded-[40px] flex gap-6 transition-all duration-700 hover:border-accent-gold/20 hover:bg-surface-dark overflow-hidden animate-reveal"
+                              style={{ animationDelay: `${idx * 0.05}s` }}
+                           >
+                              <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                              <div className={`size-14 rounded-[24px] flex items-center justify-center shrink-0 shadow-huge relative z-10 ${notif.type === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/10' :
+                                 notif.type === 'cancelled' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/10' :
+                                    notif.type === 'completed' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/10' :
+                                       'bg-primary/20 text-accent-gold border border-white/5'
                                  }`}>
-                                 <span className="material-symbols-outlined !text-lg">
+                                 <span className="material-symbols-outlined !text-[28px]">
                                     {notif.type === 'confirmed' ? 'check_circle' :
                                        notif.type === 'cancelled' ? 'cancel' :
                                           notif.type === 'completed' ? 'verified' :
                                              'notifications'}
                                  </span>
                               </div>
-                              <div className="flex-1 space-y-1">
-                                 <h4 className="font-bold text-sm text-white">{notif.title}</h4>
-                                 <p className="text-[11px] text-gray-400 leading-relaxed">{notif.message}</p>
-                                 <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest pt-1">
-                                    {new Date(notif.created_at).toLocaleString('pt-BR')}
-                                 </p>
+                              <div className="flex-1 space-y-3 relative z-10">
+                                 <div className="flex justify-between items-start pt-1">
+                                    <h4 className="font-outfit font-bold text-base text-white group-hover:text-accent-gold transition-colors duration-500">{notif.title}</h4>
+                                    <p className="text-[8px] text-white/10 font-black uppercase tracking-widest mt-1">
+                                       {new Date(notif.created_at).toLocaleDateString('pt-BR')}
+                                    </p>
+                                 </div>
+                                 <p className="text-[13px] text-white/30 font-light leading-relaxed italic pr-4">{notif.message}</p>
                               </div>
                               {!notif.read && (
-                                 <div className="absolute top-4 right-4 size-2 bg-primary rounded-full"></div>
+                                 <div className="absolute top-8 right-8 size-2.5 bg-accent-gold rounded-full shadow-[0_0_15px_rgba(201,169,97,0.8)]"></div>
                               )}
                            </div>
                         ))}
@@ -224,18 +276,29 @@ const AdminNotifications: React.FC = () => {
          </main>
 
          {activeTab === 'MARKETING' && (
-            <div className="p-6 fixed bottom-0 inset-x-0 glass-nav !bg-background-dark/90 border-t border-white/5 z-[60]">
+            <div className="p-8 fixed bottom-0 inset-x-0 glass-nav !bg-background-dark/95 border-t border-white/5 z-[60]">
                <button
                   onClick={handleSend}
                   disabled={sending}
-                  className="w-full h-16 bg-primary text-white rounded-2xl font-bold text-xs uppercase tracking-[0.3em] shadow-xl shadow-primary/20 flex items-center justify-center gap-3 disabled:opacity-50"
+                  className="group relative w-full h-18 bg-primary text-white rounded-[32px] font-outfit font-black text-[10px] uppercase tracking-[0.4em] shadow-hugest overflow-hidden active:scale-95 transition-all disabled:opacity-50"
                >
-                  {sending ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'DISPARAR AGORA'}
+                  <div className="absolute inset-0 bg-accent-gold/10 translate-y-full group-hover:translate-y-0 transition-transform duration-700"></div>
+                  {sending ? (
+                     <div className="size-6 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                     <span className="relative z-10 flex items-center justify-center gap-4">
+                        Disparar Comunicado
+                        <span className="material-symbols-outlined !text-xl text-accent-gold transition-transform group-hover:translate-x-3">rocket_launch</span>
+                     </span>
+                  )}
                </button>
             </div>
          )}
 
          <AdminBottomNav />
+
+         {/* Visual Safe Area Inset */}
+         <div className="fixed bottom-0 left-0 w-full h-8 bg-black pointer-events-none z-[90]"></div>
       </div>
    );
 };

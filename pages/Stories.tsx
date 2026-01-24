@@ -207,56 +207,77 @@ const Stories: React.FC = () => {
   if (!current) return null;
 
   return (
-    <div className="flex flex-col h-screen bg-black relative overflow-hidden select-none">
-      {/* Bars */}
-      <div className="absolute top-6 left-0 w-full flex gap-1.5 px-4 z-[60]">
+    <div className="flex flex-col h-screen bg-background-dark relative overflow-hidden select-none">
+      {/* Immersive Progress System */}
+      <div className="absolute top-6 left-0 w-full flex gap-2 px-6 z-[60]">
         {items.map((item, idx) => (
-          <div key={item.id} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden backdrop-blur-md">
+          <div key={item.id} className="flex-1 h-0.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-md ring-1 ring-white/5">
             <div
-              className={`h-full bg-white transition-all duration-50 ${idx === currentIndex ? '' : 'duration-0'}`}
+              className={`h-full bg-gradient-to-r from-accent-gold to-white transition-all duration-50 ${idx === currentIndex ? '' : 'duration-0'}`}
               style={{ width: `${idx < currentIndex ? 100 : idx === currentIndex ? progress : 0}%` }}
             ></div>
           </div>
         ))}
       </div>
 
-      {/* Header */}
-      <div className="absolute top-12 left-0 w-full flex items-center justify-between px-6 z-[60]">
+      {/* Narrative Overlay Header */}
+      <header className="absolute top-10 left-0 w-full flex items-center justify-between px-8 z-[60] animate-reveal">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-white/30 overflow-hidden shadow-2xl bg-gray-800">
-            {current.authorAvatar && <img src={current.authorAvatar} alt="author" className="w-full h-full object-cover" />}
+          <div className="relative size-12 rounded-2xl border border-white/20 p-1 overflow-hidden bg-white/5 backdrop-blur-xl">
+            <div className="absolute inset-0 bg-accent-gold organic-shape-1 opacity-10"></div>
+            <img src={current.authorAvatar} alt="author" className="w-full h-full object-cover rounded-xl shadow-inner grayscale-[20%]" />
           </div>
-          <div className="text-white drop-shadow-lg">
-            <p className="text-sm font-black tracking-wide">{current.authorName}</p>
-            <p className="text-[10px] opacity-60 font-medium">{new Date(current.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+          <div className="flex flex-col">
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-accent-gold drop-shadow-md">Professional Squad</p>
+            <h3 className="text-sm font-display font-bold text-white drop-shadow-lg tracking-wide">{current.authorName}</h3>
+            <p className="text-[8px] opacity-40 font-black text-white uppercase tracking-widest mt-0.5">{new Date(current.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
           </div>
         </div>
-        <button onClick={() => navigate('/home')} className="material-symbols-outlined text-white text-4xl drop-shadow-lg active:scale-90 transition-transform">close</button>
-      </div>
+        <button
+          onClick={() => navigate('/home')}
+          className="size-10 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white active:scale-90 transition-transform"
+        >
+          <span className="material-symbols-outlined !text-2xl">close</span>
+        </button>
+      </header>
 
-      {/* Content */}
+      {/* Immersive Content Engine */}
       <div
-        className="flex-1 w-full bg-cover bg-center bg-no-repeat transition-all duration-500 animate-fade-in relative"
+        className="flex-1 w-full bg-cover bg-center bg-no-repeat transition-all duration-700 relative group cursor-pointer"
         style={{ backgroundImage: `url(${current.url})` }}
         onClick={handleTouch}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background-dark/60 via-transparent to-background-dark/80 pointer-events-none"></div>
+
+        {/* Visual Cues for Navigation (Desktop/Large UI) */}
+        <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <span className="material-symbols-outlined text-white/20 !text-4xl">chevron_left</span>
+        </div>
+        <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <span className="material-symbols-outlined text-white/20 !text-4xl">chevron_right</span>
+        </div>
       </div>
 
-      {/* Footer */}
-      <div className="p-8 pb-12 flex items-center justify-center absolute bottom-0 inset-x-0 z-[60] backdrop-blur-sm bg-black/10">
-        <button
-          onClick={(e) => { e.stopPropagation(); handleLike(); }}
-          disabled={liked || likeLoading}
-          className={`
-            material-symbols-outlined text-4xl active:scale-150 transition-all duration-300
-            ${liked ? 'text-rose-500 scale-110' : 'text-white/60 hover:text-white'}
-          `}
-          style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}
-        >
-          favorite
-        </button>
-      </div>
+      {/* interaction Ecosystem */}
+      <footer className="px-8 pt-6 pb-12 flex flex-col items-center justify-center absolute bottom-0 inset-x-0 z-[60] backdrop-blur-lg bg-background-dark/40 border-t border-white/5 animate-reveal" style={{ animationDelay: '0.3s' }}>
+        <div className="flex flex-col items-center gap-6 w-full max-w-[280px]">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleLike(); }}
+            disabled={liked || likeLoading}
+            className={`
+               size-16 rounded-full flex items-center justify-center transition-all duration-500
+               ${liked ? 'bg-rose-500 text-white shadow-2xl shadow-rose-500/40 scale-110' : 'bg-white/5 border border-white/10 text-white/40 hover:text-white hover:border-white/30'}
+             `}
+          >
+            <span className="material-symbols-outlined !text-3xl active:scale-150 transition-transform" style={{ fontVariationSettings: liked ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+          </button>
+
+          <div className="flex flex-col items-center gap-2 opacity-30 select-none">
+            <p className="text-[8px] font-black uppercase tracking-[0.5em] text-white">Julia Zenaro</p>
+            <div className="h-px w-6 bg-accent-gold/40"></div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

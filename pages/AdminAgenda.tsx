@@ -38,7 +38,6 @@ const AdminAgenda: React.FC = () => {
          if (profile) {
             setCurrentUser(profile as { id: string, role: UserRole });
 
-            // Fetch real professionals from professionals table
             const { data: pros } = await supabase
                .from('professionals')
                .select('*')
@@ -58,7 +57,6 @@ const AdminAgenda: React.FC = () => {
 
             setProfessionals(formattedPros);
 
-            // Find the professional record that matches the logged-in user by name
             const { data: profileData } = await supabase
                .from('profiles')
                .select('name')
@@ -69,18 +67,7 @@ const AdminAgenda: React.FC = () => {
                p.name.toLowerCase().includes(profileData?.name?.split(' ')[0]?.toLowerCase() || '')
             );
 
-            // Initial selection
             const isPrivileged = ['MASTER_ADMIN', 'ADMIN', 'PROFESSIONAL_ADMIN'].includes(profile.role);
-            if (isPrivileged) {
-               setSelectedProId(matchingPro?.id || formattedPros[0]?.id || '');
-            } else {
-               setSelectedProId(matchingPro?.id || '');
-            }
-
-            // Use the professional's ID for filtering
-            const initialProId = isPrivileged ? (matchingPro?.id || formattedPros[0]?.id || '') : (matchingPro?.id || '');
-
-            // SECURITY: If not Master, force selectedProId to be the matching professional ID
             if (!isPrivileged) {
                if (!matchingPro) {
                   alert("Perfil profissional não vinculado. Entre em contato com o suporte.");
@@ -89,7 +76,7 @@ const AdminAgenda: React.FC = () => {
                }
                setSelectedProId(matchingPro.id);
             } else {
-               setSelectedProId(initialProId);
+               setSelectedProId(matchingPro?.id || formattedPros[0]?.id || '');
             }
          }
       } catch (err) {
@@ -102,20 +89,12 @@ const AdminAgenda: React.FC = () => {
    useEffect(() => {
       initAgenda();
 
-      // Real-time synchronization
       const channel = supabase
          .channel('schema-db-changes')
          .on(
             'postgres_changes',
-            {
-               event: '*',
-               schema: 'public',
-               table: 'appointments'
-            },
-            () => {
-               // Reload data on any change
-               fetchMonthAppts();
-            }
+            { event: '*', schema: 'public', table: 'appointments' },
+            () => fetchMonthAppts()
          )
          .subscribe();
 
@@ -131,16 +110,14 @@ const AdminAgenda: React.FC = () => {
          const firstDay = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-01`;
          const lastDay = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-${daysInMonth}`;
 
-         const { data, error } = await supabase
+         const { data } = await supabase
             .from('appointments')
             .select('date, status')
             .eq('professional_id', selectedProId)
-            // Just filter out cancelled, everything else is relevant for blocking the calendar
             .neq('status', 'cancelled')
             .gte('date', firstDay)
             .lte('date', lastDay);
 
-         if (error) throw error;
          setAppointments(data || []);
       } catch (e) {
          console.error("Error fetching month appts", e);
@@ -182,88 +159,123 @@ const AdminAgenda: React.FC = () => {
 
    if (loading) {
       return (
-         <div className="flex h-screen items-center justify-center bg-background-dark">
-            <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+         <div className="flex h-screen items-center justify-center bg-background-dark font-outfit">
+            <div className="relative size-16 flex items-center justify-center">
+               <div className="absolute inset-0 border-2 border-primary/5 rounded-full"></div>
+               <div className="absolute inset-0 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+               <span className="material-symbols-outlined text-accent-gold scale-75">calendar_month</span>
+            </div>
          </div>
       );
    }
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-32 lg:pb-8">
-         <header className="sticky top-0 z-50 glass-nav !bg-background-dark/80 p-6 lg:p-8 border-b border-white/5 flex flex-col gap-6">
+      <div className="flex flex-col min-h-screen bg-background-dark text-white font-outfit antialiased selection:bg-accent-gold/20 selection:text-white">
+         <header className="relative z-[60] premium-blur-dark sticky top-0 px-8 py-6 flex flex-col gap-6 border-b border-white/5 bg-background-dark/80 backdrop-blur-xl">
             <div className="flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                  <button onClick={() => navigate('/admin')} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-                  <div>
-                     <h1 className="text-xl md:text-2xl font-display font-bold">Agenda Mestra</h1>
-                     <p className="text-[10px] md:text-xs text-gray-500 uppercase font-bold tracking-[0.2em]">Sincronizada em Tempo Real</p>
+               <div className="flex items-center gap-6">
+                  <button
+                     onClick={() => navigate('/admin')}
+                     className="size-11 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-accent-gold group active:scale-95 transition-all"
+                  >
+                     <span className="material-symbols-outlined !text-xl group-hover:-translate-x-1 transition-transform">west</span>
+                  </button>
+                  <div className="space-y-0.5">
+                     <p className="text-[7px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none">Gestão Studio</p>
+                     <h1 className="font-display italic text-xl text-white">Agenda Mestra</h1>
                   </div>
                </div>
+
                <div className="flex gap-3">
-                  <button onClick={() => initAgenda()} className="size-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
-                     <span className="material-symbols-outlined !text-xl">refresh</span>
+                  <button
+                     onClick={() => initAgenda()}
+                     className="size-11 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white/30 hover:text-white transition-all active:rotate-180 duration-500"
+                  >
+                     <span className="material-symbols-outlined !text-lg">sync</span>
                   </button>
-                  <button onClick={() => navigate('/admin/agenda/new')} className="size-10 rounded-full bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20">
-                     <span className="material-symbols-outlined">add</span>
+                  <button
+                     onClick={() => navigate('/admin/agenda/new')}
+                     className="size-11 rounded-2xl bg-accent-gold flex items-center justify-center text-primary shadow-huge active:scale-90 transition-all"
+                  >
+                     <span className="material-symbols-outlined !text-lg">add</span>
                   </button>
                </div>
             </div>
 
-            {(isMaster && visibleProfessionals.length > 1) && (
-               <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-                  {visibleProfessionals.map(p => (
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+               {/* Professional Selector - More Compact */}
+               {isMaster && visibleProfessionals.length > 1 && (
+                  <div className="flex-1 flex items-center gap-3 overflow-x-auto no-scrollbar mask-fade-horizontal">
+                     {visibleProfessionals.map(p => (
+                        <button
+                           key={p.id}
+                           onClick={() => setSelectedProId(p.id)}
+                           className={`group flex items-center gap-2 px-4 h-11 rounded-2xl transition-all duration-500 shrink-0 border whitespace-nowrap ${selectedProId === p.id ? 'bg-white text-primary border-white shadow-huge' : 'bg-white/5 border-white/10 text-white/30 hover:bg-white/10'}`}
+                        >
+                           <div className={`size-6 rounded-lg overflow-hidden border transition-all duration-500 ${selectedProId === p.id ? 'border-primary/20' : 'border-white/10 opacity-40'}`}>
+                              <img src={p.avatar} className="w-full h-full object-cover" alt="" />
+                           </div>
+                           <span className="text-[9px] font-black uppercase tracking-[0.1em]">{p.name.split(' ')[0]}</span>
+                        </button>
+                     ))}
+                  </div>
+               )}
+
+               {/* View Filters - More Compact */}
+               <div className="bg-white/5 p-1 rounded-2xl border border-white/5 flex gap-1 shrink-0">
+                  {[
+                     { id: 'ALL', label: 'Tudo', icon: 'border_all' },
+                     { id: 'FREE', label: 'Disponível', icon: 'auto_awesome' },
+                     { id: 'BUSY', label: 'Demanda', icon: 'show_chart' }
+                  ].map(f => (
                      <button
-                        key={p.id}
-                        onClick={() => setSelectedProId(p.id)}
-                        className={`px-6 h-10 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all shrink-0 border ${selectedProId === p.id ? 'bg-primary border-primary text-white shadow-lg' : 'bg-white/5 border-white/10 text-gray-400'}`}
-                     >{p.name}</button>
+                        key={f.id}
+                        onClick={() => setFilter(f.id as any)}
+                        className={`px-4 h-9 rounded-xl flex items-center justify-center gap-2 text-[8px] font-black uppercase tracking-[0.1em] transition-all duration-500 ${filter === f.id ? 'bg-white/10 text-accent-gold border border-accent-gold/20' : 'text-white/20 hover:text-white/40'}`}
+                     >
+                        <span className="material-symbols-outlined !text-xs">{f.icon}</span>
+                        {f.label}
+                     </button>
                   ))}
                </div>
-            )}
-
-            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5">
-               {[
-                  { id: 'ALL', label: 'Tudo', icon: 'border_all' },
-                  { id: 'FREE', label: 'Livres', icon: 'event_available' },
-                  { id: 'BUSY', label: 'Ocupados', icon: 'event_busy' }
-               ].map(f => (
-                  <button
-                     key={f.id}
-                     onClick={() => setFilter(f.id as any)}
-                     className={`flex-1 h-9 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${filter === f.id ? 'bg-white/10 text-accent-gold shadow-sm' : 'text-gray-500'}`}
-                  >
-                     <span className="material-symbols-outlined !text-sm">{f.icon}</span>
-                     {f.label}
-                  </button>
-               ))}
             </div>
          </header>
 
-         <main className="flex-1 p-6 lg:p-6 space-y-6 overflow-y-auto no-scrollbar">
-            <div className="max-w-6xl mx-auto w-full">
-               <div className="flex justify-between items-center px-4">
-                  <h2 className="text-2xl md:text-3xl font-display font-bold capitalize">{monthName} <span className="text-gray-600">{viewYear}</span></h2>
-                  <div className="flex gap-4">
-                     <button onClick={() => changeMonth(-1)} className="material-symbols-outlined text-gray-500 hover:text-white transition-colors">chevron_left</button>
-                     <button onClick={() => changeMonth(1)} className="material-symbols-outlined text-gray-500 hover:text-white transition-colors">chevron_right</button>
+         <main className="relative z-10 p-8 lg:p-12 space-y-12 pb-48 w-full max-w-screen-xl mx-auto overflow-x-hidden">
+            {/* Calendar Navigation and Month View */}
+            <div className="space-y-10 animate-reveal">
+               <div className="flex items-center justify-between px-4">
+                  <div className="space-y-2">
+                     <p className="text-[10px] font-black text-accent-gold tracking-[0.4em] uppercase opacity-40">Período Selecionado</p>
+                     <h2 className="text-4xl font-display font-medium text-white italic capitalize">{monthName} <span className="font-light text-white/30 not-italic ml-2">{viewYear}</span></h2>
+                  </div>
+                  <div className="flex bg-white/5 p-2 rounded-2xl border border-white/10 gap-2">
+                     <button onClick={() => changeMonth(-1)} className="size-12 rounded-xl flex items-center justify-center text-white/40 hover:text-white active:scale-95 transition-all">
+                        <span className="material-symbols-outlined !text-xl">west</span>
+                     </button>
+                     <button onClick={() => changeMonth(1)} className="size-12 rounded-xl flex items-center justify-center text-white/40 hover:text-white active:scale-95 transition-all">
+                        <span className="material-symbols-outlined !text-xl">east</span>
+                     </button>
                   </div>
                </div>
 
-               <div className="grid grid-cols-7 gap-2 lg:gap-3 transition-opacity duration-300">
-                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(d => (
-                     <div key={d} className="text-center text-[9px] md:text-xs font-black uppercase text-gray-700 pb-2">{d}</div>
+               {/* Design Calendar Grid */}
+               <div className="grid grid-cols-7 gap-3 lg:gap-6">
+                  {['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'].map(d => (
+                     <div key={d} className="text-center text-[9px] font-black uppercase text-white/10 py-4 tracking-[0.3em] font-outfit">{d}</div>
                   ))}
-                  {/* Empty cells for offset */}
+
                   {Array.from({ length: new Date(viewYear, viewMonth, 1).getDay() }).map((_, i) => (
-                     <div key={`empty-${i}`}></div>
+                     <div key={`empty-${i}`} className="aspect-square opacity-0"></div>
                   ))}
+
                   {Array.from({ length: daysInMonth }).map((_, i) => {
                      const day = i + 1;
                      const dayDate = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
                      const isToday = dayDate === now.toISOString().split('T')[0];
 
                      const dayAppts = appointments.filter(a => a.date === dayDate);
-                     const busyAppts = dayAppts.filter(a => ['scheduled', 'confirmed', 'completed'].includes(a.status));
+                     const busyAppts = dayAppts.filter(a => ['scheduled', 'confirmed', 'completed', 'rescheduled'].includes(a.status));
                      const blockedAppts = dayAppts.filter(a => ['blocked', 'BLOCKED'].includes(a.status));
 
                      const selectedPro = professionals.find(p => p.id === selectedProId);
@@ -277,66 +289,87 @@ const AdminAgenda: React.FC = () => {
 
                      const startH = parseInt(startRange.split(':')[0]);
                      const endH = parseInt(endRange.split(':')[0]);
-                     const totalSlots = isDayClosed ? 0 : (endH - startH) * 2; // Slots de 30 min
+                     const totalSlots = isDayClosed ? 0 : (endH - startH) * 2;
 
                      const hasAppointments = busyAppts.length > 0;
                      const isBlocked = blockedAppts.length > 0;
                      const isFull = busyAppts.length >= totalSlots && totalSlots > 0;
                      const isFree = busyAppts.length === 0 && !isBlocked;
 
-                     // Filter Logic
                      const isVisible = filter === 'ALL' || (filter === 'FREE' && isFree && !isDayClosed) || (filter === 'BUSY' && !isFree);
 
                      return (
                         <button
                            key={i}
                            onClick={() => handleDayClick(day)}
-                           className={`aspect-square md:aspect-auto md:h-12 rounded-2xl md:rounded-xl border flex flex-col items-center justify-center gap-1 transition-all relative 
-                               ${isToday ? 'bg-primary border-primary shadow-xl shadow-primary/30 scale-105 z-10' : 'bg-white/5 border-white/5 hover:border-accent-gold/30 hover:bg-white/10'}
-                               ${!isVisible ? 'opacity-20 grayscale' : 'opacity-100'}
-                               ${isDayClosed && !isToday ? 'bg-rose-500/5 border-rose-500/10 grayscale-[0.8]' : ''}
-                               ${filter === 'FREE' && isFree && !isToday && !isDayClosed ? 'ring-1 ring-emerald-500/50 bg-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : ''}
+                           className={`group aspect-square rounded-[24px] lg:rounded-[36px] border flex flex-col items-center justify-center p-2 transition-all duration-700 relative overflow-hidden
+                               ${isToday ? 'bg-accent-gold border-accent-gold shadow-huge scale-[1.1] z-20' : 'bg-surface-dark/40 border-white/5 hover:border-accent-gold/40 hover:bg-surface-dark'}
+                               ${!isVisible ? 'opacity-10 scale-90 blur-[1px]' : 'opacity-100'}
+                               ${isDayClosed && !isToday ? 'bg-rose-900/5 border-rose-900/10' : ''}
+                               ${filter === 'FREE' && isFree && !isToday && !isDayClosed ? 'border-accent-gold/40 ring-1 ring-accent-gold/20' : ''}
+                               animate-reveal
                             `}
+                           style={{ animationDelay: `${i * 0.02}s` }}
                         >
-                           <span className={`text-xs md:text-sm font-black ${isToday ? 'text-white' : (filter === 'FREE' && isFree && !isDayClosed ? 'text-emerald-400' : (isDayClosed ? 'text-rose-900/40' : 'text-gray-400'))}`}>{day}</span>
-                           <div className="flex gap-1 items-center">
-                              {isDayClosed && <span className="text-[8px] font-black text-rose-900/40 uppercase">Folga</span>}
-                              {hasAppointments && <div className={`size-1.5 rounded-full ${isFull ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>}
+                           <span className={`text-base lg:text-xl font-display ${isToday ? 'text-primary' : (isDayClosed ? 'text-white/10' : (hasAppointments ? 'text-white' : 'text-white/30'))}`}>
+                              {day}
+                           </span>
+
+                           <div className="flex gap-1 items-center mt-1">
+                              {isDayClosed && !isToday ? (
+                                 <span className="text-[6px] font-black text-rose-400 uppercase tracking-widest opacity-40">Folga</span>
+                              ) : (
+                                 <div className={`h-1 transition-all duration-700 rounded-full ${isFull ? 'w-4 bg-rose-500' : (hasAppointments ? 'w-2 bg-accent-gold' : 'w-0')}`}></div>
+                              )}
                               {isBlocked && <span className="material-symbols-outlined !text-[10px] text-rose-500">lock</span>}
                            </div>
+
+                           {!isToday && !isDayClosed && hasAppointments && (
+                              <div className="absolute top-2 right-2 text-[8px] font-black text-white/20 group-hover:text-accent-gold transition-colors">{busyAppts.length}</div>
+                           )}
                         </button>
                      );
                   })}
                </div>
 
-               <div className="bg-card-dark p-6 rounded-3xl border border-white/5 space-y-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Status dos Dias</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="flex items-center gap-3">
-                        <div className="size-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Atendimentos</span>
-                     </div>
-                     <div className="flex items-center gap-3">
-                        <div className="size-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20"></div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cheio / Bloqueado</span>
-                     </div>
-                     <div className="flex items-center gap-3">
-                        <div className="size-3 rounded-full border border-gray-600"></div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sem Atividade</span>
-                     </div>
-                     <div className="flex items-center gap-3">
-                        <div className="size-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-                           <span className="material-symbols-outlined !text-[10px] text-emerald-500">check</span>
+               {/* Status Intelligence Legend */}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-10 border-t border-white/5">
+                  <div className="flex flex-col gap-6 p-8 bg-surface-dark/20 rounded-[40px] border border-white/5">
+                     <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-2">Monitor de Disponibilidade</p>
+                     <div className="grid grid-cols-2 gap-6">
+                        <div className="flex items-center gap-4 group">
+                           <div className="size-3 rounded-full bg-accent-gold shadow-lg shadow-accent-gold/20"></div>
+                           <span className="text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:text-white transition-colors">Reserva Ativa</span>
                         </div>
-                        <span className="text-[10px] font-bold text-gray-100 uppercase tracking-widest">Dia Disponível</span>
+                        <div className="flex items-center gap-4 group">
+                           <div className="size-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20"></div>
+                           <span className="text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:text-white transition-colors">Capacidade Máxima</span>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-6 p-8 bg-surface-dark/20 rounded-[40px] border border-white/5">
+                     <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-2">Informação Estratégica</p>
+                     <div className="flex flex-wrap gap-10">
+                        <div className="flex items-center gap-4 group">
+                           <div className="size-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-accent-gold">
+                              <span className="material-symbols-outlined !text-sm">auto_awesome</span>
+                           </div>
+                           <span className="text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:text-white transition-colors">Dia de Alta Demanda</span>
+                        </div>
                      </div>
                   </div>
                </div>
             </div>
          </main>
+
          <div className="lg:hidden">
             <AdminBottomNav />
          </div>
+
+         {/* Elite Background Gradients */}
+         <div className="fixed top-0 left-0 w-[50vw] h-[50vh] bg-accent-gold/5 blur-[120px] pointer-events-none z-0"></div>
+         <div className="fixed bottom-0 right-0 w-[40vw] h-[40vh] bg-primary/20 blur-[100px] pointer-events-none z-0 opacity-30"></div>
       </div>
    );
 };

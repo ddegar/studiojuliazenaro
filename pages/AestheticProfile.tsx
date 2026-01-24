@@ -111,124 +111,138 @@ const AestheticProfile: React.FC = () => {
 
   if (loading && step === 1 && !profile) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#fbfaf9]">
-        <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex h-screen items-center justify-center bg-background-light font-outfit">
+        <div className="relative size-16 flex items-center justify-center">
+          <div className="absolute inset-0 border-2 border-primary/5 rounded-full"></div>
+          <div className="absolute inset-0 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+          <span className="material-symbols-outlined text-primary scale-75">face</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#fbfaf9]">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md p-6 border-b border-gray-100 flex items-center justify-between">
-        <button onClick={handleBack} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
+    <div className="flex flex-col min-h-screen bg-background-light font-outfit antialiased selection:bg-accent-gold/20 selection:text-primary">
+      {/* Immersive Background Narrative */}
+      <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[70%] aspect-square organic-shape-1 bg-accent-gold/10 blur-[100px] animate-float"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      <header className="relative z-50 px-6 py-8 flex items-center justify-between sticky top-0 premium-blur border-b border-primary/5">
+        <button
+          onClick={handleBack}
+          className="size-12 rounded-2xl bg-white shadow-sm border border-primary/5 flex items-center justify-center text-primary group active:scale-95 transition-all"
+        >
+          <span className="material-symbols-outlined !text-xl group-hover:-translate-x-1 transition-transform">west</span>
+        </button>
         <div className="text-center">
-          <h2 className="font-display font-bold text-primary text-lg">
+          <p className="text-[8px] font-black uppercase tracking-[0.5em] text-primary/30 leading-none mb-1">Consultoria Digital</p>
+          <h2 className="font-display italic text-xl text-primary">
             {step === 1 && 'Perfil do Olhar'}
-            {step === 2 && 'Preferências Estéticas'}
-            {step === 3 && 'Espessura e Intensidade'}
-            {step === 4 && 'Manutenção e Alergias'}
-            {step === 5 && 'Seu Bem-estar'}
+            {step === 2 && 'Design e Forma'}
+            {step === 3 && 'Acabamento VIP'}
+            {step === 4 && 'Ciclo e Cuidados'}
+            {step === 5 && 'Seu Momento'}
           </h2>
-          <p className="text-[9px] uppercase tracking-[0.2em] text-accent-gold font-black">Studio Julia Zenaro</p>
         </div>
-        <span className="material-symbols-outlined text-primary opacity-60">info</span>
+        <div className="size-12 rounded-2xl flex items-center justify-center text-accent-gold/40">
+          <span className="material-symbols-outlined !text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
+        </div>
       </header>
 
-      <div className="px-8 pt-6 pb-2">
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-            {step === 1 && 'Preferências - Formato dos Olhos'}
-            {step === 2 && 'Personalização do Olhar'}
-            {step === 3 && 'Personalização do Olhar'}
-            {step === 4 && 'Frequência e Cuidados'}
-            {step === 5 && 'Hospitalidade Premium'}
-          </span>
-          <span className="text-[10px] font-black text-accent-gold uppercase tracking-widest">Passo {step} de 5</span>
+      {/* Progress Elite Indicator */}
+      <div className="relative z-40 px-8 py-6 bg-background-light/80 backdrop-blur-xl border-b border-primary/5 sticky top-[109px]">
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em]">Sua Jornada de Beleza</span>
+          <span className="text-[10px] font-black text-accent-gold uppercase tracking-[0.2em]">Fase {step} de 5</span>
         </div>
-        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-[2px] w-full bg-primary/5 rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary transition-all duration-500 ease-out"
+            className="h-full bg-accent-gold shadow-[0_0_10px_rgba(201,169,97,0.5)] transition-all duration-1000 ease-out"
             style={{ width: `${(step / 5) * 100}%` }}
           ></div>
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto no-scrollbar p-8 pb-32">
+      <main className="relative z-10 flex-1 overflow-y-auto no-scrollbar p-8 pb-32">
         {step === 1 && (
-          <div className="space-y-10 animate-fade-in">
-            <div className="text-center space-y-3">
-              <h1 className="text-3xl font-display font-bold text-primary leading-tight">Qual o formato dos seus olhos?</h1>
-              <p className="text-sm text-gray-500 font-medium px-4">Isso nos ajuda a definir o mapeamento ideal para o seu rosto.</p>
+          <div className="space-y-12 animate-reveal">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-display text-primary leading-tight tracking-tight italic">Qual a moldura <br /> <span className="not-italic text-accent-gold font-light font-outfit">do seu olhar?</span></h1>
+              <p className="text-xs text-primary/40 font-light max-w-[280px] mx-auto leading-relaxed">Isso nos permite criar um mapeamento arquitetônico perfeito para o seu rosto.</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
               {[
-                { id: 'amendoado', label: 'Amendoado', desc: 'Formato clássico e versátil.', icon: 'visibility' },
-                { id: 'arredondado', label: 'Arredondado', desc: 'Mais altura e expressividade.', icon: 'lens' },
-                { id: 'monolidico', label: 'Monolídico', desc: 'Pálpebra única, exige projeção.', icon: 'remove_red_eye' },
-                { id: 'caido', label: 'Caído', desc: 'Canto externo inclinado para baixo.', icon: 'south_east' }
+                { id: 'amendoado', label: 'Amendoado', desc: 'Clássico e versátil, harmonia natural.', icon: 'visibility' },
+                { id: 'arredondado', label: 'Arredondado', desc: 'Altura e expressividade marcante.', icon: 'lens' },
+                { id: 'monolidico', label: 'Monolídico', desc: 'Pálpebra única, exige projeção estratégica.', icon: 'remove_red_eye' },
+                { id: 'caido', label: 'Caído', desc: 'Exige levantamento do canto externo.', icon: 'south_east' }
               ].map((opt) => (
                 <button
                   key={opt.id}
                   onClick={() => setEyeShape(opt.id)}
-                  className={`w-full p-6 rounded-[32px] border-2 flex items-center gap-5 transition-all text-left group ${eyeShape === opt.id ? 'border-primary bg-primary/5 shadow-lg' : 'border-gray-100 bg-white'}`}
+                  className={`group relative w-full p-8 rounded-[40px] border flex items-center gap-6 transition-all duration-500 text-left overflow-hidden ${eyeShape === opt.id ? 'border-accent-gold/40 bg-white shadow-huge' : 'border-primary/5 bg-white/40'}`}
                 >
-                  <div className={`size-14 rounded-full flex items-center justify-center transition-colors ${eyeShape === opt.id ? 'bg-primary text-white' : 'bg-gray-50 text-gray-400'}`}>
+                  <div className={`size-16 rounded-[28px] flex items-center justify-center transition-all duration-500 ${eyeShape === opt.id ? 'bg-primary text-accent-gold shadow-xl shadow-primary/20' : 'bg-primary/5 text-primary/30'}`}>
                     <span className="material-symbols-outlined !text-3xl">{opt.icon}</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-lg text-primary">{opt.label}</p>
-                    <p className="text-xs text-gray-400">{opt.desc}</p>
+                    <p className={`font-display text-xl transition-colors ${eyeShape === opt.id ? 'text-primary' : 'text-primary/40'}`}>{opt.label}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-primary/20 leading-none mt-1">{opt.desc}</p>
                   </div>
-                  <div className={`size-6 rounded-full border-2 flex items-center justify-center transition-all ${eyeShape === opt.id ? 'border-primary bg-primary' : 'border-gray-200'}`}>
-                    {eyeShape === opt.id && <span className="material-symbols-outlined text-white !text-sm">check</span>}
+                  <div className={`size-8 rounded-full border-2 flex items-center justify-center transition-all ${eyeShape === opt.id ? 'border-accent-gold bg-accent-gold' : 'border-primary/5'}`}>
+                    {eyeShape === opt.id && <span className="material-symbols-outlined text-primary !text-sm">done</span>}
                   </div>
                 </button>
               ))}
             </div>
-            <p className="text-center text-[10px] font-black text-accent-gold uppercase tracking-[0.3em] pt-4">Consultoria Profissional Julia Zenaro</p>
+            <div className="text-center pt-8 opacity-20">
+              <p className="text-[8px] font-black uppercase tracking-[0.5em]">Julia Zenaro • Lash Design Expertise</p>
+            </div>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-10 animate-fade-in">
-            <div className="text-center space-y-3">
-              <h1 className="text-3xl font-display font-bold text-primary leading-tight">Escolha o seu Estilo</h1>
-              <p className="text-sm text-gray-500 font-medium px-4">Selecione o volume que melhor expressa sua personalidade hoje.</p>
+          <div className="space-y-14 animate-reveal">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-display text-primary leading-tight tracking-tight italic">Sua assinatura <br /> <span className="not-italic text-accent-gold font-light font-outfit">estética.</span></h1>
+              <p className="text-xs text-primary/40 font-light px-6">Escolha o volume que expressa sua essência neste momento.</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               {[
-                { id: 'natural', label: 'Natural Look', desc: 'Um fio por vez, realce discreto.', img: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400' },
-                { id: 'rimel', label: 'Efeito Rímel', desc: 'Volume clássico com mais definição.', img: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400' },
-                { id: 'russo', label: 'Volume Russo', desc: 'Preenchimento total e glamour.', img: 'https://images.unsplash.com/photo-1583001809033-00e930cd2645?w=400' },
-                { id: 'lifting', label: 'Lash Lifting', desc: 'Curvatura natural sem extensões.', img: 'https://images.unsplash.com/photo-1519415510236-85591199360e?w=400' }
+                { id: 'natural', label: 'Natural Look', desc: 'Realce discreto', img: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400' },
+                { id: 'rimel', label: 'Efeito Rímel', desc: 'Volume clássico', img: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400' },
+                { id: 'russo', label: 'Volume Russo', desc: 'Total glamour', img: 'https://images.unsplash.com/photo-1583001809033-00e930cd2645?w=400' },
+                { id: 'lifting', label: 'Lash Lifting', desc: 'Curvatura natural', img: 'https://images.unsplash.com/photo-1519415510236-85591199360e?w=400' }
               ].map((opt) => (
                 <button
                   key={opt.id}
                   onClick={() => setStyle(opt.id)}
-                  className={`relative aspect-[3/4] rounded-[32px] overflow-hidden border-2 transition-all ${style === opt.id ? 'border-primary ring-4 ring-primary/5 shadow-xl' : 'border-transparent'}`}
+                  className={`group relative aspect-[3/4.5] rounded-[48px] overflow-hidden border-2 transition-all duration-700 ${style === opt.id ? 'border-accent-gold shadow-huge scale-[1.02]' : 'border-transparent opacity-80 hover:opacity-100'}`}
                 >
-                  <img src={opt.img} className="w-full h-full object-cover" alt={opt.label} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5 text-left">
-                    <p className="font-bold text-white text-base leading-tight mb-1">{opt.label}</p>
-                    <p className="text-[10px] text-white/70 leading-tight">{opt.desc}</p>
+                  <img src={opt.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s]" alt={opt.label} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/20 to-transparent flex flex-col justify-end p-6 text-left">
+                    <p className="font-display italic text-lg text-white mb-0.5">{opt.label}</p>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-accent-gold/80 leading-none">{opt.desc}</p>
                   </div>
                   {style === opt.id && (
-                    <div className="absolute top-4 right-4 size-6 bg-primary text-white rounded-full flex items-center justify-center shadow-lg">
-                      <span className="material-symbols-outlined !text-sm">check</span>
+                    <div className="absolute top-5 right-5 size-8 bg-accent-gold text-primary rounded-2xl flex items-center justify-center shadow-2xl animate-reveal">
+                      <span className="material-symbols-outlined !text-sm">done</span>
                     </div>
                   )}
                 </button>
               ))}
             </div>
 
-            <section className="space-y-6 pt-4">
-              <div className="flex justify-between items-end">
-                <h3 className="font-display font-bold text-xl text-primary">Curvatura</h3>
-                <button className="text-[10px] font-black text-accent-gold uppercase underline">Ver Guia ?</button>
+            <section className="space-y-8 pt-6">
+              <div className="flex justify-between items-center px-2">
+                <h3 className="font-display italic text-2xl text-primary">Curvatura</h3>
+                <span className="text-[10px] font-black text-accent-gold border-b border-accent-gold/20 pb-1">CONSULTORIA TÉCNICA</span>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-4">
                 {[
                   { id: 'C', label: 'C-CURL', sub: 'Natural', icon: 'gesture' },
                   { id: 'D', label: 'D-CURL', sub: 'Marcado', icon: 'all_inclusive' },
@@ -237,35 +251,35 @@ const AestheticProfile: React.FC = () => {
                   <button
                     key={c.id}
                     onClick={() => setCurvature(c.id)}
-                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${curvature === c.id ? 'border-primary bg-primary text-white' : 'border-gray-50 bg-white text-gray-400'}`}
+                    className={`p-6 rounded-[32px] border flex flex-col items-center gap-3 transition-all duration-500 ${curvature === c.id ? 'border-accent-gold bg-primary text-accent-gold shadow-huge' : 'border-primary/5 bg-white/40 text-primary/30'}`}
                   >
                     <span className="material-symbols-outlined !text-3xl">{c.icon}</span>
                     <div className="text-center">
-                      <p className="text-[10px] font-black tracking-widest">{c.label}</p>
-                      <p className={`text-[8px] font-bold uppercase tracking-widest ${curvature === c.id ? 'text-white/60' : 'text-gray-300'}`}>{c.sub}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest">{c.label}</p>
+                      <p className={`text-[8px] font-medium mt-0.5 opacity-60`}>{c.sub}</p>
                     </div>
                   </button>
                 ))}
               </div>
             </section>
 
-            <section className="space-y-6">
-              <div className="flex justify-between items-center px-1">
-                <h3 className="font-display font-bold text-xl text-primary">Comprimento</h3>
-                <span className="bg-gray-100 px-4 py-1.5 rounded-full text-[10px] font-black text-primary">{length > 70 ? 'Impactante' : length > 30 ? 'Equilibrado' : 'Discreto'}</span>
+            <section className="space-y-8">
+              <div className="flex justify-between items-center px-2">
+                <h3 className="font-display italic text-2xl text-primary">Extensão</h3>
+                <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{length > 70 ? 'Cenográfico' : length > 30 ? 'Equilibrado' : 'Sutil'}</span>
               </div>
-              <div className="px-4">
+              <div className="px-6 py-8 bg-white/40 rounded-[40px] border border-primary/5">
                 <input
                   type="range"
                   min="0" max="100"
                   value={length}
                   onChange={(e) => setLength(parseInt(e.target.value))}
-                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="premium-range w-full"
                 />
-                <div className="flex justify-between mt-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                  <span>Discreto</span>
-                  <span className="text-primary">Equilibrado</span>
-                  <span>Impactante</span>
+                <div className="flex justify-between mt-6 text-[8px] font-black text-primary/20 uppercase tracking-[0.5em]">
+                  <span>Minimal</span>
+                  <span className="text-accent-gold">Curadoria JZ</span>
+                  <span>Impact</span>
                 </div>
               </div>
             </section>
@@ -273,52 +287,51 @@ const AestheticProfile: React.FC = () => {
         )}
 
         {step === 3 && (
-          <div className="space-y-10 animate-fade-in">
-            <div className="text-center space-y-3">
-              <h1 className="text-3xl font-display font-bold text-primary leading-tight">Defina a intensidade do seu olhar</h1>
-              <p className="text-sm text-gray-500 font-medium px-4">Escolha o acabamento ideal para seus fios ou pigmento.</p>
+          <div className="space-y-14 animate-reveal">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-display text-primary leading-tight tracking-tight italic">Profundidade <br /> <span className="not-italic text-accent-gold font-light font-outfit">e Intensidade.</span></h1>
+              <p className="text-xs text-primary/40 font-light px-8">A precisão do acabamento define o refinamento do seu olhar.</p>
             </div>
 
-            <section className="space-y-6">
-              <h3 className="font-display font-bold text-xl text-primary">Espessura dos Fios</h3>
-              <div className="space-y-3">
+            <section className="space-y-8">
+              <h3 className="font-display italic text-2xl text-primary px-2">Textura dos Fios</h3>
+              <div className="space-y-4">
                 {[
-                  { id: 'natural', label: 'NATURAL', desc: 'Para um realce clássico e sutil.' },
-                  { id: 'fino', label: 'ULTRA FINO', desc: 'Leveza máxima, aspecto imperceptível.' },
-                  { id: 'intenso', label: 'INTENSO', desc: 'Fios mais espessos para maior destaque.' }
+                  { id: 'natural', label: 'CURADORIA NATURAL', desc: 'Realce clássico e atemporal' },
+                  { id: 'fino', label: 'ULTRA FINO (TECH)', desc: 'Leveza máxima de seda' },
+                  { id: 'intenso', label: 'INTENSO DRAMA', desc: 'Destaque e densidade profunda' }
                 ].map((opt) => (
                   <button
                     key={opt.id}
                     onClick={() => setThickness(opt.id)}
-                    className={`w-full p-6 rounded-2xl border-2 text-left flex items-center justify-between transition-all ${thickness === opt.id ? 'border-primary bg-primary text-white' : 'border-gray-50 bg-white'}`}
+                    className={`w-full p-8 rounded-[40px] border-2 text-left flex items-center justify-between transition-all duration-500 overflow-hidden relative ${thickness === opt.id ? 'border-accent-gold bg-primary shadow-huge' : 'border-primary/5 bg-white/40'}`}
                   >
                     <div>
-                      <p className={`font-black text-xs tracking-widest ${thickness === opt.id ? 'text-white' : 'text-primary'}`}>{opt.label}</p>
-                      <p className={`text-[10px] mt-1 ${thickness === opt.id ? 'text-white/60' : 'text-gray-400'}`}>{opt.desc}</p>
+                      <p className={`font-black text-[10px] tracking-[0.3em] uppercase ${thickness === opt.id ? 'text-accent-gold' : 'text-primary/40'}`}>{opt.label}</p>
+                      <p className={`text-base font-display italic mt-1 ${thickness === opt.id ? 'text-white' : 'text-primary/60'}`}>{opt.desc}</p>
                     </div>
-                    {thickness === opt.id && <span className="material-symbols-outlined text-white">check_circle</span>}
+                    {thickness === opt.id && <span className="material-symbols-outlined text-accent-gold !text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>}
                   </button>
                 ))}
               </div>
             </section>
 
-            <section className="space-y-6">
-              <div className="flex justify-between items-center px-1">
-                <h3 className="font-display font-bold text-xl text-primary">Intensidade do Pigmento</h3>
-                <span className="bg-gray-100 px-4 py-1.5 rounded-full text-[10px] font-black text-primary">{pigment > 70 ? 'Marcante' : pigment > 30 ? 'Equilibrado' : 'Discreto'}</span>
+            <section className="space-y-8">
+              <div className="flex justify-between items-center px-2">
+                <h3 className="font-display italic text-2xl text-primary">Pigmentação</h3>
+                <span className="text-[10px] font-black text-primary/40 uppercase tracking-widest">{pigment > 70 ? 'Ebony' : pigment > 30 ? 'Classic' : 'Smoke'}</span>
               </div>
-              <div className="px-4">
+              <div className="px-6 py-8 bg-white/40 rounded-[40px] border border-primary/5">
                 <input
                   type="range"
                   min="0" max="100"
                   value={pigment}
                   onChange={(e) => setPigment(parseInt(e.target.value))}
-                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary"
+                  className="premium-range w-full"
                 />
-                <div className="flex justify-between mt-4 text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                  <span>Discreto</span>
-                  <span className="text-primary">Equilibrado</span>
-                  <span>Marcante</span>
+                <div className="flex justify-between mt-6 text-[8px] font-black text-primary/20 uppercase tracking-[0.5em]">
+                  <span>Translucent</span>
+                  <span className="text-accent-gold">High Deep</span>
                 </div>
               </div>
             </section>
@@ -326,45 +339,45 @@ const AestheticProfile: React.FC = () => {
         )}
 
         {step === 4 && (
-          <div className="space-y-10 animate-fade-in">
-            <div className="text-center space-y-3">
-              <h1 className="text-3xl font-display font-bold text-primary leading-tight">Intervalo de Manutenção</h1>
-              <p className="text-sm text-gray-500 font-medium px-4">Com que frequência você gostaria de renovar seu olhar?</p>
+          <div className="space-y-14 animate-reveal">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-display text-primary leading-tight tracking-tight italic">Cuidado <br /> <span className="not-italic text-accent-gold font-light font-outfit">e Frequência.</span></h1>
+              <p className="text-xs text-primary/40 font-light px-8">Planeje a manutenção da sua beleza para um brilho contínuo.</p>
             </div>
 
             <div className="space-y-4">
               {[
-                { id: '2', label: 'A cada 2 semanas', desc: 'Ideal para manter o volume sempre impecável.' },
-                { id: '3', label: 'A cada 3 semanas', desc: 'Equilíbrio perfeito entre durabilidade e estética.', recommended: true },
-                { id: '4', label: 'A cada 4 semanas', desc: 'Para quem busca praticidade e um ciclo longo.' }
+                { id: '2', label: 'Ciclo de 15 dias', desc: 'Beleza impecável, volume sempre pleno.' },
+                { id: '3', label: 'Ciclo de 21 dias', desc: 'O equilíbrio perfeito entre vida e estética.', recommended: true },
+                { id: '4', label: 'Ciclo de 30 dias', desc: 'Máxima praticidade para rotinas dinâmicas.' }
               ].map((opt) => (
                 <button
                   key={opt.id}
                   onClick={() => setMaintenance(opt.id)}
-                  className={`w-full p-6 rounded-[32px] border-2 text-left transition-all relative ${maintenance === opt.id ? 'border-primary bg-primary/5 shadow-md' : 'border-gray-50 bg-white'}`}
+                  className={`w-full p-8 rounded-[48px] border-2 text-left transition-all duration-500 relative overflow-hidden ${maintenance === opt.id ? 'border-accent-gold bg-primary shadow-huge' : 'border-primary/5 bg-white/40'}`}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <p className="font-bold text-primary text-lg">{opt.label}</p>
-                    <div className={`size-6 rounded-full border-2 flex items-center justify-center ${maintenance === opt.id ? 'border-primary bg-primary' : 'border-gray-200'}`}>
-                      {maintenance === opt.id && <span className="material-symbols-outlined text-white !text-sm">check</span>}
-                    </div>
+                    <p className={`font-display text-xl ${maintenance === opt.id ? 'text-white' : 'text-primary'}`}>{opt.label}</p>
+                    {maintenance === opt.id && <span className="material-symbols-outlined text-accent-gold !text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_fix_high</span>}
                   </div>
-                  <p className="text-xs text-gray-400 pr-10">{opt.desc}</p>
+                  <p className={`text-xs font-light ${maintenance === opt.id ? 'text-white/60' : 'text-primary/40'} pr-10`}>{opt.desc}</p>
                   {opt.recommended && (
-                    <span className="absolute top-0 right-10 -translate-y-1/2 bg-accent-gold/10 text-accent-gold px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border border-accent-gold/20">RECOMENDADO</span>
+                    <span className="absolute top-0 right-10 -translate-y-1/2 bg-accent-gold text-primary px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-[0.3em] shadow-xl">ESSENCIAL</span>
                   )}
                 </button>
               ))}
             </div>
 
-            <section className="space-y-4 pt-4">
-              <div className="flex items-center gap-3 px-1 text-primary">
-                <span className="material-symbols-outlined !text-2xl">medical_services</span>
-                <h3 className="font-display font-bold text-xl">Alergias ou Observações</h3>
+            <section className="space-y-6 pt-6">
+              <div className="flex items-center gap-4 px-2">
+                <div className="size-10 rounded-2xl bg-primary text-accent-gold flex items-center justify-center">
+                  <span className="material-symbols-outlined !text-xl">medical_information</span>
+                </div>
+                <h3 className="font-display italic text-2xl text-primary">Sensibilidade</h3>
               </div>
               <textarea
-                placeholder="Ex: Tenho sensibilidade a colas específicas ou rinite..."
-                className="w-full bg-white border border-gray-100 rounded-[32px] p-8 text-sm focus:ring-primary h-40 italic placeholder:text-gray-300 shadow-sm"
+                placeholder="Informe-nos sobre alergias, restrições ou observações que tornem seu atendimento mais seguro..."
+                className="w-full bg-white/40 border border-primary/5 rounded-[40px] p-8 text-sm focus:bg-white focus:ring-accent-gold/20 h-44 italic placeholder:text-primary/20 shadow-inner outline-none transition-all"
                 value={allergies}
                 onChange={(e) => setAllergies(e.target.value)}
               />
@@ -373,29 +386,29 @@ const AestheticProfile: React.FC = () => {
         )}
 
         {step === 5 && (
-          <div className="space-y-12 animate-fade-in">
-            <div className="text-center space-y-3">
-              <h1 className="text-3xl font-display font-bold text-primary leading-tight">Seu Momento VIP</h1>
-              <p className="text-sm text-gray-500 font-medium px-4">Como podemos tornar sua experiência ainda mais acolhedora?</p>
+          <div className="space-y-16 animate-reveal">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-display text-primary leading-tight tracking-tight italic">Seu Ritual <br /> <span className="not-italic text-accent-gold font-light font-outfit">de Bem-estar.</span></h1>
+              <p className="text-xs text-primary/40 font-light px-6">Hospitalidade é a nossa arte. Como podemos acolher você hoje?</p>
             </div>
 
-            <section className="space-y-8">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-primary">
-                  <span className="material-symbols-outlined">coffee</span>
-                  <h3 className="font-display font-bold text-lg">O que você aceita beber?</h3>
+            <section className="space-y-12">
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 px-2">
+                  <span className="material-symbols-outlined text-accent-gold">local_bar</span>
+                  <h3 className="font-display italic text-2xl text-primary">Bar JZ</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {[
-                    { id: 'cafe', label: 'Café Expresso' },
-                    { id: 'agua', label: 'Água Aromatizada' },
-                    { id: 'refri', label: 'Refrigerante' },
-                    { id: 'cha', label: 'Chá Gelado' }
+                    { id: 'cafe', label: 'Expresso Gourmet' },
+                    { id: 'agua', label: 'Acqua Detox' },
+                    { id: 'refri', label: 'Beverage Selection' },
+                    { id: 'cha', label: 'Herbal Tea' }
                   ].map(opt => (
                     <button
                       key={opt.id}
                       onClick={() => setHospitality({ ...hospitality, drink: opt.id })}
-                      className={`h-14 rounded-2xl border-2 text-xs font-bold uppercase transition-all ${hospitality.drink === opt.id ? 'border-primary bg-primary text-white shadow-md' : 'border-gray-50 bg-white text-gray-400'}`}
+                      className={`h-20 rounded-[32px] border text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${hospitality.drink === opt.id ? 'border-accent-gold bg-primary text-accent-gold shadow-huge' : 'border-primary/5 bg-white/40 text-primary/30 hover:bg-white'}`}
                     >
                       {opt.label}
                     </button>
@@ -403,22 +416,22 @@ const AestheticProfile: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-primary">
-                  <span className="material-symbols-outlined">music_note</span>
-                  <h3 className="font-display font-bold text-lg">Gênero Musical favorito</h3>
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 px-2">
+                  <span className="material-symbols-outlined text-accent-gold">music_note</span>
+                  <h3 className="font-display italic text-2xl text-primary">Atmosphere</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {[
-                    { id: 'jazz', label: 'Jazz & Bossa' },
-                    { id: 'pop', label: 'Pop Acústico' },
-                    { id: 'lofi', label: 'Lofi & Relax' },
-                    { id: 'silencio', label: 'Silêncio (Deep)' }
+                    { id: 'jazz', label: 'Jazz & Soul' },
+                    { id: 'pop', label: 'Soft Pop' },
+                    { id: 'lofi', label: 'Deep Focus' },
+                    { id: 'silencio', label: 'Deep Silence' }
                   ].map(opt => (
                     <button
                       key={opt.id}
                       onClick={() => setHospitality({ ...hospitality, music: opt.id })}
-                      className={`h-14 rounded-2xl border-2 text-xs font-bold uppercase transition-all ${hospitality.music === opt.id ? 'border-primary bg-primary text-white shadow-md' : 'border-gray-50 bg-white text-gray-400'}`}
+                      className={`h-20 rounded-[32px] border text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${hospitality.music === opt.id ? 'border-accent-gold bg-primary text-accent-gold shadow-huge' : 'border-primary/5 bg-white/40 text-primary/30 hover:bg-white'}`}
                     >
                       {opt.label}
                     </button>
@@ -426,22 +439,22 @@ const AestheticProfile: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-primary">
-                  <span className="material-symbols-outlined">cookie</span>
-                  <h3 className="font-display font-bold text-lg">Acompanhamento</h3>
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 px-2">
+                  <span className="material-symbols-outlined text-accent-gold">cookie</span>
+                  <h3 className="font-display italic text-2xl text-primary">Delicatesse</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {[
-                    { id: 'bolacha', label: 'Bolachas Finas' },
-                    { id: 'frutas', label: 'Frutas Frescas' },
-                    { id: 'chocolate', label: 'Chocolate 70%' },
-                    { id: 'nenhum', label: 'Apenas a bebida' }
+                    { id: 'bolacha', label: 'Fine Biscuits' },
+                    { id: 'frutas', label: 'Fresh Fruits' },
+                    { id: 'chocolate', label: 'Gourmet Choc' },
+                    { id: 'nenhum', label: 'Just Drinks' }
                   ].map(opt => (
                     <button
                       key={opt.id}
                       onClick={() => setHospitality({ ...hospitality, snack: opt.id })}
-                      className={`h-14 rounded-2xl border-2 text-xs font-bold uppercase transition-all ${hospitality.snack === opt.id ? 'border-primary bg-primary text-white shadow-md' : 'border-gray-50 bg-white text-gray-400'}`}
+                      className={`h-20 rounded-[32px] border text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${hospitality.snack === opt.id ? 'border-accent-gold bg-primary text-accent-gold shadow-huge' : 'border-primary/5 bg-white/40 text-primary/30 hover:bg-white'}`}
                     >
                       {opt.label}
                     </button>
@@ -450,31 +463,37 @@ const AestheticProfile: React.FC = () => {
               </div>
             </section>
 
-            <div className="bg-primary p-8 rounded-[40px] text-center space-y-4 shadow-2xl shadow-primary/20">
-              <span className="material-symbols-outlined text-accent-gold !text-5xl">auto_awesome</span>
-              <h4 className="font-display text-white text-xl">Sua experiência personalizada está pronta!</h4>
-              <p className="text-white/60 text-xs">Cuidamos de cada detalhe para que você se sinta em casa.</p>
+            <div className="bg-primary/5 border border-primary/5 p-10 rounded-[56px] text-center space-y-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-accent-gold/40 to-transparent"></div>
+              <span className="material-symbols-outlined text-accent-gold !text-5xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+              <h4 className="font-display text-primary text-2xl italic tracking-tight leading-tight">Sua jornada de <br />personalização está concluída.</h4>
+              <p className="text-primary/40 text-xs font-light px-4">Cada detalhe selecionado será cuidadosamente preparado pela equipe Julia Zenaro.</p>
             </div>
           </div>
         )}
       </main>
 
-      <div className="fixed bottom-0 inset-x-0 p-8 glass-nav border-t border-gray-100 rounded-t-[40px] shadow-[0_-15px_40px_rgba(0,0,0,0.05)] z-50">
-        <button
-          onClick={handleNext}
-          disabled={loading}
-          className="w-full h-18 bg-primary text-white rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
-        >
-          {loading ? (
-            <div className="size-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            <>
-              {step === 5 ? 'Salvar Minhas Preferências' : 'Continuar'}
-              <span className="material-symbols-outlined !text-base">{step === 5 ? 'done_all' : 'east'}</span>
-            </>
-          )}
-        </button>
+      <div className="fixed bottom-0 inset-x-0 p-8 z-[100]">
+        <div className="premium-blur rounded-[32px] border border-primary/5 p-2 shadow-huge">
+          <button
+            onClick={handleNext}
+            disabled={loading}
+            className="w-full h-18 bg-primary text-white rounded-[24px] font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {loading ? (
+              <div className="size-6 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <>
+                {step === 5 ? 'Salvar Experiência' : 'Continuar Jornada'}
+                <span className="material-symbols-outlined !text-xl text-accent-gold">{step === 5 ? 'verified' : 'east'}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Safe Area View Inset */}
+      <div className="fixed bottom-0 left-0 w-full h-4 bg-background-light pointer-events-none z-[110]"></div>
     </div>
   );
 };

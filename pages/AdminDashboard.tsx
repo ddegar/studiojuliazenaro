@@ -183,8 +183,12 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#121417]">
-        <div className="size-12 border-4 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex h-screen items-center justify-center bg-background-dark font-outfit">
+        <div className="relative size-16 flex items-center justify-center">
+          <div className="absolute inset-0 border-2 border-primary/5 rounded-full"></div>
+          <div className="absolute inset-0 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+          <span className="material-symbols-outlined text-accent-gold scale-75">monitoring</span>
+        </div>
       </div>
     );
   }
@@ -192,177 +196,249 @@ const AdminDashboard: React.FC = () => {
   const currentDate = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#121417] text-white font-sans flex flex-col">
-      {/* Sidebar Removida (Global AppContainerAdmin) */}
+    <div className="min-h-screen bg-background-dark text-white font-outfit antialiased selection:bg-accent-gold/20 selection:text-white">
+      {/* Narrative Header */}
+      <header className="h-24 px-8 flex items-center justify-between border-b border-white/5 bg-background-dark/80 backdrop-blur-xl sticky top-0 z-[60]">
+        <div className="flex flex-col">
+          <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none mb-1">Comando Estratégico</p>
+          <h1 className="font-display italic text-2xl text-white">Painel do Studio</h1>
+        </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen">
-        {/* Header */}
-        <header className="h-20 px-6 flex items-center justify-between border-b border-white/5 bg-[#121417] sticky top-0 z-40">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xs font-black uppercase tracking-widest text-white">Visão Geral</h1>
+        <div className="flex items-center gap-6">
+          <div className="hidden md:block text-right">
+            <p className="text-xs font-bold text-white leading-none">{stats.user.name}</p>
+            <p className="text-[9px] font-black tracking-widest text-accent-gold/60 mt-1 uppercase">{isMaster ? 'Curadoria Master' : 'Profissional de Elite'}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-[10px] md:text-xs font-bold text-white truncate max-w-[100px] md:max-w-[200px]">{stats.user.name}</p>
-              <p className="text-[8px] font-black tracking-widest text-accent-gold">{isMaster ? 'MASTER' : 'PRO'}</p>
-            </div>
-            <div className="size-10 rounded-full bg-[#1c1f24] border border-accent-gold/20 flex items-center justify-center overflow-hidden">
-              <img src={stats.user.avatar || `https://ui-avatars.com/api/?name=${stats.user.name}`} className="w-full h-full object-cover" alt="User" />
+          <div className="group relative">
+            <div className="absolute inset-0 bg-accent-gold/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="relative size-12 rounded-2xl bg-surface-dark border border-white/10 flex items-center justify-center overflow-hidden shadow-huge">
+              <img src={stats.user.avatar || `https://ui-avatars.com/api/?name=${stats.user.name}&background=0f3e29&color=C9A961`} className="w-full h-full object-cover" alt="User" />
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <main className="flex-1 p-5 lg:p-6 space-y-6 pb-32 lg:pb-8 w-full max-w-7xl mx-auto overflow-y-auto no-scrollbar">
-          {/* Welcome Section */}
-          <div className="space-y-1">
-            <p className="text-[10px] font-black text-accent-gold/80 tracking-widest">{currentDate}</p>
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-              <div className="space-y-2">
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white leading-tight">Olá,<br className="md:hidden" />{stats.user.name.split(' ')[0]}</h2>
-                <p className="text-xs md:text-sm text-gray-500 font-medium tracking-tight">Resumo do seu estúdio hoje.</p>
-              </div>
+      <main className="relative z-10 p-8 lg:p-12 space-y-12 pb-40 w-full max-w-screen-2xl mx-auto overflow-x-hidden">
+        {/* Elite Welcome & Action */}
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 animate-reveal">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="h-px w-8 bg-accent-gold/40"></span>
+              <p className="text-[10px] font-black text-accent-gold tracking-[0.5em]">{currentDate}</p>
+            </div>
+            <h2 className="text-5xl md:text-7xl font-display font-bold text-white leading-none tracking-tighter">
+              Olá, <br /> <span className="italic text-accent-gold font-light">{stats.user.name.split(' ')[0]}</span>.
+            </h2>
+          </div>
+
+          <button
+            onClick={() => navigate('/admin/agenda/new')}
+            className="group relative w-full lg:w-fit h-18 bg-accent-gold text-primary p-1 rounded-3xl transition-all active:scale-95 shadow-huge"
+          >
+            <div className="h-full bg-accent-gold rounded-[22px] flex items-center justify-center gap-4 px-10">
+              <span className="material-symbols-outlined !text-xl group-hover:rotate-90 transition-transform duration-500">add_circle</span>
+              <span className="text-[11px] font-black uppercase tracking-[0.3em]">Novo Agendamento</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Intelligence Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-reveal stagger-1">
+          {[
+            { label: 'Faturamento 30d', value: `R$ ${stats.revenue.toLocaleString('pt-BR')}`, icon: 'receipt_long', trend: '+12%', color: 'text-emerald-400', path: '/admin/finance' },
+            { label: 'Equipe Especialista', value: `${stats.professionals} Ativos`, icon: 'clinical_notes', trend: 'Global', color: 'text-accent-gold', path: '/admin/professionals', hide: !isMaster },
+            { label: 'Agendamentos Hoje', value: stats.appointmentsToday, icon: 'calendar_month', trend: 'Live', color: 'text-sky-400', path: '/admin/agenda' },
+            { label: 'Membros Privé', value: stats.clients, icon: 'diamond', trend: 'Premium', color: 'text-indigo-400', path: '/admin/clients' }
+          ].map((stat, idx) => {
+            if (stat.hide) return null;
+            return (
               <button
-                onClick={() => navigate('/admin/agenda')}
-                className="bg-[#1c2e28] text-emerald-400 border border-emerald-900/50 px-5 py-3 rounded-full flex items-center gap-2 hover:bg-emerald-900/30 transition-colors shadow-lg w-fit"
+                key={idx}
+                onClick={() => navigate(stat.path)}
+                className="group bg-surface-dark/40 backdrop-blur-sm p-8 rounded-[48px] border border-white/5 flex flex-col gap-8 text-left hover:bg-surface-dark hover:border-accent-gold/20 hover:translate-y-[-4px] transition-all duration-500 shadow-huge"
               >
-                <span className="material-symbols-outlined !text-sm">add</span>
-                <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest">Novo Agendamento</span>
+                <div className="flex justify-between items-start">
+                  <div className={`size-14 rounded-[24px] bg-white/5 ${stat.color} flex items-center justify-center group-hover:bg-white group-hover:text-primary transition-all duration-700`}>
+                    <span className="material-symbols-outlined !text-3xl">{stat.icon}</span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/20">{stat.trend}</span>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-2">{stat.label}</p>
+                  <p className="text-3xl font-display text-white">{stat.value}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Strategic Deep-Dive */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 animate-reveal stagger-2">
+          {/* Revenue Intelligence BI */}
+          <div className="lg:col-span-3 bg-surface-dark/40 backdrop-blur-sm rounded-[56px] border border-white/5 p-10 space-y-10 shadow-huge overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-64 h-1 bg-gradient-to-l from-accent-gold/30 to-transparent"></div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-gold/40">Global Performance</p>
+                <h3 className="text-2xl font-display italic text-white">Análise de Faturamento</h3>
+              </div>
+              <div className="flex gap-2">
+                <div className="size-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-white/40">
+                  <span className="material-symbols-outlined !text-sm">analytics</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="h-[240px] w-full relative group">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="chartGold" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#C9A961" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#C9A961" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" hide />
+                  <Tooltip
+                    cursor={{ stroke: '#C9A961', strokeWidth: 1, strokeDasharray: '4 4' }}
+                    contentStyle={{ backgroundColor: '#1c1f24', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px', fontSize: '10px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', padding: '16px' }}
+                    itemStyle={{ color: '#C9A961', fontWeight: 'bold' }}
+                  />
+                  <Area type="monotone" dataKey="value" stroke="#C9A961" fill="url(#chartGold)" strokeWidth={3} animationDuration={2000} />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div className="absolute bottom-[-10px] left-0 right-0 flex justify-between px-2 text-[9px] font-black uppercase text-white/20 tracking-widest">
+                <span>Início do Ciclo</span>
+                <span>Projeção JZ</span>
+                <span>Status Atual</span>
+              </div>
+            </div>
+
+            {isMaster && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-10 border-t border-white/5">
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4">
+                    <div className="size-8 rounded-lg bg-emerald-400/10 flex items-center justify-center text-emerald-400">
+                      <span className="material-symbols-outlined !text-base">auto_awesome</span>
+                    </div>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Serviços Assinatura</h4>
+                  </div>
+                  <div className="space-y-6">
+                    {stats.topServices.map((s: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between group">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <span className="text-xs font-black text-accent-gold/20">0{i + 1}</span>
+                          <p className="text-sm font-light text-white/80 truncate tracking-tight group-hover:text-white transition-colors uppercase">{s.name}</p>
+                        </div>
+                        <span className="text-xs font-bold text-accent-gold shrink-0">{s.count}x</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4">
+                    <div className="size-8 rounded-lg bg-accent-gold/10 flex items-center justify-center text-accent-gold">
+                      <span className="material-symbols-outlined !text-base">workspace_premium</span>
+                    </div>
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Profissionais de Elite</h4>
+                  </div>
+                  <div className="space-y-6">
+                    {stats.proRevenue.map((p: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between group">
+                        <p className="text-sm font-light text-white/80 truncate tracking-tight uppercase group-hover:text-white transition-colors">{p.name.split(' ')[0]}</p>
+                        <span className="text-xs font-bold text-emerald-400 shrink-0">R$ {p.revenue.toLocaleString('pt-BR')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming Narrative Feed */}
+          <div className="lg:col-span-2 bg-surface-dark/40 backdrop-blur-sm rounded-[56px] border border-white/5 p-10 space-y-10 shadow-huge relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-sky-400/30 to-transparent"></div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-sky-400/40">Feed de Recepção</p>
+                <h3 className="text-2xl font-display italic text-white">Próximos Atendimentos</h3>
+              </div>
+              <button onClick={() => navigate('/admin/agenda')} className="size-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all">
+                <span className="material-symbols-outlined !text-lg">east</span>
               </button>
             </div>
-          </div>
 
-          {/* Stats Grid - Responsive 2x2 -> 4 cols on lg */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'Faturamento (30d)', value: `R$ ${stats.revenue.toLocaleString('pt-BR')}`, icon: 'payments', color: 'bg-emerald-400/10 text-emerald-400', path: '/admin/finance' },
-              { label: 'Equipe / Staff', value: `${stats.professionals} Ativos`, icon: 'badge', color: 'bg-orange-400/10 text-orange-400', path: '/admin/professionals', hide: !isMaster },
-              { label: 'Agendamentos', value: stats.appointmentsToday, icon: 'calendar_today', color: 'bg-blue-400/10 text-blue-400', path: '/admin/agenda' },
-              { label: 'Clientes', value: stats.clients, icon: 'groups', color: 'bg-purple-400/10 text-purple-400', path: '/admin/clients' }
-            ].map((stat, idx) => {
-              if (stat.hide) return null;
-              return (
-                <button key={idx} onClick={() => navigate(stat.path)} className="bg-[#1c1f24] p-5 lg:p-6 rounded-3xl border border-white/5 flex flex-col gap-4 text-left hover:border-white/10 hover:scale-[1.02] transition-all shadow-xl">
-                  <div className={`size-10 lg:size-12 rounded-xl ${stat.color} flex items-center justify-center`}>
-                    <span className="material-symbols-outlined !text-xl lg:!text-2xl">{stat.icon}</span>
+            <div className="flex-1 space-y-4">
+              {upcomingAppointments.length > 0 ? upcomingAppointments.map((appt, i) => (
+                <div key={i} className="group relative w-full bg-[#121417]/30 p-6 rounded-[32px] border border-white/5 hover:border-accent-gold/30 hover:bg-[#121417] transition-all duration-500 overflow-hidden">
+                  <div className="flex items-center gap-5">
+                    <div className="relative size-14 shrink-0 rounded-2xl overflow-hidden border border-white/10 shadow-huge group-hover:scale-105 transition-transform">
+                      <img
+                        src={appt.profiles?.profile_pic || `https://ui-avatars.com/api/?name=${appt.profiles?.name}&background=0f3e29&color=C9A961`}
+                        className="w-full h-full object-cover"
+                        alt="Member"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white truncate group-hover:text-accent-gold transition-colors">{appt.profiles?.name || 'Membro do Clube'}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="size-1.5 rounded-full bg-accent-gold/40"></span>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-white/30 truncate">{appt.services?.name || 'Curadoria VIP'}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">{stat.label}</p>
-                    <p className="text-lg lg:text-xl font-bold text-white">{stat.value}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
 
-          {/* Two-column layout on lg for Upcoming + Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Upcoming Section */}
-            <div className="bg-[#1c1f24] rounded-[32px] border border-white/5 p-6 space-y-6 shadow-xl">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-accent-gold !text-xl">schedule</span>
-                  <h3 className="text-sm font-bold text-white">Próximos Agendamentos</h3>
+                  <div className="mt-6 flex items-center justify-between border-t border-white/5 pt-4">
+                    <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+                      {new Date(appt.start_time).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                    </p>
+                    <div className="flex items-center gap-2 text-accent-gold">
+                      <span className="material-symbols-outlined !text-xs">schedule</span>
+                      <p className="text-[11px] font-bold">{new Date(appt.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                  </div>
                 </div>
-                <button onClick={() => navigate('/admin/agenda')} className="text-[10px] font-black uppercase text-accent-gold tracking-widest">Ver Agenda</button>
-              </div>
-              <div className="space-y-3">
-                {upcomingAppointments.length > 0 ? upcomingAppointments.map((appt, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-[#121417]/50 border border-white/5 hover:bg-[#121417]">
-                    <div className="flex items-center gap-4">
-                      <div className="size-10 rounded-full bg-[#1c1f24] flex items-center justify-center text-accent-gold font-bold text-xs ring-1 ring-white/10">
-                        {appt.profiles?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-white">{appt.profiles?.name || 'Cliente'}</p>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-accent-gold mt-0.5">{appt.services?.name || 'Serviço'}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-black text-gray-500">{new Date(appt.start_time).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {new Date(appt.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="p-8 text-center text-gray-600 text-[10px] font-black uppercase tracking-widest border border-dashed border-white/10 rounded-2xl italic">Livre por enquanto</div>
-                )}
-              </div>
-            </div>
-
-            {/* Financial BI Section */}
-            <div className="bg-[#1c1f24] rounded-[32px] border border-white/5 p-6 space-y-8 shadow-xl">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-accent-gold">trending_up</span>
-                <h3 className="text-sm font-bold text-white">Faturamento (30 dias)</h3>
-              </div>
-
-              <div className="h-[140px] w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs><linearGradient id="chartGold" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#d4af37" stopOpacity={0.2} /><stop offset="95%" stopColor="#d4af37" stopOpacity={0} /></linearGradient></defs>
-                    <XAxis dataKey="date" hide />
-                    <Tooltip contentStyle={{ backgroundColor: '#1c1f24', border: 'none', borderRadius: '12px', fontSize: '10px' }} />
-                    <Area type="monotone" dataKey="value" stroke="#d4af37" fill="url(#chartGold)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {isMaster && (
-                <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/5">
-                  {/* Services Ranking */}
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-emerald-400 !text-sm">grid_view</span>
-                      <h4 className="text-[8px] font-black uppercase tracking-widest text-white">Serviços Mais Agendados</h4>
-                    </div>
-                    <div className="space-y-4">
-                      {stats.topServices.map((s: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between gap-2 overflow-hidden">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-[9px] font-black text-gray-600">#{i + 1}</span>
-                            <p className="text-[9px] font-bold text-gray-300 truncate tracking-tight">{s.name}</p>
-                          </div>
-                          <span className="text-[10px] font-black text-emerald-400 shrink-0">{s.count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Professionals Ranking */}
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-accent-gold !text-sm">account_balance_wallet</span>
-                      <h4 className="text-[8px] font-black uppercase tracking-widest text-white">Faturamento por Profissional</h4>
-                    </div>
-                    <div className="space-y-4">
-                      {stats.proRevenue.map((p: any, i: number) => (
-                        <div key={i} className="flex items-center justify-between gap-1 overflow-hidden">
-                          <p className="text-[9px] font-bold text-gray-300 truncate tracking-tight">{p.name}</p>
-                          <span className="text-[10px] font-black text-emerald-500 shrink-0">R$ {p.revenue.toLocaleString('pt-BR')}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              )) : (
+                <div className="flex-1 flex flex-col items-center justify-center gap-6 opacity-20 py-20">
+                  <span className="material-symbols-outlined !text-6xl" style={{ fontVariationSettings: "'FILL' 1" }}>spa</span>
+                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-center w-[180px]">Agenda disponível para novas experiências</p>
                 </div>
               )}
             </div>
-          </div>
-        </main>
 
-        {/* Bottom Nav - Hidden on lg (sidebar visible) */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#121417] border-t border-white/5 flex items-center justify-around h-20 px-4 z-50 lg:hidden">
-          {[
-            { label: 'PAINEL', icon: 'grid_view', path: '/admin', active: location.pathname === '/admin' },
-            { label: 'AGENDA', icon: 'calendar_month', path: '/admin/agenda', active: location.pathname.includes('agenda') },
-            { label: 'EQUIPE', icon: 'person', path: '/admin/professionals', active: location.pathname.includes('professionals') },
-            { label: 'AJUSTES', icon: 'settings', path: isMaster ? '/admin/settings' : '/admin/my-profile', active: location.pathname.includes('profile') || location.pathname.includes('settings') }
-          ].map((item, idx) => (
-            <button key={idx} onClick={() => navigate(item.path)} className={`flex flex-col items-center gap-1 transition-all ${item.active ? 'text-emerald-400' : 'text-gray-500'}`}>
-              <span className={`material-symbols-outlined !text-[24px]`}>{item.icon}</span>
-              <span className="text-[8px] font-black tracking-widest">{item.label}</span>
+            <button onClick={() => navigate('/admin/agenda')} className="w-full py-4 text-[9px] font-black text-white/20 hover:text-accent-gold uppercase tracking-[0.4em] text-center transition-colors">
+              Explorar agenda completa
             </button>
-          ))}
-        </nav>
-      </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Persistent Premium Navigation - Visible only on mobile/tablet */}
+      <nav className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-[500px] z-[120] lg:hidden">
+        <div className="premium-blur-dark rounded-[32px] border border-white/10 shadow-hugest px-8 py-4 flex justify-between items-center bg-[#121417]/90">
+          {[
+            { label: 'STATUS', icon: 'grid_view', path: '/admin', active: location.pathname === '/admin' },
+            { label: 'AGENDA', icon: 'calendar_month', path: '/admin/agenda', active: location.pathname.includes('agenda') },
+            { label: 'SQUAD', icon: 'clinical_notes', path: '/admin/professionals', active: location.pathname.includes('professionals'), hide: !isMaster },
+            { label: 'GESTAO', icon: 'settings_cinematic', path: isMaster ? '/admin/settings' : '/admin/profile', active: location.pathname.includes('profile') || location.pathname.includes('settings') }
+          ].map((item, idx) => {
+            if (item.hide) return null;
+            return (
+              <button key={idx} onClick={() => navigate(item.path)} className={`flex flex-col items-center gap-1 group transition-all ${item.active ? 'text-accent-gold' : 'text-white/20 hover:text-white/60'}`}>
+                <span className={`material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform ${item.active ? 'fill-current' : ''}`} style={item.active ? { fontVariationSettings: "'FILL' 1" } : {}}>{item.icon}</span>
+                <span className="text-[8px] font-black tracking-[0.3em] uppercase">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Decorative Elite Gradients */}
+      <div className="fixed top-0 right-0 w-[40vw] h-[40vh] bg-accent-gold/5 blur-[120px] pointer-events-none z-0"></div>
+      <div className="fixed bottom-0 left-0 w-[30vw] h-[30vh] bg-primary/20 blur-[100px] pointer-events-none z-0 opacity-40"></div>
     </div>
   );
 };

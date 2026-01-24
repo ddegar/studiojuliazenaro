@@ -38,41 +38,70 @@ const FAQ: React.FC = () => {
    };
 
    return (
-      <div className="flex flex-col h-full bg-background-light">
-         <header className="glass-nav p-4 flex items-center justify-between border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
-            <button onClick={() => navigate(-1)} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
-            <h2 className="font-display font-bold text-lg">Dúvidas Frequentes</h2>
-            <span className="size-6"></span>
+      <div className="flex flex-col h-full bg-background-light overflow-y-auto no-scrollbar selection:bg-accent-gold/30 selection:text-primary">
+         {/* Dynamic Background Elements */}
+         <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+            <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+         </div>
+
+         <header className="sticky top-0 z-[100] premium-blur px-6 py-5 flex justify-between items-center border-b border-primary/5">
+            <div className="flex items-center gap-4">
+               <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white border border-primary/5 text-primary shadow-sm active:scale-90 transition-transform">
+                  <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+               </button>
+               <div>
+                  <p className="text-[9px] font-outfit font-black uppercase tracking-[0.2em] text-primary/40 leading-none mb-1">Suporte Exclusivo</p>
+                  <h2 className="text-xl font-display italic text-primary tracking-tight">Dúvidas Frequentes</h2>
+               </div>
+            </div>
+            <span className="size-10"></span>
          </header>
 
-         <main className="flex-1 p-6 space-y-8 overflow-y-auto no-scrollbar">
+         <main className="relative z-10 flex-1 p-8 space-y-10 pb-32">
             {loading ? (
-               <div className="text-center py-20 space-y-3">
-                  <div className="size-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto"></div>
-                  <p className="text-xs text-gray-400 font-medium">Buscando informações...</p>
+               <div className="flex flex-col items-center justify-center py-32 space-y-4">
+                  <div className="relative size-12 flex items-center justify-center">
+                     <div className="absolute inset-0 border-2 border-primary/10 rounded-full"></div>
+                     <div className="absolute inset-0 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-[10px] font-outfit font-bold text-primary/40 uppercase tracking-widest">Sincronizando Respostas</p>
                </div>
-            ) : categories.map(cat => {
+            ) : categories.map((cat, idx) => {
                const catFaqs = faqs.filter(f => f.category === cat.name);
                if (catFaqs.length === 0) return null;
 
                return (
-                  <section key={cat.id} className="space-y-4">
-                     <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-[0.2em] px-2">{cat.name}</h3>
-                     <div className="space-y-3">
+                  <section key={cat.id} className="space-y-6 animate-reveal" style={{ animationDelay: `${idx * 0.1}s` }}>
+                     <div className="flex items-center gap-3 px-2">
+                        <span className="h-px w-6 bg-accent-gold/40"></span>
+                        <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-[0.3em] font-outfit">{cat.name}</h3>
+                     </div>
+                     <div className="grid gap-4">
                         {catFaqs.map(item => (
-                           <div key={item.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm transition-all duration-300">
+                           <div
+                              key={item.id}
+                              className={`group overflow-hidden rounded-[32px] border transition-all duration-500 ${openId === item.id ? 'bg-white border-accent-gold/20 shadow-xl' : 'bg-white/40 border-primary/5 hover:border-accent-gold/30'}`}
+                           >
                               <button
                                  onClick={() => setOpenId(openId === item.id ? null : item.id)}
-                                 className="w-full p-5 flex items-center justify-between text-left"
+                                 className="w-full p-6 flex items-center justify-between text-left"
                               >
-                                 <span className="font-bold text-sm text-primary pr-4">{item.question}</span>
-                                 <span className={`material-symbols-outlined transition-transform text-gray-400 ${openId === item.id ? 'rotate-180' : ''}`}>expand_more</span>
-                              </button>
-                              {openId === item.id && (
-                                 <div className="px-5 pb-5 animate-slide-down">
-                                    <p className="text-xs text-gray-500 leading-relaxed border-t border-gray-50 pt-4">{item.answer}</p>
+                                 <span className={`font-outfit font-bold text-sm transition-colors duration-300 ${openId === item.id ? 'text-primary' : 'text-primary/70 group-hover:text-primary'}`}>{item.question}</span>
+                                 <div className={`size-8 rounded-full flex items-center justify-center transition-all duration-500 ${openId === item.id ? 'bg-primary text-white rotate-180' : 'bg-primary/5 text-primary'}`}>
+                                    <span className="material-symbols-outlined !text-lg">expand_more</span>
                                  </div>
-                              )}
+                              </button>
+                              <div className={`grid transition-all duration-500 ease-in-out ${openId === item.id ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                                 <div className="overflow-hidden">
+                                    <div className="px-6 pb-6 pt-2">
+                                       <div className="h-px w-8 bg-accent-gold/20 mb-4"></div>
+                                       <p className="text-xs text-primary/60 leading-relaxed font-outfit font-light italic">
+                                          {item.answer}
+                                       </p>
+                                    </div>
+                                 </div>
+                              </div>
                            </div>
                         ))}
                      </div>
@@ -81,22 +110,31 @@ const FAQ: React.FC = () => {
             })}
 
             {!loading && faqs.length === 0 && (
-               <div className="text-center py-20 px-10 space-y-4">
-                  <span className="material-symbols-outlined !text-5xl text-gray-200">help_center</span>
-                  <p className="text-xs text-gray-400 italic">Nenhuma dúvida cadastrada no momento.</p>
+               <div className="text-center py-24 px-10 space-y-6 opacity-30">
+                  <div className="size-20 rounded-full bg-primary/5 flex items-center justify-center mx-auto">
+                     <span className="material-symbols-outlined !text-4xl text-primary">spa</span>
+                  </div>
+                  <p className="text-xs font-outfit text-primary italic tracking-wide">Uma jornada de conhecimento sem precedentes está sendo preparada.</p>
                </div>
             )}
 
-            <div className="pt-8 text-center space-y-4">
-               <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Ainda tem dúvidas?</p>
+            <div className="pt-12 text-center space-y-6 animate-reveal" style={{ animationDelay: '0.4s' }}>
+               <div className="flex flex-col items-center gap-2">
+                  <p className="text-[10px] text-primary/30 uppercase font-black tracking-[0.4em]">Personal Concierge</p>
+                  <h4 className="text-xl font-display text-primary">Ainda tem dúvidas?</h4>
+               </div>
                <button
                   onClick={handleWhatsApp}
-                  className="flex items-center gap-3 px-8 py-4 bg-[#25D366] text-white rounded-full font-bold text-xs mx-auto shadow-lg shadow-green-500/20 active:scale-95 transition-transform"
+                  className="group relative flex items-center gap-3 px-10 py-5 bg-primary text-white rounded-full font-outfit font-black text-[10px] uppercase tracking-[0.3em] mx-auto shadow-2xl shadow-primary/20 overflow-hidden active:scale-95 transition-all"
                >
-                  <span className="material-symbols-outlined !text-lg">chat_bubble</span> FALAR NO WHATSAPP
+                  <div className="absolute inset-0 bg-accent-gold translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                  <span className="material-symbols-outlined !text-lg relative z-10 group-hover:text-primary transition-colors">chat_bubble</span>
+                  <span className="relative z-10 group-hover:text-primary transition-colors">Falar no WhatsApp</span>
                </button>
             </div>
          </main>
+         {/* Visual Safe Area Inset */}
+         <div className="fixed bottom-0 left-0 w-full h-8 bg-background-light pointer-events-none z-[90]"></div>
       </div>
    );
 };

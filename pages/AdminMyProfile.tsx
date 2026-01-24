@@ -59,12 +59,12 @@ const AdminMyProfile: React.FC = () => {
                     return acc;
                 }, {});
 
-                let dbHours = proData?.working_hours;
+                let dbHours = proData?.working_hours || null;
                 if (!dbHours && proData?.closed_days) {
-                    // Migrate from old structure if possible
-                    const closed = JSON.parse(typeof proData.closed_days === 'string' ? proData.closed_days : JSON.stringify(proData.closed_days || []));
-                    dbHours = { ...defaultHours } as any;
-                    Object.keys(dbHours).forEach(day => {
+                    const rawClosed = proData.closed_days;
+                    const closed = Array.isArray(rawClosed) ? rawClosed : (typeof rawClosed === 'string' ? JSON.parse(rawClosed) : []);
+                    dbHours = Object.assign({}, defaultHours);
+                    Object.keys(dbHours).forEach((day: any) => {
                         dbHours[day].start = proData.start_hour || '08:00';
                         dbHours[day].end = proData.end_hour || '20:00';
                         dbHours[day].closed = closed.includes(Number(day));

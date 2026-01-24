@@ -150,271 +150,293 @@ const ServiceManagement: React.FC = () => {
    }
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white pb-32 lg:pb-8">
-         <header className="sticky top-0 z-40 glass-nav !bg-background-dark/80 p-6 lg:p-8 border-b border-white/5 flex flex-col gap-4">
+      <div className="flex flex-col min-h-screen bg-background-dark text-white font-outfit antialiased selection:bg-accent-gold/20 selection:text-white">
+         <header className="relative z-[60] premium-blur-dark sticky top-0 px-8 py-10 flex flex-col gap-6 border-b border-white/5 bg-background-dark/80 backdrop-blur-xl">
             <div className="flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                  <button onClick={() => navigate('/admin')} className="size-10 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors">
-                     <span className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</span>
+               <div className="flex items-center gap-6">
+                  <button
+                     onClick={() => navigate('/admin')}
+                     className="size-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-accent-gold group active:scale-95 transition-all"
+                  >
+                     <span className="material-symbols-outlined !text-xl group-hover:-translate-x-1 transition-transform">west</span>
                   </button>
-                  <div>
-                     <h1 className="text-xl lg:text-2xl font-display font-bold">Catálogo de Serviços</h1>
-                     <p className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest">{filteredServices.length} Procedimentos Ativos</p>
+                  <div className="space-y-1">
+                     <p className="text-[8px] font-black uppercase tracking-[0.5em] text-accent-gold/40 leading-none">Inventário do Catálogo</p>
+                     <h1 className="font-display italic text-2xl text-white">Curadoria de Serviços</h1>
                   </div>
                </div>
+
                {(isMaster || (currentUser as any)?.permissions?.canManageOwnServices) && (
-                  <button onClick={() => { setEditingService({ professionalIds: isMaster ? [] : [currentUser!.id], category: 'Procedimento', pointsReward: 50, features: [] }); setShowModal(true); }} className="size-11 rounded-full bg-primary flex items-center justify-center shadow-xl shadow-primary/20 ring-4 ring-primary/5 active:scale-95 transition-transform">
+                  <button
+                     onClick={() => { setEditingService({ professionalIds: isMaster ? [] : [currentUser!.id], category: 'Procedimento', pointsReward: 50, features: [] }); setShowModal(true); }}
+                     className="size-12 rounded-2xl bg-accent-gold flex items-center justify-center text-primary shadow-huge active:scale-90 transition-all font-black text-xs tracking-widest"
+                  >
                      <span className="material-symbols-outlined">add</span>
                   </button>
                )}
             </div>
          </header>
 
-         <main className="flex-1 p-6 lg:p-6 w-full max-w-7xl mx-auto overflow-y-auto no-scrollbar">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-               {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-                     <div className="size-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                     <p className="text-xs font-bold uppercase tracking-widest">Sincronizando catálogo...</p>
-                  </div>
-               ) : filteredServices.length === 0 ? (
-                  <div className="text-center py-20 space-y-4 opacity-30">
-                     <span className="material-symbols-outlined !text-6xl">category</span>
-                     <p className="font-display italic text-lg">Nenhum serviço encontrado.</p>
-                  </div>
-               ) : filteredServices.map(service => (
-                  <div key={service.id} className="bg-card-dark p-6 rounded-[32px] border border-white/5 space-y-6 group hover:border-white/10 transition-all">
-                     <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-5">
-                           <div className="size-20 rounded-2xl overflow-hidden border border-white/10 shadow-lg shadow-black/20">
-                              <img src={service.imageUrl || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400'} className="w-full h-full object-cover" alt={service.name} />
+         <main className="relative z-10 p-8 lg:p-12 space-y-10 pb-48 w-full max-w-screen-xl mx-auto overflow-x-hidden">
+            <div className="flex items-center justify-between group">
+               <div className="space-y-1">
+                  <h2 className="text-sm font-black uppercase tracking-[0.3em] text-white/40">Acervo Disponível</h2>
+                  <p className="text-[10px] text-accent-gold/40 font-black uppercase tracking-[0.2em]">{filteredServices.length} Procedimentos Ativos</p>
+               </div>
+               <div className="size-12 rounded-2xl border border-white/5 bg-white/5 flex items-center justify-center text-white/20 group-hover:text-accent-gold transition-colors">
+                  <span className="material-symbols-outlined">diamond</span>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8 animate-reveal">
+               {filteredServices.map(service => (
+                  <div key={service.id} className="relative group bg-surface-dark/40 border border-white/5 rounded-[40px] p-8 space-y-8 hover:border-accent-gold/20 hover:bg-surface-dark transition-all duration-700 overflow-hidden">
+                     <div className="flex justify-between items-start relative z-10">
+                        <div className="flex items-center gap-6">
+                           <div className="size-24 rounded-[32px] overflow-hidden border border-white/10 shadow-hugest group-hover:scale-105 transition-transform duration-700">
+                              <img src={service.imageUrl || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400'} className="w-full h-full object-cover" alt="" />
                            </div>
-                           <div className="space-y-1.5">
-                              <h3 className="text-base font-bold text-white group-hover:text-accent-gold transition-colors">{service.name}</h3>
-                              <div className="flex flex-wrap gap-2">
-                                 <span className="bg-primary/10 text-primary text-[8px] font-black px-2.5 py-1 rounded-full uppercase border border-primary/20">{service.category}</span>
-                                 <span className="bg-accent-gold/10 text-accent-gold text-[8px] font-black px-2.5 py-1 rounded-full uppercase border border-accent-gold/20">{service.pointsReward} Lash Points</span>
+                           <div className="space-y-2">
+                              <h3 className="text-lg font-display italic text-white group-hover:text-accent-gold transition-colors">{service.name}</h3>
+                              <div className="flex gap-2">
+                                 <span className="bg-white/5 text-white/40 text-[7px] font-black px-3 py-1 rounded-full uppercase border border-white/5 tracking-widest">{service.category}</span>
                               </div>
                            </div>
                         </div>
-                        <div className="flex gap-2">
+
+                        <div className="flex flex-col gap-2">
                            <button
                               onClick={() => { setEditingService(service); setShowModal(true); }}
-                              className="size-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-primary hover:text-white transition-all active:scale-90"
+                              className="size-10 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white/40 hover:bg-white hover:text-primary transition-all active:scale-95"
                            >
-                              <span className="material-symbols-outlined !text-xl">edit</span>
+                              <span className="material-symbols-outlined !text-lg">edit</span>
                            </button>
                            {isMaster && (
                               <button
                                  onClick={() => handleDelete(service.id)}
-                                 className="size-10 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all active:scale-90"
+                                 className="size-10 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white/20 hover:bg-rose-500 hover:text-white transition-all active:scale-95"
                               >
-                                 <span className="material-symbols-outlined !text-xl">delete</span>
+                                 <span className="material-symbols-outlined !text-lg">delete</span>
                               </button>
                            )}
                         </div>
                      </div>
 
-                     <div className="grid grid-cols-3 gap-4 pt-5 border-t border-white/5">
-                        <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
-                           <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Preço</p>
-                           <p className="text-sm font-black text-emerald-500">R$ {service.price}</p>
+                     <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/5 relative z-10">
+                        <div className="text-center group/metric">
+                           <p className="text-[7px] font-black text-white/20 uppercase tracking-widest mb-1 group-hover/metric:text-accent-gold transition-colors">Elite Value</p>
+                           <p className="text-sm font-black text-emerald-400 tabular-nums">R$ {service.price}</p>
                         </div>
-                        <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
-                           <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Tempo</p>
-                           <p className="text-sm font-black text-gray-300">{service.duration} min</p>
+                        <div className="text-center group/metric border-x border-white/5 px-2">
+                           <p className="text-[7px] font-black text-white/20 uppercase tracking-widest mb-1 group-hover/metric:text-accent-gold transition-colors">Session</p>
+                           <p className="text-sm font-black text-white/60 tabular-nums">{service.duration}m</p>
                         </div>
-                        <div className="text-center bg-white/5 py-4 rounded-2xl border border-white/5">
-                           <p className="text-[8px] font-black text-gray-500 uppercase tracking-tighter mb-1">Equipe</p>
-                           <p className="text-sm font-black text-accent-gold">{service.professionalIds.length}</p>
+                        <div className="text-center group/metric">
+                           <p className="text-[7px] font-black text-white/20 uppercase tracking-widest mb-1 group-hover/metric:text-accent-gold transition-colors">Staff</p>
+                           <p className="text-sm font-black text-accent-gold tabular-nums">{service.professionalIds.length}</p>
                         </div>
                      </div>
+
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/5 blur-[80px] -z-0 rounded-full group-hover:bg-accent-gold/10 transition-all duration-700"></div>
                   </div>
                ))}
             </div>
          </main>
 
          {showModal && (
-            <div className="fixed inset-0 z-[100] bg-black/95 flex items-end justify-center backdrop-blur-xl animate-fade-in">
+            <div className="fixed inset-0 z-[100] bg-background-dark/95 flex items-end justify-center backdrop-blur-2xl animate-fade-in overflow-hidden">
                <div className="fixed inset-0" onClick={() => setShowModal(false)}></div>
-               <form onSubmit={handleSave} className="bg-card-dark w-full max-w-[430px] rounded-t-[48px] p-10 space-y-8 animate-slide-up border-t border-white/10 max-h-[90vh] overflow-y-auto no-scrollbar relative z-10 shadow-2xl">
-                  <div className="flex justify-between items-center">
-                     <div>
-                        <h2 className="text-2xl font-display font-bold text-white">Configurar Serviço</h2>
-                        <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">Gestão de Portfólio</p>
+               <form onSubmit={handleSave} className="bg-surface-dark w-full max-w-screen-md rounded-t-[64px] p-12 space-y-10 animate-slide-up border-t border-white/10 max-h-[92vh] overflow-y-auto no-scrollbar relative z-10 shadow-hugest selection:bg-accent-gold/20">
+                  <div className="flex justify-between items-center px-4">
+                     <div className="space-y-1">
+                        <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none">Configuration</p>
+                        <h2 className="text-3xl font-display italic text-white italic">Assinatura do Serviço</h2>
                      </div>
-                     <button type="button" onClick={() => setShowModal(false)} className="size-10 flex items-center justify-center rounded-full bg-white/5 text-gray-500 hover:text-white transition-colors">
+                     <button type="button" onClick={() => setShowModal(false)} className="size-14 flex items-center justify-center rounded-3xl bg-white/5 border border-white/10 text-white/20 hover:text-white transition-all">
                         <span className="material-symbols-outlined">close</span>
                      </button>
                   </div>
 
-                  <div className="space-y-8">
-                     <div className="space-y-3">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Imagem do Procedimento</label>
-                        <div className="flex flex-col gap-4">
-                           {editingService?.imageUrl && (
-                              <div className="w-full h-40 rounded-2xl overflow-hidden border border-white/10">
-                                 <img src={editingService.imageUrl} className="w-full h-full object-cover" />
-                              </div>
-                           )}
-                           <div className="relative">
-                              <label className="flex items-center justify-center gap-3 w-full h-14 bg-white/5 border border-dashed border-white/20 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors">
-                                 <span className="material-symbols-outlined text-gray-400">upload</span>
-                                 <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Fazer Upload de Foto</span>
-                                 <input
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={async (e) => {
-                                       const file = e.target.files?.[0];
-                                       if (file) {
-                                          const url = await uploadImage(file, 'services');
-                                          if (url) setEditingService({ ...editingService, imageUrl: url });
-                                       }
-                                    }}
-                                 />
+                  <div className="space-y-12">
+                     <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-accent-gold/40"></span>
+                           <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em]">Material Visual</label>
+                        </div>
+                        <div className="flex flex-col md:flex-row gap-6">
+                           <div className="relative size-32 lg:size-48 rounded-[40px] overflow-hidden border border-white/10 shrink-0 group/img">
+                              <img src={editingService?.imageUrl || 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=800'} className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" />
+                              <label className="absolute inset-0 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center opacity-0 group-hover/img:opacity-100 transition-all cursor-pointer">
+                                 <span className="material-symbols-outlined text-white mb-2">add_a_photo</span>
+                                 <span className="text-[8px] font-black uppercase tracking-widest text-white">Update Elite Cover</span>
+                                 <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                       const url = await uploadImage(file, 'services');
+                                       if (url) setEditingService({ ...editingService, imageUrl: url });
+                                    }
+                                 }} />
                               </label>
                            </div>
-                           <input type="text" placeholder="Ou cole a URL da imagem aqui..." value={editingService?.imageUrl || ''} onChange={e => setEditingService({ ...editingService, imageUrl: e.target.value })} className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 text-[10px] focus:ring-primary outline-none italic" />
+                           <div className="flex-1 space-y-4">
+                              <input type="text" placeholder="URL da Coleção Exclusiva..." value={editingService?.imageUrl || ''} onChange={e => setEditingService({ ...editingService, imageUrl: e.target.value })} className="w-full h-15 bg-white/5 border border-white/5 rounded-[24px] px-8 text-xs focus:border-accent-gold/40 outline-none italic text-white/40 transition-all shadow-huge" />
+                              <p className="text-[9px] font-medium text-white/10 px-4 leading-relaxed">Recomendamos imagens de alta curadoria no formato 1:1 para melhor estética no catálogo.</p>
+                           </div>
                         </div>
                      </div>
 
-                     <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Título do Procedimento</label>
-                        <input type="text" required placeholder="Ex: Extensão Volume Russo" value={editingService?.name || ''} onChange={e => setEditingService({ ...editingService, name: e.target.value })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:ring-primary outline-none" />
-                     </div>
-
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Tipo de Serviço (Ex: Cílios)</label>
-                           <input type="text" placeholder="Cílios, Unhas, etc" value={editingService?.category || ''} onChange={e => setEditingService({ ...editingService, category: e.target.value })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:ring-primary outline-none" />
+                     <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-accent-gold/40"></span>
+                           <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em]">Identidade e Valor</label>
                         </div>
-                        <div className="space-y-2">
-                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Valor (R$)</label>
-                           <input type="number" required placeholder="250.00" value={editingService?.price || ''} onChange={e => setEditingService({ ...editingService, price: parseFloat(e.target.value) })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-black text-emerald-500 focus:ring-primary outline-none" />
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                           <div className="space-y-2">
+                              <input type="text" required placeholder="Título da Experiência..." value={editingService?.name || ''} onChange={e => setEditingService({ ...editingService, name: e.target.value })} className="w-full h-18 bg-white/5 border border-white/5 rounded-[28px] px-8 text-base font-medium focus:border-accent-gold/60 outline-none transition-all shadow-huge" />
+                           </div>
+                           <div className="grid grid-cols-2 gap-4">
+                              <input type="text" placeholder="Categoria" value={editingService?.category || ''} onChange={e => setEditingService({ ...editingService, category: e.target.value })} className="h-18 bg-white/5 border border-white/5 rounded-[28px] px-6 text-xs font-black uppercase tracking-widest focus:border-accent-gold/60 outline-none text-white/40 text-center" />
+                              <div className="relative">
+                                 <span className="absolute left-6 top-1/2 -translate-y-1/2 text-emerald-400/40 text-sm font-black">R$</span>
+                                 <input type="number" required placeholder="Value" value={editingService?.price || ''} onChange={e => setEditingService({ ...editingService, price: parseFloat(e.target.value) })} className="w-full h-18 bg-white/5 border border-white/5 rounded-[28px] pl-14 pr-6 text-lg font-black text-emerald-400 focus:border-accent-gold/60 outline-none shadow-huge text-center tabular-nums" />
+                              </div>
+                           </div>
                         </div>
+                        <textarea placeholder="Narrativa de transformação e benefícios..." value={editingService?.description || ''} onChange={e => setEditingService({ ...editingService, description: e.target.value })} className="w-full h-40 bg-white/5 border border-white/5 rounded-[40px] p-8 text-sm focus:border-accent-gold/60 outline-none italic text-white/60 resize-none shadow-huge" />
                      </div>
 
-                     <div className="space-y-2">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Descrição para a Cliente</label>
-                        <textarea placeholder="Explique os benefícios e o resultado final..." value={editingService?.description || ''} onChange={e => setEditingService({ ...editingService, description: e.target.value })} className="w-full h-32 bg-white/5 border border-white/10 rounded-3xl p-6 text-sm focus:ring-primary outline-none italic" />
-                     </div>
-
-                     <div className="space-y-4">
+                     <div className="space-y-6">
                         <div className="flex justify-between items-center px-2">
-                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em]">Diferenciais do Serviço</label>
+                           <div className="flex items-center gap-3">
+                              <span className="w-6 h-px bg-accent-gold/40"></span>
+                              <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em]">Diferenciais de Autoridade</label>
+                           </div>
                            <button
                               type="button"
                               onClick={() => {
                                  const current = editingService?.features || [];
                                  setEditingService({ ...editingService, features: [...current, { title: '', description: '', icon: 'stars' }] });
                               }}
-                              className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest flex items-center gap-1"
+                              className="size-10 rounded-2xl bg-accent-gold/10 text-accent-gold hover:bg-accent-gold hover:text-primary transition-all flex items-center justify-center shadow-lg"
                            >
-                              <span className="material-symbols-outlined !text-sm">add_circle</span>
-                              Adicionar
+                              <span className="material-symbols-outlined !text-xl">add</span>
                            </button>
                         </div>
-                        <div className="space-y-3">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            {editingService?.features?.map((feat, idx) => (
-                              <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3 relative group">
+                              <div key={idx} className="bg-white/5 border border-white/5 rounded-[32px] p-6 space-y-4 relative group/feat hover:bg-white/[0.08] transition-all duration-500">
                                  <button
                                     type="button"
                                     onClick={() => {
                                        const current = editingService?.features || [];
                                        setEditingService({ ...editingService, features: current.filter((_, i) => i !== idx) });
                                     }}
-                                    className="absolute top-2 right-2 text-rose-500 opacity-50 hover:opacity-100 p-1"
+                                    className="absolute top-4 right-4 size-8 flex items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 opacity-0 group-hover/feat:opacity-100 hover:bg-rose-500 hover:text-white transition-all"
                                  >
-                                    <span className="material-symbols-outlined !text-lg">delete</span>
+                                    <span className="material-symbols-outlined !text-sm">close</span>
                                  </button>
-                                 <div className="flex gap-3">
-                                    <div className="space-y-1 flex-1">
-                                       <label className="text-[9px] text-gray-500 font-bold uppercase">Título (Gera ícone auto)</label>
-                                       <input
-                                          placeholder="Ex: Biossegurança"
-                                          value={feat.title}
-                                          onChange={e => {
-                                             const val = e.target.value;
-                                             let icon = 'stars';
-                                             const t = val.toLowerCase();
-                                             if (t.includes('bio') || t.includes('seguran') || t.includes('material')) icon = 'verified_user';
-                                             else if (t.includes('premium') || t.includes('cuidado') || t.includes('alta')) icon = 'spa';
-                                             else if (t.includes('conforto') || t.includes('relax')) icon = 'chair';
-                                             else if (t.includes('tempo') || t.includes('dura') || t.includes('resist')) icon = 'timelapse';
-                                             else if (t.includes('volume') || t.includes('olhar')) icon = 'visibility';
-
-                                             const current = [...(editingService?.features || [])];
-                                             current[idx] = { ...current[idx], title: val, icon };
-                                             setEditingService({ ...editingService, features: current });
-                                          }}
-                                          className="w-full h-10 bg-black/20 rounded-xl px-3 text-xs text-white border border-white/10"
-                                       />
+                                 <div className="flex gap-4">
+                                    <div className="size-10 rounded-2xl bg-accent-gold/10 flex items-center justify-center text-accent-gold shrink-0">
+                                       <span className="material-symbols-outlined !text-xl">{feat.icon || 'star'}</span>
                                     </div>
-                                    <div className="w-10 flex flex-col items-center justify-end pb-1">
-                                       <span className="material-symbols-outlined text-accent-gold">{feat.icon || 'stars'}</span>
-                                    </div>
-                                 </div>
-                                 <div className="space-y-1">
-                                    <label className="text-[9px] text-gray-500 font-bold uppercase">Descrição</label>
-                                    <textarea
-                                       placeholder="Descreva o diferencial..."
-                                       value={feat.description}
+                                    <input
+                                       placeholder="Diferencial Elite..."
+                                       value={feat.title}
                                        onChange={e => {
+                                          const val = e.target.value;
+                                          let icon = 'stars';
+                                          const t = val.toLowerCase();
+                                          if (t.includes('bio') || t.includes('seguran')) icon = 'verified_user';
+                                          else if (t.includes('prem') || t.includes('cuid')) icon = 'spa';
+                                          else if (t.includes('comfort') || t.includes('relax')) icon = 'chair';
+                                          else if (t.includes('resid')) icon = 'timelapse';
                                           const current = [...(editingService?.features || [])];
-                                          current[idx] = { ...current[idx], description: e.target.value };
+                                          current[idx] = { ...current[idx], title: val, icon };
                                           setEditingService({ ...editingService, features: current });
                                        }}
-                                       className="w-full h-16 bg-black/20 rounded-xl p-3 text-xs text-white border border-white/10 italic resize-none"
+                                       className="flex-1 bg-transparent border-none focus:ring-0 text-xs font-black uppercase tracking-widest text-white/80"
                                     />
                                  </div>
+                                 <textarea
+                                    placeholder="Valor agregado..."
+                                    value={feat.description}
+                                    onChange={e => {
+                                       const current = [...(editingService?.features || [])];
+                                       current[idx] = { ...current[idx], description: e.target.value };
+                                       setEditingService({ ...editingService, features: current });
+                                    }}
+                                    className="w-full bg-transparent border-none focus:ring-0 text-[10px] text-white/30 italic resize-none h-12 leading-relaxed"
+                                 />
                               </div>
                            ))}
-                           {(!editingService?.features || editingService.features.length === 0) && (
-                              <p className="text-center text-xs text-gray-600 italic py-4">Nenhum diferencial adicionado.</p>
-                           )}
                         </div>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                           <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Duração (Min)</label>
-                           <input type="number" required placeholder="90" value={editingService?.duration || ''} onChange={e => setEditingService({ ...editingService, duration: parseInt(e.target.value) })} className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-bold focus:ring-primary outline-none" />
+                     <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-accent-gold/40"></span>
+                           <label className="text-[10px] uppercase font-black text-white/30 tracking-[0.3em]">Rede de Especialistas</label>
                         </div>
-                        <div className="space-y-2 bg-accent-gold/5 p-4 rounded-2xl border border-accent-gold/10">
-                           <label className="text-[10px] uppercase font-black text-accent-gold tracking-[0.2em] pl-1">Zenaro Credits ✨</label>
-                           <input type="number" placeholder="50" value={editingService?.pointsReward || ''} onChange={e => setEditingService({ ...editingService, pointsReward: parseInt(e.target.value) })} className="w-full h-10 bg-white/20 border border-accent-gold/20 rounded-xl px-4 text-sm font-black text-accent-gold focus:ring-accent-gold outline-none mt-1" />
-                        </div>
-                     </div>
-
-                     <div className="space-y-4">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Vincular Profissionais</label>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-3">
                            {professionals.map(pro => (
                               <button
                                  key={pro.id}
                                  type="button"
                                  onClick={() => toggleProSelection(pro.id)}
-                                 className={`px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${editingService?.professionalIds?.includes(pro.id) ? 'bg-primary border-primary text-white shadow-lg' : 'bg-white/5 border-white/5 text-gray-500'}`}
+                                 className={`flex items-center gap-3 pr-8 h-15 rounded-[24px] transition-all duration-700 border ${editingService?.professionalIds?.includes(pro.id) ? 'bg-white text-primary border-white shadow-huge scale-[1.02]' : 'bg-white/5 border-white/5 text-white/20 hover:bg-white/10'}`}
                               >
-                                 {pro.name}
+                                 <div className={`size-15 rounded-[22px] overflow-hidden border p-1 border-white/10 transition-all ${editingService?.professionalIds?.includes(pro.id) ? 'opacity-100' : 'opacity-40'}`}>
+                                    <img src={pro.image_url || `https://ui-avatars.com/api/?name=${pro.name}`} className="w-full h-full object-cover rounded-[18px]" />
+                                 </div>
+                                 <div className="text-left">
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{pro.name.split(' ')[0]}</span>
+                                    {editingService?.professionalIds?.includes(pro.id) && <p className="text-[7px] font-black uppercase tracking-widest text-emerald-500 opacity-60">Linked</p>}
+                                 </div>
                               </button>
                            ))}
                         </div>
                      </div>
+
+                     <div className="grid grid-cols-2 gap-8 pt-6">
+                        <div className="space-y-4">
+                           <div className="flex items-center gap-3">
+                              <span className="w-6 h-px bg-white/10"></span>
+                              <label className="text-[10px] uppercase font-black text-white/20 tracking-[0.3em]">Sincronia (Minutos)</label>
+                           </div>
+                           <input type="number" required placeholder="90" value={editingService?.duration || ''} onChange={e => setEditingService({ ...editingService, duration: parseInt(e.target.value) })} className="w-full h-18 bg-surface-dark border border-white/5 rounded-[32px] px-8 text-xl font-black text-center tabular-nums focus:border-accent-gold/40 transition-all focus:ring-0 outline-none text-white/60" />
+                        </div>
+                        <div className="space-y-4">
+                           <div className="flex items-center gap-3">
+                              <span className="w-6 h-px bg-accent-gold/40"></span>
+                              <label className="text-[10px] uppercase font-black text-accent-gold/40 tracking-[0.3em]">Reward Elite Credits</label>
+                           </div>
+                           <div className="relative">
+                              <span className="absolute left-6 top-1/2 -translate-y-1/2 material-symbols-outlined text-accent-gold !text-lg">stars</span>
+                              <input type="number" placeholder="50" value={editingService?.pointsReward || ''} onChange={e => setEditingService({ ...editingService, pointsReward: parseInt(e.target.value) })} className="w-full h-18 bg-accent-gold/5 border border-accent-gold/20 rounded-[32px] pl-16 pr-8 text-xl font-black text-center tabular-nums focus:border-accent-gold outline-none text-accent-gold shadow-[0_0_30px_rgba(201,169,97,0.05)]" />
+                           </div>
+                        </div>
+                     </div>
                   </div>
 
-                  <div className="flex gap-4 pt-6">
-                     <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-18 bg-white/5 border border-white/10 text-gray-500 rounded-3xl font-black uppercase tracking-widest text-[11px] active:scale-95 transition-all">Sair</button>
-                     <button type="submit" className="flex-[2] h-18 bg-primary text-white rounded-3xl font-black uppercase tracking-[0.4em] text-[11px] shadow-2xl shadow-primary/30 active:scale-95 transition-all">SALVAR SERVIÇO</button>
+                  <div className="flex gap-4 pt-12">
+                     <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-20 bg-white/5 border border-white/10 text-white/20 rounded-[32px] font-black uppercase tracking-[0.4em] text-[10px] active:scale-95 transition-all">Discard</button>
+                     <button type="submit" className="flex-[2] h-20 bg-accent-gold text-primary rounded-[32px] font-black uppercase tracking-[0.5em] text-[11px] shadow-hugest active:scale-95 transition-all">Consolidate Catalogue</button>
                   </div>
                </form>
+
+               <div className="fixed top-0 left-0 w-[50vw] h-[50vh] bg-accent-gold/10 blur-[120px] pointer-events-none -z-0"></div>
+               <div className="fixed bottom-0 right-0 w-[40vw] h-[40vh] bg-primary/20 blur-[120px] pointer-events-none -z-0 opacity-40"></div>
             </div >
          )}
+
          <div className="lg:hidden">
             <AdminBottomNav />
          </div>
-      </div >
+
+         <div className="fixed top-0 right-0 w-[40vw] h-[40vh] bg-accent-gold/5 blur-[120px] pointer-events-none z-0"></div>
+         <div className="fixed bottom-0 left-0 w-[40vw] h-[40vh] bg-primary/20 blur-[120px] pointer-events-none z-0 opacity-40"></div>
+      </div>
    );
 };
 

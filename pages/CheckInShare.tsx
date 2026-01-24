@@ -109,74 +109,94 @@ const CheckInShare: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#FDF8F2] font-sans text-[#122B22] flex flex-col items-center relative overflow-hidden">
-            {/* Header */}
-            <header className="w-full px-8 pt-10 pb-4 flex items-center justify-between z-10">
-                <button onClick={() => navigate(-1)} className="size-10 bg-white rounded-full flex items-center justify-center shadow-sm active:scale-95 transition-all text-[#122B22]">
-                    <span className="material-symbols-outlined">arrow_back_ios_new</span>
-                </button>
-                <h2 className="font-serif italic text-lg font-medium text-[#122B22]">JZ Privé Club</h2>
+        <div className="flex flex-col h-full bg-background-light overflow-y-auto no-scrollbar selection:bg-accent-gold/30 selection:text-primary pb-32">
+            {/* Dynamic Background Elements */}
+            <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+                <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+            </div>
+
+            <header className="sticky top-0 z-[100] premium-blur px-6 py-5 flex justify-between items-center border-b border-primary/5">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white border border-primary/5 text-primary shadow-sm active:scale-90 transition-transform">
+                        <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+                    </button>
+                    <div>
+                        <p className="text-[9px] font-outfit font-black uppercase tracking-[0.2em] text-primary/40 leading-none mb-1">Social Club</p>
+                        <h2 className="text-xl font-display italic text-primary tracking-tight">Compartilhar Brilho</h2>
+                    </div>
+                </div>
                 <div className="size-10"></div>
             </header>
 
-            <main className="flex-1 w-full max-w-sm px-6 flex flex-col items-center justify-center space-y-8 pb-10 z-10 relative">
+            <main className="relative z-10 flex-1 w-full max-w-sm mx-auto p-8 space-y-12">
 
-                {/* Reward Card */}
-                <div className="w-full bg-[#2A4038] text-white rounded-[32px] p-8 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-20">
-                        <span className="material-symbols-outlined !text-6xl text-[#C9A961]">auto_awesome</span>
+                {/* Elite Reward Card */}
+                <div className="group relative bg-primary p-10 rounded-[48px] shadow-2xl shadow-primary/20 overflow-hidden animate-reveal">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12 transition-transform group-hover:rotate-45 duration-700">
+                        <span className="material-symbols-outlined !text-7xl text-accent-gold">auto_awesome</span>
                     </div>
 
-                    <div className="flex items-center gap-2 mb-4 text-[#C9A961]">
-                        <span className="material-symbols-outlined text-sm">stars</span>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Recompensa Exclusiva</span>
+                    <div className="relative z-10 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <span className="size-8 rounded-lg bg-white/10 flex items-center justify-center text-accent-gold border border-white/5">
+                                <span className="material-symbols-outlined !text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
+                            </span>
+                            <span className="text-[9px] font-outfit font-black uppercase tracking-[0.3em] text-white/60">Recompensa Exclusiva</span>
+                        </div>
+
+                        <h1 className="text-3xl font-display text-white leading-tight">
+                            Sua beleza <br /><span className="italic text-accent-gold"> merece ser </span> vista.
+                        </h1>
+
+                        <p className="text-xs font-outfit text-white/40 leading-relaxed font-light italic">
+                            Compartilhe seu momento JZ Studio e desbloqueie <span className="text-accent-gold font-bold">50 Lash Points</span> para sua próxima experiência.
+                        </p>
                     </div>
-
-                    <h1 className="font-display text-3xl font-medium leading-tight mb-4">
-                        Celebre sua beleza e ganhe 50 JZ Privé Balance
-                    </h1>
-
-                    <p className="text-white/60 text-xs leading-relaxed font-medium max-w-[90%]">
-                        Compartilhe seu momento no JZ Studio e desbloqueie créditos exclusivos para sua próxima experiência de cuidado.
-                    </p>
                 </div>
 
                 {/* Simulated Filter Preview */}
-                <div className="w-full relative">
-                    <p className="text-[9px] text-[#122B22]/40 font-black uppercase tracking-[0.3em] text-center mb-4">Pré-visualização do Filtro Premium</p>
-                    <div className="aspect-[4/5] w-full rounded-[32px] bg-gray-200 relative overflow-hidden shadow-lg border-4 border-white">
+                <div className="w-full flex flex-col items-center animate-reveal" style={{ animationDelay: '0.1s' }}>
+                    <div className="flex items-center gap-2 mb-4">
+                        <p className="text-[9px] text-primary/30 uppercase font-black tracking-[0.4em]">Curadoria Visual</p>
+                        <div className="h-px w-6 bg-accent-gold/40"></div>
+                    </div>
+                    <div className="aspect-[4/5] w-full rounded-[48px] bg-background-dark relative overflow-hidden shadow-2xl border-8 border-white group">
                         <img
                             src="https://images.unsplash.com/photo-1515377905703-c4788e51af93?q=80&w=700&auto=format&fit=crop"
                             alt="Preview Mode"
-                            className="w-full h-full object-cover grayscale-[20%]"
+                            className="w-full h-full object-cover grayscale-[20%] transition-transform duration-700 group-hover:scale-105"
                         />
 
-                        <div className="absolute inset-0 bg-[#C9A961]/10 mix-blend-overlay"></div>
-                        <div className="absolute top-8 left-0 right-0 text-center">
-                            <h3 className="font-serif italic text-white text-xl drop-shadow-md">JZ Studio</h3>
+                        <div className="absolute inset-0 bg-accent-gold/5 mix-blend-overlay"></div>
+                        <div className="absolute top-10 left-0 right-0 text-center">
+                            <h3 className="font-display italic text-white text-2xl drop-shadow-huge">JZ Studio</h3>
                         </div>
-                        <div className="absolute bottom-8 left-8 flex items-center gap-2">
-                            <div className="size-2 rounded-full bg-[#C9A961]"></div>
-                            <span className="text-[10px] text-white font-black uppercase tracking-widest drop-shadow-md">Privé Member</span>
+                        <div className="absolute bottom-10 left-10 flex items-center gap-3">
+                            <div className="size-2 rounded-full bg-accent-gold animate-pulse"></div>
+                            <span className="text-[9px] text-white font-black uppercase tracking-[0.3em] drop-shadow-md">Privé Member Elite</span>
                         </div>
 
-                        <button className="absolute top-6 right-6 size-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 text-white">
-                            <span className="material-symbols-outlined !text-lg">filter_vintage</span>
-                        </button>
+                        <div className="absolute top-8 right-8 size-12 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 text-accent-gold shadow-huge">
+                            <span className="material-symbols-outlined !text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>filter_vintage</span>
+                        </div>
                     </div>
                 </div>
 
                 {/* Actions */}
-                <div className="w-full space-y-4">
+                <div className="w-full grid gap-4 animate-reveal" style={{ animationDelay: '0.2s' }}>
                     <button
                         onClick={handleInstagramShare}
-                        className="w-full h-16 bg-[#2A4038] text-white rounded-[24px] font-bold text-sm flex items-center justify-between px-8 shadow-xl shadow-[#2A4038]/20 active:scale-95 transition-all"
+                        className="group relative w-full h-20 bg-primary text-white rounded-3xl font-outfit font-black text-[10px] uppercase tracking-[0.3em] overflow-hidden shadow-2xl shadow-primary/20 flex items-center justify-between px-8 active:scale-95 transition-all"
                     >
-                        <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined">camera_alt</span>
-                            <span>Postar no Stories (Instagram)</span>
+                        <div className="absolute inset-x-0 bottom-0 h-1 bg-accent-gold translate-y-full group-hover:translate-y-0 transition-transform"></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="size-12 rounded-2xl bg-white/10 flex items-center justify-center text-accent-gold border border-white/5">
+                                <span className="material-symbols-outlined !text-xl">camera_alt</span>
+                            </div>
+                            <span className="group-hover:text-accent-gold transition-colors">Instagram Stories</span>
                         </div>
-                        <span className="material-symbols-outlined">arrow_forward</span>
+                        <span className="material-symbols-outlined text-white/20 group-hover:text-accent-gold transition-colors relative z-10">east</span>
                     </button>
 
                     <input
@@ -190,50 +210,62 @@ const CheckInShare: React.FC = () => {
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="w-full h-16 bg-white border border-[#122B22]/5 text-[#122B22] rounded-[24px] font-serif italic text-lg flex items-center justify-between px-8 shadow-sm active:scale-95 transition-all disabled:opacity-50"
+                        className="group relative w-full h-20 bg-white border border-primary/5 text-primary rounded-3xl font-outfit font-black text-[10px] uppercase tracking-[0.3em] overflow-hidden shadow-sm flex items-center justify-between px-8 active:scale-95 transition-all disabled:opacity-50 hover:border-accent-gold/20"
                     >
-                        <div className="flex items-center gap-3">
-                            <span className="material-symbols-outlined text-[#C9A961]">add_a_photo</span>
-                            <span>{uploading ? 'Publicando...' : 'Storie no App (24h)'}</span>
+                        <div className="flex items-center gap-4">
+                            <div className="size-12 rounded-2xl bg-accent-gold/10 flex items-center justify-center text-accent-gold transition-all duration-500 shadow-sm">
+                                <span className="material-symbols-outlined !text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>add_a_photo</span>
+                            </div>
+                            <span className="group-hover:text-primary transition-colors">{uploading ? 'Processando...' : 'Timeline Studio (24h)'}</span>
                         </div>
                         {uploading ? (
-                            <div className="size-5 border-2 border-[#C9A961] border-t-transparent rounded-full animate-spin"></div>
+                            <div className="size-5 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
                         ) : (
-                            <span className="material-symbols-outlined text-[#122B22]/20">add_circle</span>
+                            <span className="material-symbols-outlined text-primary/10 group-hover:text-primary transition-colors">add_circle</span>
                         )}
                     </button>
                 </div>
 
-                <p className="font-serif italic text-sm text-[#122B22]/40 pt-4">Seu espaço de cuidado sempre te espera</p>
-
+                <footer className="pt-12 text-center select-none opacity-20">
+                    <p className="font-display italic text-lg text-primary tracking-widest italic">A beleza compartilhada inspira.</p>
+                </footer>
             </main>
 
             {/* Reward Feedback Overlay */}
             {pointsEarned && (
-                <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center animate-fade-in p-8">
-                    <div className="text-center space-y-6">
-                        <div className="size-32 mx-auto rounded-full bg-[#C9A961]/20 flex items-center justify-center ring-4 ring-[#C9A961]/10">
-                            <span className="material-symbols-outlined !text-6xl text-[#C9A961] animate-bounce-slow">stars</span>
+                <div className="fixed inset-0 bg-background-dark/95 z-[200] flex items-center justify-center animate-fade-in p-8 backdrop-blur-2xl">
+                    <div className="text-center space-y-10 animate-reveal">
+                        <div className="size-40 mx-auto relative flex items-center justify-center">
+                            <div className="absolute inset-0 bg-accent-gold/20 rounded-full blur-[40px] animate-pulse"></div>
+                            <div className="relative size-32 rounded-full bg-accent-gold/10 flex items-center justify-center ring-4 ring-accent-gold/20 border border-accent-gold/40">
+                                <span className="material-symbols-outlined !text-7xl text-accent-gold animate-bounce-slow" style={{ fontVariationSettings: "'FILL' 1" }}>diamond</span>
+                            </div>
                         </div>
-                        <div>
-                            <h2 className="text-4xl font-display font-bold text-[#C9A961] mb-2">+{pointsEarned.amount}</h2>
-                            <p className="text-xl text-white font-medium">JZ Privé Balance</p>
+
+                        <div className="space-y-2">
+                            <p className="text-[10px] font-black text-accent-gold uppercase tracking-[0.6em]">Recompensa Desbloqueada</p>
+                            <h2 className="text-5xl font-display font-bold text-white mb-2">+{pointsEarned.amount}</h2>
+                            <p className="text-lg font-outfit text-white/60 font-light tracking-widest uppercase">Lash Points</p>
                         </div>
-                        <p className="text-white/60 text-sm leading-relaxed max-w-[200px] mx-auto">
-                            {pointsEarned.type === 'INSTAGRAM' ? 'Seu momento agora faz parte do JZ Privé Club.' : 'Sua beleza está brilhando no nosso App!'}
+
+                        <p className="text-white/40 text-sm font-outfit italic leading-relaxed max-w-[240px] mx-auto">
+                            {pointsEarned.type === 'INSTAGRAM' ? 'Seu momento exclusivo agora faz parte da nossa elite.' : 'Sua beleza está brilhando na timeline JZ Privé!'}
                         </p>
+
                         <button
                             onClick={() => {
                                 setPointsEarned(null);
                                 if (pointsEarned.type === 'APP') navigate('/stories');
                             }}
-                            className="px-8 py-3 bg-white text-black rounded-full font-bold uppercase tracking-widest text-xs mt-4"
+                            className="group relative px-12 py-5 bg-accent-gold text-primary rounded-2xl font-outfit font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl shadow-accent-gold/10 overflow-hidden active:scale-95 transition-all"
                         >
-                            Continuar
+                            <span className="relative z-10">Continuar Jornada</span>
                         </button>
                     </div>
                 </div>
             )}
+            {/* Visual Safe Area Inset */}
+            <div className="fixed bottom-0 left-0 w-full h-8 bg-background-light pointer-events-none z-[90]"></div>
         </div>
     );
 };

@@ -26,7 +26,6 @@ const History: React.FC = () => {
          if (user) {
             const today = new Date().toISOString().split('T')[0];
 
-            // Fetch with specific columns to avoid join errors if relations aren't perfect
             const { data: allAppts } = await supabase.from('appointments')
                .select(`
                   *,
@@ -43,7 +42,6 @@ const History: React.FC = () => {
                const ps = allAppts.filter(a => a.date < today || !upcomingStatuses.includes(a.status));
 
                setUpcoming(up);
-               // Sort past reverse
                setPast(ps.sort((a, b) => b.date.localeCompare(a.date)));
             }
          }
@@ -61,14 +59,8 @@ const History: React.FC = () => {
          .channel('history-changes')
          .on(
             'postgres_changes',
-            {
-               event: '*',
-               schema: 'public',
-               table: 'appointments'
-            },
-            () => {
-               fetchHistory();
-            }
+            { event: '*', schema: 'public', table: 'appointments' },
+            () => fetchHistory()
          )
          .subscribe();
 
@@ -78,41 +70,63 @@ const History: React.FC = () => {
    }, []);
 
    const renderAppointmentCard = (item: any, isPast: boolean) => {
-      const status = statusMap[item.status] || { label: item.status, color: 'text-gray-400 bg-gray-50' };
+      const status = statusMap[item.status] || { label: item.status, color: 'text-gray-400 bg-gray-100' };
 
       return (
-         <div key={item.id} className="relative">
-            {!isPast && <div className="absolute left-[-45px] top-4 w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-primary/10"></div>}
-            <div
-               onClick={() => navigate(`/history/details/${item.id}`)}
-               className={`bg-white p-6 rounded-[32px] premium-shadow border border-gray-50 active:scale-[0.98] transition-all cursor-pointer ${isPast ? 'opacity-70' : ''}`}
-            >
-               <div className="flex justify-between items-start mb-4">
-                  <div className="space-y-1">
-                     <p className="text-[10px] font-black text-accent-gold uppercase tracking-widest leading-none">
-                        {item.services?.category || 'Procedimento'}
-                     </p>
-                     <h4 className="font-bold text-primary text-lg leading-tight">{item.service_name || item.services?.name}</h4>
-                  </div>
-                  <span className={`text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest border ${status.color}`}>
-                     {status.label}
-                  </span>
+         <div
+            key={item.id}
+            onClick={() => navigate(`/history/details/${item.id}`)}
+            className={`group relative w-full bg-white p-8 rounded-[40px] border border-primary/5 shadow-xl shadow-primary/5 hover:shadow-huge active:scale-[0.99] transition-all duration-500 overflow-hidden ${isPast ? 'opacity-80' : ''}`}
+         >
+            <div className="flex justify-between items-start mb-6">
+               <div className="space-y-1">
+                  <p className="text-[8px] font-black text-accent-gold uppercase tracking-[0.4em] leading-none mb-1">
+                     {item.services?.category || 'Procedimento VIP'}
+                  </p>
+                  <h4 className="font-display italic text-2xl text-primary leading-tight">{item.service_name || item.services?.name}</h4>
                </div>
-               <div className="space-y-3 text-xs text-gray-500 font-medium">
-                  <div className="flex items-center gap-2">
-                     <span className="material-symbols-outlined !text-sm text-accent-gold">calendar_today</span>
-                     {new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+               <span className={`text-[9px] font-black px-4 py-2 rounded-2xl uppercase tracking-widest border ${status.color}`}>
+                  {status.label}
+               </span>
+            </div>
+
+            <div className="h-px w-full bg-gradient-to-r from-primary/5 to-transparent mb-6"></div>
+
+            <div className="flex flex-wrap gap-6 items-center">
+               <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary/40 group-hover:text-accent-gold transition-colors">
+                     <span className="material-symbols-outlined !text-lg">calendar_month</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                     <span className="material-symbols-outlined !text-sm text-accent-gold">schedule</span>
-                     {item.time}
+                  <div>
+                     <p className="text-[8px] font-black text-primary/20 uppercase tracking-widest">Data</p>
+                     <p className="text-sm font-outfit font-bold text-primary">
+                        {new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
+                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                     <span className="material-symbols-outlined !text-sm text-accent-gold">person</span>
-                     com {item.professional_name || item.professionals?.name}
+               </div>
+
+               <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary/40 group-hover:text-accent-gold transition-colors">
+                     <span className="material-symbols-outlined !text-lg">schedule</span>
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black text-primary/20 uppercase tracking-widest">Hora</p>
+                     <p className="text-sm font-outfit font-bold text-primary">{item.time}</p>
+                  </div>
+               </div>
+
+               <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary/40 group-hover:text-accent-gold transition-colors">
+                     <span className="material-symbols-outlined !text-lg">person</span>
+                  </div>
+                  <div>
+                     <p className="text-[8px] font-black text-primary/20 uppercase tracking-widest">Especialista</p>
+                     <p className="text-sm font-outfit font-bold text-primary">{item.professional_name || item.professionals?.name?.split(' ')[0]}</p>
                   </div>
                </div>
             </div>
+
+            <div className="absolute top-0 right-0 w-24 h-1 bg-gradient-to-l from-accent-gold/20 to-transparent"></div>
          </div>
       );
    };
@@ -120,87 +134,135 @@ const History: React.FC = () => {
    if (loading) {
       return (
          <div className="flex h-screen items-center justify-center bg-background-light">
-            <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <div className="relative size-16 flex items-center justify-center">
+               <div className="absolute inset-0 border-2 border-primary/5 rounded-full"></div>
+               <div className="absolute inset-0 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+               <span className="material-symbols-outlined text-primary scale-75">calendar_month</span>
+            </div>
          </div>
       );
    }
 
    return (
-      <div className="flex flex-col h-full bg-background-light pb-24">
-         <header className="sticky top-0 z-50 glass-nav p-6 flex items-center justify-between border-b">
-            <button onClick={() => navigate('/home')} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
-            <h2 className="font-display font-bold text-lg">Seus Agendamentos</h2>
-            <span className="size-6"></span>
+      <div className="flex flex-col min-h-screen bg-background-light font-outfit antialiased selection:bg-accent-gold/20 selection:text-primary">
+         {/* Immersive Background */}
+         <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+            <div className="absolute top-[-10%] left-[-10%] w-[70%] aspect-square organic-shape-1 bg-accent-gold/10 blur-[100px] animate-float"></div>
+            <div className="absolute bottom-[-10%] right-[-10%] w-[60%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+         </div>
+
+         <header className="relative z-50 premium-blur sticky top-0 px-6 py-8 flex items-center justify-between border-b border-primary/5">
+            <button
+               onClick={() => navigate('/home')}
+               className="size-12 rounded-2xl bg-white shadow-sm border border-primary/5 flex items-center justify-center text-primary group active:scale-95 transition-all"
+            >
+               <span className="material-symbols-outlined !text-xl group-hover:-translate-x-1 transition-transform">west</span>
+            </button>
+            <div className="text-center">
+               <p className="text-[8px] font-black uppercase tracking-[0.5em] text-primary/30 leading-none mb-1">Seu Histórico</p>
+               <h2 className="font-display italic text-xl text-primary">Agenda VIP</h2>
+            </div>
+            <div className="size-12"></div>
          </header>
 
-         <main className="flex-1 p-6 space-y-8 overflow-y-auto no-scrollbar">
-            <div className="flex gap-4 border-b">
+         <main className="relative z-10 flex-1 px-8 pt-8 pb-32 overflow-y-auto no-scrollbar">
+            {/* Elegant Tab Switcher */}
+            <div className="bg-white/50 p-2 rounded-3xl border border-primary/5 flex gap-2 mb-12 animate-reveal">
                <button
                   onClick={() => setActiveTab('upcoming')}
-                  className={`pb-3 font-bold text-sm flex-1 transition-all ${activeTab === 'upcoming' ? 'border-b-2 border-primary text-primary' : 'border-b-2 border-transparent text-gray-400'}`}
+                  className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === 'upcoming' ? 'bg-primary text-accent-gold shadow-lg shadow-primary/20 scale-[1.02]' : 'text-primary/30 hover:text-primary hover:bg-white'}`}
                >
-                  Próximos
+                  Próximos Momentos
                </button>
                <button
                   onClick={() => setActiveTab('past')}
-                  className={`pb-3 font-bold text-sm flex-1 transition-all ${activeTab === 'past' ? 'border-b-2 border-primary text-primary' : 'border-b-2 border-transparent text-gray-400'}`}
+                  className={`flex-1 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === 'past' ? 'bg-primary text-accent-gold shadow-lg shadow-primary/20 scale-[1.02]' : 'text-primary/30 hover:text-primary hover:bg-white'}`}
                >
-                  Anteriores
+                  Minha Jornada
                </button>
             </div>
 
             {activeTab === 'upcoming' ? (
-               <section className="space-y-6 animate-fade-in">
-                  <div className="flex justify-between items-center">
-                     <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Agendados</h3>
-                     <span className="text-[10px] text-gray-400 font-bold uppercase">{upcoming.length} Encontro(s)</span>
+               <section className="space-y-10 animate-reveal">
+                  <div className="flex justify-between items-center px-2">
+                     <h3 className="text-[10px] font-black text-primary/30 uppercase tracking-[0.3em]">Encontros Confirmados</h3>
+                     <span className="text-[10px] text-accent-gold font-black uppercase tracking-widest">{upcoming.length} Reserva(s)</span>
                   </div>
 
-                  <div className="relative pl-10 border-l border-gray-100 py-2 space-y-4">
+                  <div className="space-y-6">
                      {upcoming.length === 0 ? (
-                        <div className="py-10 text-center space-y-2 opacity-40">
-                           <span className="material-symbols-outlined !text-4xl text-primary">calendar_today</span>
-                           <p className="text-xs font-bold uppercase tracking-widest">Nenhum agendamento futuro</p>
-                           <button onClick={() => navigate('/services')} className="text-[10px] text-accent-gold underline font-bold uppercase tracking-widest mt-2 block w-full text-center">Agendar Agora ✨</button>
+                        <div className="py-24 text-center space-y-6 glass-nav rounded-[48px] border border-dashed border-primary/10">
+                           <div className="size-20 rounded-full bg-primary/5 flex items-center justify-center mx-auto text-primary/20">
+                              <span className="material-symbols-outlined !text-4xl">event_upcoming</span>
+                           </div>
+                           <div className="space-y-2">
+                              <p className="text-[10px] font-black text-primary/30 uppercase tracking-widest">Nenhum agendamento futuro</p>
+                              <button
+                                 onClick={() => navigate('/services')}
+                                 className="text-accent-gold font-display italic text-lg hover:underline transition-all"
+                              >
+                                 Deseja reservar um novo horário?✧
+                              </button>
+                           </div>
                         </div>
-                     ) : upcoming.map(item => renderAppointmentCard(item, false))}
+                     ) : (
+                        <div className="grid grid-cols-1 gap-6">
+                           {upcoming.map((item, i) => (
+                              <div key={item.id} className="animate-reveal" style={{ animationDelay: `${i * 0.15}s` }}>
+                                 {renderAppointmentCard(item, false)}
+                              </div>
+                           ))}
+                        </div>
+                     )}
                   </div>
                </section>
             ) : (
-               <section className="space-y-6 animate-fade-in">
-                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sua História Conosco</h3>
+               <section className="space-y-10 animate-reveal">
+                  <h3 className="text-[10px] font-black text-primary/30 uppercase tracking-[0.3em] px-2">Histórico de Experiências</h3>
                   <div className="space-y-6">
                      {past.length === 0 ? (
-                        <p className="text-xs text-gray-400 pl-10 opacity-60">Histórico vazio.</p>
-                     ) : past.map(item => renderAppointmentCard(item, true))}
+                        <div className="py-24 text-center glass-nav rounded-[48px] border border-dashed border-primary/10">
+                           <p className="text-[10px] font-black text-primary/20 uppercase tracking-widest">Inicie sua história conosco ✨</p>
+                        </div>
+                     ) : (
+                        <div className="grid grid-cols-1 gap-6">
+                           {past.map((item, i) => (
+                              <div key={item.id} className="animate-reveal" style={{ animationDelay: `${i * 0.15}s` }}>
+                                 {renderAppointmentCard(item, true)}
+                              </div>
+                           ))}
+                        </div>
+                     )}
                   </div>
                </section>
             )}
          </main>
 
-         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav px-8 pt-4 pb-10 flex justify-between items-center shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-50 bg-[#fdfcf9]/80 backdrop-blur-xl border-t border-[#d4af37]/10 rounded-t-[32px]">
-            <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
-               <span className="material-symbols-outlined !text-2xl">home</span>
-               <span className="text-[9px] uppercase tracking-tighter font-bold">Início</span>
-            </button>
-            <button onClick={() => navigate('/feed')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
-               <span className="material-symbols-outlined !text-2xl">grid_view</span>
-               <span className="text-[9px] uppercase tracking-tighter font-bold">Feed</span>
-            </button>
-            <button onClick={() => navigate('/services')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-[#c5a059] transition-colors">
-               <span className="material-symbols-outlined !text-3xl">diamond</span>
-               <span className="text-[9px] uppercase tracking-tighter font-bold">Serviços</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-primary">
-               <span className="material-symbols-outlined !text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_today</span>
-               <span className="text-[9px] uppercase tracking-tighter font-bold">Agenda</span>
-            </button>
-            <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1 text-primary/40 hover:text-primary transition-colors">
-               <span className="material-symbols-outlined !text-2xl">person_outline</span>
-               <span className="text-[9px] uppercase tracking-tighter font-bold">Perfil</span>
-            </button>
-         </nav>
-         <div className="fixed bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1.5 bg-primary/5 rounded-full z-[60]"></div>
+         {/* Persistent Premium Navigation */}
+         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] z-[120]">
+            <nav className="animate-reveal" style={{ animationDelay: '0.4s' }}>
+               <div className="premium-blur rounded-[28px] border border-primary/10 shadow-2xl px-6 py-3 flex justify-between items-center bg-white/80">
+                  <button onClick={() => navigate('/home')} className="p-2 text-primary/30 hover:text-primary transition-colors group">
+                     <span className="material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform">home</span>
+                  </button>
+                  <button onClick={() => navigate('/feed')} className="p-2 text-primary/30 hover:text-primary transition-colors group">
+                     <span className="material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform">grid_view</span>
+                  </button>
+                  <button onClick={() => navigate('/services')} className="relative size-14 -translate-y-6 rounded-3xl bg-primary text-accent-gold shadow-lg shadow-primary/40 flex items-center justify-center border-4 border-background-light group-active:scale-90 transition-transform ring-1 ring-primary/5">
+                     <span className="material-symbols-outlined !text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>diamond</span>
+                  </button>
+                  <button className="relative p-2 text-primary group transition-all">
+                     <span className="material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_today</span>
+                     <span className="absolute bottom-[-16px] left-1/2 -translate-x-1/2 w-1 h-1 bg-accent-gold rounded-full"></span>
+                  </button>
+                  <button onClick={() => navigate('/profile')} className="p-2 text-primary/30 hover:text-primary transition-colors group">
+                     <span className="material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform">person_outline</span>
+                  </button>
+               </div>
+            </nav>
+         </div>
+
+         <div className="fixed bottom-0 left-0 w-full h-8 bg-background-light pointer-events-none z-[110]"></div>
       </div>
    );
 };

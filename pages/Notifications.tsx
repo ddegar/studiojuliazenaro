@@ -66,76 +66,121 @@ const Notifications: React.FC = () => {
    };
 
    return (
-      <div className="flex flex-col h-full bg-background-light">
-         <header className="sticky top-0 z-50 glass-nav p-4 flex items-center justify-between border-b">
-            <button onClick={() => navigate(-1)} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
-            <h2 className="font-display font-bold text-lg">Notificações</h2>
-            <button onClick={fetchNotifications} className="text-primary text-xs font-bold uppercase underline">Atualizar</button>
+      <div className="flex flex-col h-full bg-background-light overflow-y-auto no-scrollbar selection:bg-accent-gold/30 selection:text-primary pb-32">
+         {/* Dynamic Background Elements */}
+         <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+            <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+         </div>
+
+         <header className="sticky top-0 z-[100] premium-blur px-6 py-5 flex justify-between items-center border-b border-primary/5">
+            <div className="flex items-center gap-4">
+               <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white border border-primary/5 text-primary shadow-sm active:scale-90 transition-transform">
+                  <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+               </button>
+               <div>
+                  <p className="text-[9px] font-outfit font-black uppercase tracking-[0.2em] text-primary/40 leading-none mb-1">Elite Inbox</p>
+                  <h2 className="text-xl font-display italic text-primary tracking-tight">Notificações</h2>
+               </div>
+            </div>
+            <button onClick={fetchNotifications} className="size-10 flex items-center justify-center rounded-full bg-primary/5 text-primary border border-primary/10 hover:bg-primary/10 transition-colors">
+               <span className="material-symbols-outlined !text-lg">refresh</span>
+            </button>
          </header>
 
-         <main className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-8">
+         <main className="relative z-10 flex-1 p-8 space-y-10">
             {loading ? (
-               <div className="flex justify-center py-20">
-                  <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+               <div className="flex flex-col items-center justify-center py-32 space-y-4">
+                  <div className="relative size-12 flex items-center justify-center">
+                     <div className="absolute inset-0 border-2 border-primary/10 rounded-full"></div>
+                     <div className="absolute inset-0 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <p className="text-[10px] font-outfit font-bold text-primary/40 uppercase tracking-widest">Sua Linha do Tempo</p>
                </div>
             ) : notifications.length === 0 ? (
-               <div className="flex flex-col items-center justify-center py-20 opacity-30 italic">
-                  <span className="material-symbols-outlined text-4xl mb-2">notifications_off</span>
-                  <p className="text-sm">Nenhuma notificação por enquanto</p>
+               <div className="text-center py-24 px-10 space-y-6 opacity-30">
+                  <div className="size-20 rounded-full bg-primary/5 flex items-center justify-center mx-auto">
+                     <span className="material-symbols-outlined !text-4xl text-primary">notifications_off</span>
+                  </div>
+                  <p className="text-xs font-outfit text-primary italic tracking-wide">O silêncio é a moldura de novos momentos.</p>
                </div>
             ) : (
-               <>
-                  <section className="space-y-4">
-                     <h3 className="text-xl font-display font-bold px-2">Recentes</h3>
-                     <div className="space-y-3">
-                        {notifications.map(item => (
-                           <div
-                              key={item.id}
-                              onClick={() => handleNotificationClick(item)}
-                              className={`${item.is_read ? 'bg-white/60 opacity-70' : 'bg-white'} p-5 rounded-2xl border border-gray-100 shadow-sm flex gap-4 relative group active:scale-[0.98] transition-all cursor-pointer`}
-                           >
-                              <div className={`w-12 h-12 ${item.is_read ? 'bg-gray-100 text-gray-400' : 'bg-primary/10 text-primary'} rounded-xl flex items-center justify-center shrink-0`}>
-                                 <span className="material-symbols-outlined">{item.icon || 'notifications'}</span>
+               <div className="space-y-4">
+                  <div className="flex items-center gap-3 px-2 mb-6">
+                     <span className="h-px w-6 bg-accent-gold/40"></span>
+                     <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-[0.3em] font-outfit">Recentes</h3>
+                  </div>
+                  <div className="grid gap-4">
+                     {notifications.map((item, idx) => (
+                        <div
+                           key={item.id}
+                           onClick={() => handleNotificationClick(item)}
+                           className={`group relative p-6 rounded-[32px] border transition-all duration-500 animate-reveal shadow-sm cursor-pointer active:scale-[0.98] ${item.is_read ? 'bg-white/40 border-primary/5 grayscale-[50%] opacity-80' : 'bg-white border-accent-gold/20 shadow-xl'}`}
+                           style={{ animationDelay: `${idx * 0.1}s` }}
+                        >
+                           <div className="flex gap-5">
+                              <div className={`size-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors duration-500 ${item.is_read ? 'bg-gray-100 text-gray-400' : 'bg-primary text-white shadow-lg shadow-primary/20'}`}>
+                                 <span className="material-symbols-outlined !text-xl">{item.icon || 'notifications'}</span>
                               </div>
-                              <div className="flex-1 space-y-1">
-                                 <div className="flex justify-between items-center">
-                                    <p className="font-bold text-sm leading-tight text-gray-900">{item.title}</p>
-                                    <p className="text-[10px] text-gray-400 font-bold">{formatTime(item.created_at)}</p>
+                              <div className="flex-1 space-y-2">
+                                 <div className="flex justify-between items-start">
+                                    <h4 className="font-outfit font-bold text-sm text-primary leading-tight px-1">{item.title}</h4>
+                                    <span className="text-[9px] font-outfit font-black text-primary/30 uppercase tracking-widest pt-0.5">{formatTime(item.created_at)}</span>
                                  </div>
-                                 <p className="text-xs text-gray-500 leading-relaxed">{item.message}</p>
+                                 <p className="text-xs text-primary/60 leading-relaxed font-outfit font-light italic px-1">{item.message}</p>
                               </div>
-                              {!item.is_read && (
-                                 <div className="absolute top-4 right-1 translate-x-1/2">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-primary/10"></div>
-                                 </div>
-                              )}
                            </div>
-                        ))}
-                     </div>
-                  </section>
-               </>
+                           {!item.is_read && (
+                              <div className="absolute top-4 right-4">
+                                 <div className="size-2 rounded-full bg-accent-gold ring-4 ring-accent-gold/10"></div>
+                              </div>
+                           )}
+                           <div className={`absolute bottom-4 right-6 flex items-center gap-1.5 text-[9px] font-outfit font-black uppercase tracking-widest transition-all duration-500 ${item.is_read ? 'opacity-0' : 'opacity-30 group-hover:opacity-100 text-accent-gold'}`}>
+                              <span>Abrir</span>
+                              <span className="material-symbols-outlined !text-xs">east</span>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </div>
             )}
 
-            <div className="pt-12 pb-8 flex flex-col items-center opacity-10 grayscale pointer-events-none">
-               <p className="font-display italic text-lg text-primary">Studio Julia Zenaro</p>
-               <div className="h-[1px] w-12 bg-primary mt-2"></div>
-            </div>
+            <footer className="pt-20 pb-12 text-center opacity-20 grayscale pointer-events-none transition-all hover:opacity-100 hover:grayscale-0">
+               <p className="font-display italic text-lg text-primary tracking-widest">Excelência em cada detalhe.</p>
+               <div className="flex items-center justify-center gap-4 mt-4">
+                  <div className="h-px w-8 bg-primary"></div>
+                  <span className="font-outfit text-[8px] font-black uppercase tracking-[0.4em]">Julia Zenaro</span>
+                  <div className="h-px w-8 bg-primary"></div>
+               </div>
+            </footer>
          </main>
 
-         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] glass-nav border-t border-gray-100 flex justify-around items-center py-4 px-2 z-50 rounded-t-2xl">
-            <button onClick={() => navigate('/home')} className="flex flex-col items-center gap-1 text-gray-400">
-               <span className="material-symbols-outlined">home</span>
-            </button>
-            <button onClick={() => navigate('/services')} className="flex flex-col items-center gap-1 text-gray-400">
-               <span className="material-symbols-outlined">content_cut</span>
-            </button>
-            <button onClick={() => navigate('/history')} className="flex flex-col items-center gap-1 text-gray-400">
-               <span className="material-symbols-outlined">calendar_today</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 text-primary">
-               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>notifications</span>
-            </button>
-         </nav>
+         {/* Refined Persistent Navigation */}
+         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[400px] z-[120]">
+            <nav className="animate-reveal" style={{ animationDelay: '0.6s' }}>
+               <div className="premium-blur rounded-[28px] border border-primary/10 shadow-2xl px-6 py-3 flex justify-between items-center bg-white/80">
+                  <button onClick={() => navigate('/home')} className="p-2 text-primary/30 hover:text-primary transition-colors group">
+                     <span className="material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform">home</span>
+                  </button>
+                  <button onClick={() => navigate('/services')} className="p-2 text-primary/30 hover:text-primary transition-colors group">
+                     <span className="material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform">grid_view</span>
+                  </button>
+                  <button onClick={() => navigate('/services')} className="relative size-14 -translate-y-6 rounded-3xl bg-primary text-accent-gold shadow-lg shadow-primary/40 flex items-center justify-center border-4 border-background-light group-active:scale-90 transition-transform ring-1 ring-primary/5">
+                     <span className="material-symbols-outlined !text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>diamond</span>
+                  </button>
+                  <button onClick={() => navigate('/history')} className="p-2 text-primary/30 hover:text-primary transition-colors group">
+                     <span className="material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform">calendar_today</span>
+                  </button>
+                  <button className="relative p-2 text-primary group transition-all">
+                     <span className="material-symbols-outlined !text-[28px] group-active:scale-90 transition-transform" style={{ fontVariationSettings: "'FILL' 1" }}>notifications</span>
+                     <span className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-1 h-1 bg-accent-gold rounded-full"></span>
+                  </button>
+               </div>
+            </nav>
+         </div>
+
+         {/* Visual Safe Area Inset */}
+         <div className="fixed bottom-0 left-0 w-full h-8 bg-background-light pointer-events-none z-[90]"></div>
       </div>
    );
 };

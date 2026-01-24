@@ -82,198 +82,174 @@ const PriveJourney: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#050d0a] text-white font-sans pb-32 relative overflow-hidden">
-            {/* Header */}
-            <header className="px-6 py-8 flex items-center justify-between border-b border-white/5 relative z-10 bg-[#050d0a]/80 backdrop-blur-xl sticky top-0">
-                <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-[#C9A961]">
-                    <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
-                </button>
-                <h1 className="font-serif italic text-lg tracking-tight text-[#C9A961]">Categorias de Fidelidade</h1>
-                <div className="size-10"></div>
+        <div className="flex flex-col h-full bg-background-dark text-white overflow-hidden selection:bg-accent-gold/20 relative">
+            {/* Dynamic Background Elements */}
+            <div className="fixed inset-0 pointer-events-none opacity-15 overflow-hidden">
+                <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/20 blur-[120px] animate-float"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/20 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+            </div>
+
+            <header className="sticky top-0 z-[100] premium-nav-dark p-6 border-b border-white/5 flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                    <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-accent-gold hover:bg-white/10 active:scale-90 transition-all">
+                        <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+                    </button>
+                    <div className="text-center">
+                        <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none mb-1">Loyalty Progression</p>
+                        <h2 className="font-display italic text-xl leading-tight text-white tracking-tight">JZ Privé Club</h2>
+                    </div>
+                    <div className="size-10"></div>
+                </div>
             </header>
 
-            <main className="px-6 pt-8 space-y-8 relative z-10 max-w-md mx-auto">
-                <div className="text-center space-y-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#C9A961]">JZ Privé Club</p>
-                    <h2 className="text-3xl font-serif italic leading-tight text-white">
-                        Sua jornada de<br />exclusividade e beleza
-                    </h2>
-                    <span className="material-symbols-outlined text-[#C9A961] !text-3xl mt-4 block">diamond</span>
+            <main className="relative z-10 flex-1 p-8 overflow-y-auto no-scrollbar pb-40">
+                <div className="text-center space-y-4 mb-16 animate-reveal">
+                    <div className="flex items-center justify-center gap-4 mb-4">
+                        <span className="h-px w-8 bg-accent-gold/40"></span>
+                        <p className="text-[10px] font-black uppercase text-accent-gold tracking-[0.5em] font-outfit">The Elite Path</p>
+                        <span className="h-px w-8 bg-accent-gold/40"></span>
+                    </div>
+                    <h1 className="text-5xl font-display font-bold leading-none tracking-tighter">
+                        Sua jornada de<br /><span className="italic text-accent-gold font-light">Exclusividade</span>.
+                    </h1>
                 </div>
 
-                {/* TIER CARDS */}
-                <div className="space-y-6 pb-12">
+                <div className="space-y-12 max-w-lg mx-auto pb-20">
                     {tiers.map((tier, idx) => {
                         const isConquered = points >= tier.min_points;
                         const isCurrent = idx === currentTierIdx;
                         const isLocked = points < tier.min_points;
+                        const icon = getTierIcon(tier.name);
 
                         return (
                             <div
                                 key={tier.id}
-                                className={`rounded-[32px] p-8 relative overflow-hidden shadow-2xl border transition-all duration-500 ${tier.name === 'Select' ? 'bg-white text-zinc-950 border-white/10' :
-                                        tier.name === 'Prime' ? 'bg-white text-zinc-950 border-[#C9A961]/20' :
-                                            tier.name === 'Signature' ? 'bg-white text-zinc-950 border-[#0a2e1f]/20' :
-                                                'bg-[#0a2e1f] text-white border-[#C9A961]/20'
+                                className={`group relative rounded-[56px] p-10 border transition-all duration-1000 animate-reveal shadow-hugest overflow-hidden ${isCurrent ? 'bg-surface-dark border-accent-gold/30 ring-1 ring-accent-gold/10' :
+                                    isConquered ? 'bg-surface-dark/40 border-white/10' :
+                                        'bg-surface-dark/20 border-white/5 opacity-50 grayscale'
                                     }`}
+                                style={{ animationDelay: `${idx * 0.1}s` }}
                             >
-                                {/* Icon Badge */}
-                                <div className="flex justify-center mb-6">
-                                    <div className={`size-16 rounded-full flex items-center justify-center shadow-inner ${tier.name === 'Select' ? 'bg-zinc-100 text-zinc-400' :
-                                            tier.name === 'Prime' ? 'bg-[#C9A961]/10 text-[#C9A961]' :
-                                                tier.name === 'Signature' ? 'bg-[#0a2e1f]/10 text-[#0a2e1f]' :
-                                                    'bg-[#C9A961]/10 text-[#C9A961]'
-                                        }`}>
-                                        <span className="material-symbols-outlined !text-3xl">{getTierIcon(tier.name)}</span>
-                                    </div>
-                                </div>
-
-                                {/* Title & Description */}
-                                <div className="text-center space-y-2 mb-6">
-                                    <h3 className="text-2xl font-serif font-bold">{tier.name}</h3>
-                                    <p className={`text-[11px] font-medium leading-relaxed max-w-[240px] mx-auto ${tier.name === 'Privé' ? 'text-white/60' : 'text-zinc-500'}`}>
-                                        "{getTierDescription(tier.name)}"
-                                    </p>
-                                </div>
-
-                                {/* Benefits Preview */}
-                                <div className="space-y-3 mb-8">
-                                    {tier.benefits.slice(0, 3).map((benefit, bIdx) => (
-                                        <div key={bIdx} className="flex items-center gap-3">
-                                            <span className={`material-symbols-outlined !text-lg ${tier.name === 'Privé' ? 'text-[#C9A961]' : 'text-[#C9A961]'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                                                check_circle
-                                            </span>
-                                            <span className={`text-[12px] font-medium ${tier.name === 'Privé' ? 'text-white/80' : 'text-zinc-700'}`}>
-                                                {benefit}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Status Badge */}
+                                {/* Status Ribbon */}
                                 {isCurrent && (
-                                    <div className="flex justify-center mb-6">
-                                        <span className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${tier.name === 'Privé' ? 'bg-[#C9A961] text-zinc-950' : 'bg-[#0a2e1f] text-white'
-                                            }`}>
-                                            Status Atual
-                                        </span>
+                                    <div className="absolute top-0 right-10 bg-accent-gold text-primary text-[8px] font-black uppercase tracking-widest px-4 py-1.5 rounded-b-xl shadow-lg">
+                                        Status Atual
                                     </div>
                                 )}
 
-                                {/* Action Button */}
-                                <button
-                                    onClick={() => !isLocked && setSelectedTier(tier)}
-                                    disabled={isLocked}
-                                    className={`w-full h-14 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 ${isLocked ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed' :
-                                            isCurrent && tier.name === 'Privé' ? 'bg-[#C9A961] text-zinc-950' :
-                                                isCurrent ? 'bg-[#0a2e1f] text-white' :
-                                                    tier.name === 'Privé' ? 'bg-white/10 border border-white/20 text-white' :
-                                                        'bg-transparent border border-zinc-300 text-zinc-600'
-                                        }`}
-                                >
-                                    {isCurrent ? 'Detalhes do Status' : isLocked ? 'Ver Requisitos' : 'Ver Detalhes'}
-                                </button>
-
-                                {/* Locked Overlay */}
-                                {isLocked && (
-                                    <div className={`absolute inset-0 ${tier.name === 'Privé' ? 'bg-[#050d0a]/80' : 'bg-white/80'} backdrop-blur-[2px] flex flex-col items-center justify-center rounded-[32px]`}>
-                                        <span className={`material-symbols-outlined ${tier.name === 'Privé' ? 'text-white/20' : 'text-zinc-300'} !text-5xl mb-3`}>lock</span>
-                                        <p className={`text-[10px] font-black uppercase tracking-widest ${tier.name === 'Privé' ? 'text-white/40' : 'text-zinc-400'}`}>Alcance {tier.min_points.toLocaleString()} pts</p>
+                                <div className="flex flex-col md:flex-row items-center md:items-start gap-8 relative z-10 text-center md:text-left">
+                                    <div className={`size-20 shrink-0 rounded-[32px] flex items-center justify-center border transition-all duration-[2s] group-hover:rotate-[360deg] ${isConquered ? 'bg-accent-gold border-accent-gold/20 text-primary shadow-huge' : 'bg-white/5 border-white/10 text-white/20'
+                                        }`}>
+                                        <span className="material-symbols-outlined !text-4xl">{icon}</span>
                                     </div>
-                                )}
+
+                                    <div className="flex-1 space-y-6">
+                                        <div className="space-y-2">
+                                            <h3 className="text-3xl font-display font-medium text-white">{tier.name}</h3>
+                                            <p className="text-sm font-outfit font-light text-white/40 italic leading-relaxed">
+                                                "{getTierDescription(tier.name)}"
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-1 rounded-full bg-accent-gold"></div>
+                                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent-gold/60">Privilégios da Categoria</p>
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-3">
+                                                {tier.benefits.map((benefit, bIdx) => (
+                                                    <div key={bIdx} className="flex items-start gap-4 p-4 rounded-2xl bg-white/2 border border-white/5 group-hover:border-white/10 transition-colors">
+                                                        <span className="material-symbols-outlined !text-lg text-accent-gold/40 group-hover:text-accent-gold transition-colors" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                                                        <span className="text-[12px] font-outfit text-white/60 group-hover:text-white transition-colors">{benefit}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-6">
+                                            <button
+                                                onClick={() => !isLocked && setSelectedTier(tier)}
+                                                disabled={isLocked}
+                                                className={`w-full h-18 rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] font-outfit transition-all active:scale-95 shadow-huge ${isCurrent ? 'bg-accent-gold text-primary' :
+                                                    isConquered ? 'bg-white/5 border border-white/10 text-white' :
+                                                        'bg-white/2 border border-white/5 text-white/20 cursor-not-allowed'
+                                                    }`}
+                                            >
+                                                {isLocked ? `Bloqueado ao atingir ${tier.min_points.toLocaleString()} PTS` : 'Explorar Detalhes'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Background Aura */}
+                                <div className={`absolute -bottom-20 -right-20 size-64 blur-[80px] rounded-full pointer-events-none opacity-20 transition-all duration-1000 ${isCurrent ? 'bg-accent-gold/40' : 'bg-primary/20'
+                                    }`}></div>
                             </div>
                         );
                     })}
                 </div>
 
-                {/* How to level up */}
-                <div className="text-center py-8 opacity-40">
-                    <button className="text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 mx-auto text-white/60">
-                        Como Subir de Nível
-                        <span className="material-symbols-outlined !text-sm">add</span>
-                    </button>
+                <div className="mt-16">
+                    <JZReferralCard />
                 </div>
             </main>
 
-            {/* Shared Referral Card at the end */}
-            <JZReferralCard />
-
-            {/* Background effects */}
-            <div className="fixed top-[-10%] right-[-10%] w-[80%] h-[80%] bg-[#C9A961]/5 rounded-full blur-[150px] pointer-events-none z-[-1]"></div>
-            <div className="fixed bottom-[-5%] left-[-5%] w-[60%] h-[60%] bg-[#0f3e29]/10 rounded-full blur-[120px] pointer-events-none z-[-1]"></div>
-
-            {/* DETAIL MODAL */}
+            {/* DETAIL MODAL (Elite Style) */}
             {selectedTier && (
-                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={() => setSelectedTier(null)}>
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-background-dark/80 backdrop-blur-xl animate-reveal" onClick={() => setSelectedTier(null)}>
                     <div
-                        className="w-full max-w-md bg-[#050d0a] rounded-t-[40px] p-8 pb-12 animate-slide-up border-t border-[#C9A961]/20"
+                        className="w-full max-w-lg bg-surface-dark border border-white/10 rounded-[56px] p-10 pb-12 relative overflow-hidden shadow-hugest"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Handle */}
-                        <div className="flex justify-center mb-8">
-                            <div className="w-12 h-1 bg-white/20 rounded-full"></div>
-                        </div>
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-accent-gold/5 blur-[60px] rounded-full pointer-events-none"></div>
 
-                        {/* Card Preview */}
-                        <div className={`rounded-[32px] p-8 mb-8 relative overflow-hidden shadow-2xl ${selectedTier.name === 'Select' ? 'bg-gradient-to-br from-zinc-100 to-zinc-200 text-zinc-950' :
-                                selectedTier.name === 'Prime' ? 'bg-gradient-to-br from-[#C9A961] to-[#a88a4a] text-zinc-950' :
-                                    selectedTier.name === 'Signature' ? 'bg-gradient-to-br from-[#0a2e1f] to-[#05170f] text-white' :
-                                        'bg-gradient-to-br from-zinc-900 to-zinc-950 text-white border border-[#C9A961]/30'
-                            }`}>
-                            {/* Card Header */}
-                            <div className="flex justify-between items-start mb-8">
+                        <div className="flex justify-between items-start mb-10">
+                            <div className="space-y-4">
+                                <div className="size-16 rounded-[24px] bg-accent-gold/10 border border-accent-gold/20 flex items-center justify-center text-accent-gold shadow-huge">
+                                    <span className="material-symbols-outlined !text-4xl">{getTierIcon(selectedTier.name)}</span>
+                                </div>
                                 <div>
-                                    <p className={`text-[9px] font-black uppercase tracking-widest ${selectedTier.name === 'Privé' || selectedTier.name === 'Signature' ? 'text-[#C9A961]' : 'text-zinc-950/40'
-                                        }`}>JZ Privé Club</p>
-                                    <h3 className="text-3xl font-serif italic mt-1">{selectedTier.name}</h3>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-accent-gold/40 mb-1">Coleção Privé</p>
+                                    <h3 className="text-4xl font-display font-medium text-white tracking-tighter">Status: <span className="italic text-accent-gold">{selectedTier.name}</span></h3>
                                 </div>
-                                <span className={`material-symbols-outlined !text-4xl ${selectedTier.name === 'Privé' || selectedTier.name === 'Signature' ? 'text-[#C9A961]' : 'text-zinc-950/20'
-                                    }`}>{getTierIcon(selectedTier.name)}</span>
                             </div>
-
-                            {/* Member Name */}
-                            <div className="space-y-1">
-                                <p className={`text-[9px] font-black uppercase tracking-widest ${selectedTier.name === 'Privé' || selectedTier.name === 'Signature' ? 'text-white/40' : 'text-zinc-950/40'
-                                    }`}>Membro</p>
-                                <p className="text-lg font-bold tracking-wide">{userName}</p>
-                            </div>
-
-                            {/* Decorative Element */}
-                            <div className={`absolute bottom-[-20%] right-[-10%] w-40 h-40 rounded-full blur-[60px] ${selectedTier.name === 'Privé' ? 'bg-[#C9A961]/20' :
-                                    selectedTier.name === 'Signature' ? 'bg-[#C9A961]/10' :
-                                        'bg-zinc-950/10'
-                                }`}></div>
+                            <button onClick={() => setSelectedTier(null)} className="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all">
+                                <span className="material-symbols-outlined !text-xl">close</span>
+                            </button>
                         </div>
 
-                        {/* Benefits List */}
-                        <div className="space-y-2 mb-8">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-[#C9A961] mb-4">Benefícios Exclusivos</p>
-                            {selectedTier.benefits.map((benefit, idx) => (
-                                <div key={idx} className="flex items-center gap-3 py-3 border-b border-white/5">
-                                    <span className="material-symbols-outlined text-[#C9A961] !text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                                    <span className="text-[13px] font-medium text-white/80">{benefit}</span>
+                        <div className="space-y-8 mb-12">
+                            <div className="p-8 rounded-[40px] bg-white/2 border border-white/5 space-y-4">
+                                <p className="text-sm font-outfit font-light text-white/60 italic leading-relaxed">"{getTierDescription(selectedTier.name)}"</p>
+                                <div className="h-px w-full bg-white/5"></div>
+                                <div className="flex justify-between items-center">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Requisito Mínimo</p>
+                                    <p className="text-lg font-outfit font-black text-accent-gold">{selectedTier.min_points.toLocaleString()} <span className="text-[10px] opacity-40">PTS</span></p>
                                 </div>
-                            ))}
+                            </div>
+
+                            <div className="space-y-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-accent-gold/40 px-4">Benefícios Completos</p>
+                                <div className="space-y-3">
+                                    {selectedTier.benefits.map((benefit, idx) => (
+                                        <div key={idx} className="flex items-center gap-5 p-5 rounded-3xl bg-white/2 border border-white/5 hover:bg-white/5 transition-all">
+                                            <span className="material-symbols-outlined text-accent-gold !text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                                            <span className="text-sm font-outfit text-white/80">{benefit}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Close Button */}
                         <button
                             onClick={() => setSelectedTier(null)}
-                            className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-white/60 active:scale-95 transition-all"
+                            className="w-full h-18 bg-white/5 border border-white/10 rounded-3xl text-[10px] font-black uppercase tracking-[0.3em] font-outfit text-white/60 hover:text-white hover:bg-white/10 transition-all shadow-huge active:scale-95"
                         >
-                            Fechar
+                            Retornar à Jornada
                         </button>
                     </div>
                 </div>
             )}
-
-            <style>{`
-                @keyframes slide-up {
-                    from { transform: translateY(100%); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-                .animate-slide-up { animation: slide-up 0.3s ease-out forwards; }
-            `}</style>
         </div>
     );
 };

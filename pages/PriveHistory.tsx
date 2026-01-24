@@ -126,124 +126,143 @@ const PriveHistory: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[#050d0a] text-white font-sans selection:bg-[#C9A961]/30 pb-32 relative overflow-hidden">
-            {/* Header */}
-            <header className="px-6 py-8 flex justify-between items-center relative z-10 bg-[#050d0a]/80 backdrop-blur-xl border-b border-white/5 sticky top-0">
-                <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-[#C9A961]">
-                    <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
-                </button>
-                <h2 className="font-serif italic text-xl tracking-tight text-[#C9A961]">Atividades do Clube</h2>
-                <div className="size-10"></div>
-            </header>
+        <div className="flex flex-col h-full bg-background-dark text-white overflow-hidden selection:bg-accent-gold/20 relative">
+            {/* Dynamic Background Elements */}
+            <div className="fixed inset-0 pointer-events-none opacity-15 overflow-hidden">
+                <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/20 blur-[120px] animate-float"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/20 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+            </div>
 
-            <main className="mt-8 px-6 max-w-md mx-auto relative z-10">
-                <div className="mb-8 space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Exclusive History</p>
-                    <h1 className="text-4xl font-display font-bold leading-none">Atividades do Clube</h1>
-                    <p className="text-white/40 text-[11px] font-medium leading-relaxed">Acompanhe seus créditos e utilizações no JZ Privé Club.</p>
+            <header className="sticky top-0 z-[100] premium-nav-dark p-6 border-b border-white/5 flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                    <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-accent-gold hover:bg-white/10 active:scale-90 transition-all">
+                        <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+                    </button>
+                    <div className="text-center">
+                        <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none mb-1">Elite Transaction Ledger</p>
+                        <h2 className="font-display italic text-xl leading-tight text-white tracking-tight">Atividades do Clube</h2>
+                    </div>
+                    <div className="size-10"></div>
                 </div>
 
-                {/* BALANCE CARD */}
-                <section className="mb-12">
-                    <div className="bg-zinc-950 rounded-[40px] px-8 py-8 shadow-2xl relative overflow-hidden border border-[#C9A961]/10">
-                        <div className="relative z-10 flex justify-between items-start">
-                            <div className="space-y-1">
-                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#C9A961]">Saldo Disponível</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-4xl font-display font-bold text-white">{points.toLocaleString()}</span>
-                                    <span className="text-[10px] font-bold text-[#C9A961] tracking-widest uppercase">JZ Privé Balance</span>
+                {/* Premium Category Filter */}
+                <div className="flex items-center justify-between px-2 overflow-x-auto no-scrollbar scroll-smooth gap-8">
+                    {(['all', 'earned', 'redeemed'] as const).map((f) => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`pb-3 text-[10px] font-black uppercase tracking-[0.3em] font-outfit transition-all relative whitespace-nowrap ${filter === f ? 'text-accent-gold' : 'text-white/20 hover:text-white/40'}`}
+                        >
+                            {f === 'all' ? 'Visão Geral' : f === 'earned' ? 'Créditos' : 'Utilizações'}
+                            {filter === f && (
+                                <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-accent-gold shadow-[0_0_10px_#C9A961]"></div>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            </header>
+
+            <main className="relative z-10 flex-1 p-8 overflow-y-auto no-scrollbar pb-40">
+                {/* BALANCE DASHBOARD */}
+                <section className="mb-16 animate-reveal">
+                    <div className="bg-surface-dark/40 border border-white/5 rounded-[56px] p-10 shadow-hugest relative overflow-hidden group">
+                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-1 rounded-full bg-accent-gold"></div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-gold/60">Saldo Disponível</p>
+                                </div>
+                                <div className="flex items-baseline gap-4">
+                                    <span className="text-6xl font-display font-medium text-white tracking-tighter tabular-nums group-hover:text-accent-gold transition-colors">{points.toLocaleString()}</span>
+                                    <span className="text-xs font-black text-accent-gold tracking-[0.4em] uppercase font-outfit">Credits</span>
                                 </div>
                             </div>
-                            <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[#C9A961] text-[8px] font-black uppercase tracking-widest">
-                                #{userName.charAt(0)}{points}
+
+                            <div className="h-20 w-px bg-white/5 hidden md:block"></div>
+
+                            <div className="space-y-4">
+                                <p className="text-[9px] font-black uppercase tracking-widest text-white/20">Identificador JZ</p>
+                                <div className="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 font-outfit font-black text-accent-gold text-sm tracking-widest shadow-inner">
+                                    #{userName.substring(0, 3).toUpperCase()}{points}
+                                </div>
                             </div>
                         </div>
 
-                        <div className="mt-8 relative z-10 flex flex-col gap-6">
-                            <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-[#C9A961] !text-sm">auto_awesome</span>
-                                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Use seus créditos para ativar experiências exclusivas no catálogo</p>
-                            </div>
-
+                        <div className="mt-12 group-hover:translate-x-1 transition-transform duration-700">
                             <button
                                 onClick={() => navigate('/prive/rewards')}
-                                className="w-full h-12 bg-[#0f2c22] border border-[#C9A961]/20 rounded-2xl flex items-center justify-center gap-2 text-[#C9A961] text-[9px] font-black uppercase tracking-[0.2em] hover:bg-[#C9A961] hover:text-zinc-950 transition-all active:scale-95 shadow-xl"
+                                className="w-full h-18 bg-accent-gold text-primary rounded-3xl flex items-center justify-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] font-outfit hover:bg-white transition-all active:scale-95 shadow-huge"
                             >
-                                <span className="material-symbols-outlined !text-lg">explore</span>
-                                Ver Experiências
+                                <span className="material-symbols-outlined !text-xl">explore</span>
+                                Acessar Catálogo de Experiências
                             </button>
                         </div>
 
-                        <span className="material-symbols-outlined absolute -right-4 -top-4 text-[#C9A961]/5 text-[120px] select-none pointer-events-none">
+                        {/* Aesthetic Watermark */}
+                        <span className="material-symbols-outlined absolute -right-10 -bottom-10 text-white/[0.02] text-[240px] select-none pointer-events-none rotate-12">
                             workspace_premium
                         </span>
                     </div>
                 </section>
 
-                {/* Filters */}
-                <div className="flex items-center justify-start gap-8 border-b border-white/5 mb-8 overflow-x-auto no-scrollbar">
-                    {(['all', 'earned', 'redeemed'] as const).map((f) => (
-                        <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`pb-4 text-[10px] font-black uppercase tracking-[0.3em] transition-all relative whitespace-nowrap ${filter === f ? 'text-[#C9A961]' : 'text-white/20'}`}
-                        >
-                            {f === 'all' ? 'Visão Geral' : f === 'earned' ? 'Créditos' : 'Utilizações'}
-                            {filter === f && (
-                                <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-[#C9A961] shadow-[0_0_10px_#C9A961]"></div>
-                            )}
-                        </button>
-                    ))}
-                </div>
-
                 {/* Transaction List */}
-                <div className="space-y-4 mb-20">
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between px-4 mb-2">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 italic">Cronologia de Prestígio</h3>
+                        <span className="h-px flex-1 bg-white/5 ml-6"></span>
+                    </div>
+
                     {filteredTransactions.length > 0 ? (
-                        filteredTransactions.map((tx) => (
-                            <div key={tx.id} className="bg-[#0a1611] p-6 rounded-[28px] border border-white/5 flex items-center justify-between group transition-all hover:border-[#C9A961]/20">
-                                <div className="flex items-center gap-4 flex-1">
-                                    <div className={`size-14 rounded-2xl flex items-center justify-center shrink-0 border transition-colors ${getIconColor(tx.type)}`}>
-                                        <span className="material-symbols-outlined !text-2xl">
+                        filteredTransactions.map((tx, idx) => (
+                            <div
+                                key={tx.id}
+                                className="group bg-surface-dark/20 border border-white/5 rounded-[32px] p-6 flex flex-col md:flex-row items-center justify-between gap-6 hover:bg-surface-dark hover:border-accent-gold/10 transition-all duration-700 shadow-hugest animate-reveal"
+                                style={{ animationDelay: `${idx * 0.05}s` }}
+                            >
+                                <div className="flex items-center gap-6 flex-1 w-full">
+                                    <div className={`size-16 rounded-[24px] flex items-center justify-center shrink-0 border transition-all duration-700 shadow-huge group-hover:rotate-12 ${getIconColor(tx.type)}`}>
+                                        <span className="material-symbols-outlined !text-3xl">
                                             {getIcon(tx.type)}
                                         </span>
                                     </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-bold text-[14px] text-white leading-tight">
-                                            {tx.source.replace('Resgate: ', '')} {tx.type === 'service' ? '• Atendimento realizado' : ''}
+                                    <div className="space-y-1 overflow-hidden">
+                                        <h4 className="font-display font-medium text-lg text-white leading-tight truncate group-hover:text-accent-gold transition-colors">
+                                            {tx.source.replace('Resgate: ', '')}
                                         </h4>
-                                        <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1.5">
-                                            {new Date(tx.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')} de {new Date(tx.created_at).getFullYear()} • {tx.points > 0 ? 'Crédito aplicado' : 'Utilização de mimo'}
-                                        </p>
+                                        <div className="flex items-center gap-3">
+                                            <p className="text-[9px] text-white/20 font-black uppercase tracking-widest">
+                                                {new Date(tx.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')} • {new Date(tx.created_at).getFullYear()}
+                                            </p>
+                                            <span className="size-1 rounded-full bg-white/5"></span>
+                                            <p className="text-[9px] text-accent-gold/40 font-black uppercase tracking-widest italic font-outfit">
+                                                {tx.points > 0 ? 'Crédito Aplicado' : 'Mimo Adquirido'}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="text-right ml-4">
-                                    <span className={`font-black text-[15px] block ${tx.points > 0 ? 'text-[#C9A961]' : 'text-emerald-400'}`}>
-                                        {tx.points > 0 ? '+' : ''}{tx.points.toLocaleString()}
-                                    </span>
-                                    <span className="text-[7px] font-black uppercase tracking-widest text-white/20">JZ Privé Balance</span>
+
+                                <div className="flex items-center justify-between md:justify-end w-full md:w-auto md:ml-6 px-4 md:px-0 pt-4 md:pt-0 border-t md:border-t-0 border-white/5">
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-white/10 md:hidden">Variação</span>
+                                    <div className="text-right">
+                                        <span className={`font-outfit font-black text-2xl tabular-nums ${tx.points > 0 ? 'text-accent-gold' : 'text-emerald-400'}`}>
+                                            {tx.points > 0 ? '+' : ''}{tx.points.toLocaleString()}
+                                        </span>
+                                        <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/20 leading-none mt-1">Status Balance</p>
+                                    </div>
                                 </div>
                             </div>
                         ))
                     ) : (
-                        <div className="py-20 text-center space-y-4 opacity-20">
-                            <span className="material-symbols-outlined text-4xl font-light">history</span>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhuma atividade</p>
+                        <div className="py-40 text-center space-y-8 opacity-10 animate-reveal">
+                            <span className="material-symbols-outlined !text-6xl font-light">history</span>
+                            <p className="text-xl font-display italic tracking-[0.2em] uppercase">Sua história no clube <br />está apenas começando.</p>
                         </div>
                     )}
                 </div>
-
-                <JZReferralCard />
-
-                <div className="mt-20 text-center opacity-10">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] leading-relaxed">
-                        JZ Privé Excellence
-                    </p>
-                </div>
             </main>
 
-            {/* Background Glows */}
-            <div className="fixed top-[-10%] right-[-10%] w-[80%] h-[80%] bg-[#C9A961]/5 rounded-full blur-[150px] pointer-events-none z-[-1]"></div>
-            <div className="fixed bottom-[-5%] left-[-5%] w-[60%] h-[60%] bg-[#0f3e29]/10 rounded-full blur-[120px] pointer-events-none z-[-1]"></div>
+            {/* Fixed Visual Safe Area */}
+            <div className="fixed bottom-0 left-0 w-full h-12 bg-black/40 backdrop-blur-3xl border-t border-white/5 pointer-events-none z-[130]"></div>
         </div>
     );
 };

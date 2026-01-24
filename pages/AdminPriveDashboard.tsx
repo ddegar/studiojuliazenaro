@@ -136,201 +136,245 @@ const AdminPriveDashboard: React.FC = () => {
     if (loading) return <div className="p-10 text-center text-white/50 animate-pulse">Carregando JZ Privé...</div>;
 
     return (
-        <div className="font-sans text-slate-100 min-h-screen selection:bg-[#C5A059] selection:text-[#051611] pb-24">
-            {/* Header / Title - Optionally redundant if Shell has it, but good for context */}
-            <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="font-display text-3xl font-bold tracking-tight">Dashboard Executivo</h1>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-[#C5A059] font-bold mt-1">JZ Privé Club • Visão Geral</p>
-                </div>
-                <div className="bg-[#0D2C24] px-4 py-2 rounded-full border border-white/5 flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${syncing ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-white/60">
-                        {syncing ? 'Sincronizando...' : 'Online Realtime'}
-                    </span>
-                </div>
+        <div className="flex flex-col h-full bg-background-dark text-white overflow-hidden selection:bg-accent-gold/20 relative">
+            {/* Dynamic Background Elements */}
+            <div className="fixed inset-0 pointer-events-none opacity-15 overflow-hidden">
+                <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/20 blur-[120px] animate-float"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/20 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
             </div>
 
-            {/* Global Balance Card */}
-            <div className="bg-[#0D2C24] rounded-[24px] p-8 border border-white/5 relative overflow-hidden group">
-                <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[10px] uppercase font-black tracking-[0.2em] text-[#C5A059]">Saldo Global Balance</span>
-                        <span className="material-symbols-outlined text-[#C5A059] text-sm cursor-help" title="Somatória de todos os pontos em circulação">info</span>
+            <header className="sticky top-0 z-[100] premium-nav-dark p-6 border-b border-white/5 flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="size-12 rounded-2xl bg-surface-dark border border-white/10 flex items-center justify-center text-accent-gold relative shadow-huge">
+                            <span className="material-symbols-outlined !text-2xl">loyalty</span>
+                            {syncing && <div className="absolute -top-1 -right-1 size-3 bg-emerald-500 rounded-full animate-ping"></div>}
+                        </div>
+                        <div>
+                            <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none mb-1">Intelligence Dashboard</p>
+                            <h2 className="font-display italic text-xl leading-tight text-white tracking-tight">JZ Privé Strategic</h2>
+                        </div>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="font-display text-5xl md:text-6xl text-white">{stats.globalBalance.toLocaleString('pt-BR')}</span>
-                        <span className="text-sm font-bold text-white/40 uppercase tracking-widest">Pts</span>
-                    </div>
-                    <div className="mt-4 inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
-                        <span className="material-symbols-outlined text-emerald-500 text-sm">trending_up</span>
-                        <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide">+12.5% vs. Período Anterior</span>
-                    </div>
-                </div>
-                {/* Decorative Wallet Icon Background */}
-                <span className="material-symbols-outlined absolute -right-4 -bottom-8 text-[180px] text-white/[0.02] pointer-events-none group-hover:scale-105 transition-transform duration-700">
-                    account_balance_wallet
-                </span>
-            </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4 mt-6">
-                <button
-                    onClick={() => navigate('/admin/jz-prive/members')}
-                    className="bg-[#121A16] border border-white/5 p-6 rounded-[24px] flex flex-col items-start gap-4 hover:bg-[#1A2520] transition-colors group text-left"
-                >
-                    <div className="w-10 h-10 rounded-xl bg-emerald-900/40 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-                        <span className="material-symbols-outlined text-xl">person_add</span>
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Novo Membro</span>
-                </button>
-                <button
-                    onClick={() => navigate('/admin/jz-prive/rewards')}
-                    className="bg-[#121A16] border border-white/5 p-6 rounded-[24px] flex flex-col items-start gap-4 hover:bg-[#1A2520] transition-colors group text-left"
-                >
-                    <div className="w-10 h-10 rounded-xl bg-[#C5A059]/20 border border-[#C5A059]/30 flex items-center justify-center text-[#C5A059] group-hover:scale-110 transition-transform">
-                        <span className="material-symbols-outlined text-xl">card_giftcard</span>
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Emitir Recompensa</span>
-                </button>
-            </div>
-
-            {/* Distribution by Category */}
-            <div className="mt-8">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[11px] uppercase tracking-[0.2em] font-black text-white/40">Distribuição por Categoria</h3>
-                    <button onClick={() => navigate('/admin/jz-prive/members')} className="text-[10px] text-[#C5A059] underline underline-offset-4 hover:text-white transition-colors">Ver Todos</button>
-                </div>
-
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Select */}
-                    <div className="bg-[#121A16] border border-white/5 rounded-[24px] p-5 relative overflow-hidden">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Select</p>
-                        <p className="font-display text-3xl font-bold">{stats.distribution.Select}</p>
-                        <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-slate-500" style={{ width: `${(stats.distribution.Select / (stats.totalMembers || 1)) * 100}%` }}></div>
-                        </div>
-                    </div>
-                    {/* Prime */}
-                    <div className="bg-[#121A16] border border-white/5 rounded-[24px] p-5 relative overflow-hidden">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-[#C5A059] mb-2">Prime</p>
-                        <p className="font-display text-3xl font-bold">{stats.distribution.Prime}</p>
-                        <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-[#C5A059]" style={{ width: `${(stats.distribution.Prime / (stats.totalMembers || 1)) * 100}%` }}></div>
-                        </div>
-                    </div>
-                    {/* Signature */}
-                    <div className="bg-[#121A16] border border-white/5 rounded-[24px] p-5 relative overflow-hidden">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-emerald-500 mb-2">Signature</p>
-                        <p className="font-display text-3xl font-bold">{stats.distribution.Signature}</p>
-                        <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500" style={{ width: `${(stats.distribution.Signature / (stats.totalMembers || 1)) * 100}%` }}></div>
-                        </div>
-                    </div>
-                    {/* Prive */}
-                    <div className="bg-[#121A16] border border-white/5 rounded-[24px] p-5 relative overflow-hidden">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-white mb-2">Privé</p>
-                        <p className="font-display text-3xl font-bold">{stats.distribution.Privé}</p>
-                        <div className="mt-3 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-white" style={{ width: `${(stats.distribution.Privé / (stats.totalMembers || 1)) * 100}%` }}></div>
-                        </div>
-                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full rounded-tr-[24px] flex items-center justify-center">
-                            <span className="material-symbols-outlined text-white/20 mb-2 ml-2">diamond</span>
+                    <div className="hidden md:flex items-center gap-4">
+                        <div className="px-4 py-2 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
+                            <div className={`size-2 rounded-full ${syncing ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                            <span className="text-[9px] uppercase font-black tracking-widest text-white/60">
+                                {syncing ? 'Sincronizando' : 'Online Realtime'}
+                            </span>
                         </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            {/* Upgrade Index */}
-            <div className="mt-8 bg-[#0D2C24] border border-[#C5A059]/20 rounded-[32px] p-8 relative overflow-hidden">
-                <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#C5A059]/10 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-[#C5A059]">trending_up</span>
-                        </div>
-                        <h3 className="text-md font-bold text-white uppercase tracking-wider">Índice de Upgrade</h3>
-                    </div>
-                    <span className="bg-[#1A2520] text-[#C5A059] text-[9px] font-black px-3 py-1.5 rounded-lg border border-[#C5A059]/20 uppercase tracking-widest">{upgradeIndex.length} Alvos</span>
-                </div>
+            <main className="relative z-10 flex-1 p-8 overflow-y-auto no-scrollbar pb-32">
+                {/* Elite Global Balance */}
+                <section className="mb-12 animate-reveal">
+                    <div className="bg-surface-dark/40 backdrop-blur-xl border border-white/5 rounded-[56px] p-12 relative overflow-hidden group shadow-hugest">
+                        {/* Cinematic Glow */}
+                        <div className="absolute -top-20 -right-20 size-80 bg-accent-gold/5 blur-[100px] rounded-full group-hover:bg-accent-gold/10 transition-all duration-1000"></div>
 
-                <p className="text-xs text-white/50 mb-8 max-w-md">Membros em alta propensão de migração para o próximo nível esta semana.</p>
-
-                <div className="space-y-4 relative z-10">
-                    {upgradeIndex.length > 0 ? upgradeIndex.map((client, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-[#051611]/40 border border-white/5 hover:border-[#C5A059]/30 transition-colors group">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-full bg-[#1A2520] border border-white/10 flex items-center justify-center text-[10px] font-black text-[#C5A059]">
-                                    {client.initials}
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-px w-8 bg-accent-gold/40"></div>
+                                    <p className="text-[10px] font-black uppercase text-accent-gold tracking-[0.5em] font-outfit">Saldo Global em Circulação</p>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-bold text-white">{client.name}</p>
-                                    <p className="text-[10px] font-mono text-white/40">{client.points} <span className="text-[#C5A059]">/ {client.target} PTS</span></p>
+                                <div className="flex items-baseline gap-3">
+                                    <span className="text-6xl md:text-8xl font-display font-medium leading-none tracking-tighter tabular-nums">{stats.globalBalance.toLocaleString('pt-BR')}</span>
+                                    <span className="text-sm font-black uppercase tracking-[0.3em] text-white/20">Credits</span>
+                                </div>
+                                <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 group-hover:scale-105 transition-transform duration-700">
+                                    <span className="material-symbols-outlined !text-lg">trending_up</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">+12.5% Performance Semanal</span>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => handleNotifyUpgrade(client.name)}
-                                className="w-10 h-10 rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20 flex items-center justify-center text-[#C5A059] hover:bg-[#C5A059] hover:text-[#051611] transition-all transform hover:scale-110 shadow-lg shadow-[#C5A059]/10"
-                                title="Enviar Notificação de Incentivo"
-                            >
-                                <span className="material-symbols-outlined text-lg">bolt</span>
+
+                            <div className="flex gap-4">
+                                <button onClick={() => navigate('/admin/jz-prive/members')} className="group/btn relative h-16 px-8 bg-white/5 border border-white/10 rounded-3xl flex items-center gap-4 hover:bg-white/10 transition-all active:scale-95 shadow-huge">
+                                    <span className="material-symbols-outlined !text-xl text-accent-gold group-hover/btn:rotate-12 transition-transform">person_add</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Novo Membro</span>
+                                </button>
+                                <button onClick={() => navigate('/admin/jz-prive/rewards')} className="group/btn relative h-16 px-8 bg-accent-gold text-primary rounded-3xl flex items-center gap-4 hover:bg-white hover:text-primary transition-all active:scale-95 shadow-huge">
+                                    <span className="material-symbols-outlined !text-xl group-hover/btn:scale-110 transition-transform">card_giftcard</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Emitir Mimo</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Background Icon Decoration */}
+                        <span className="material-symbols-outlined absolute -right-6 -bottom-10 text-[220px] text-white/[0.02] pointer-events-none group-hover:text-white/[0.04] transition-all duration-1000 select-none">
+                            account_balance_wallet
+                        </span>
+                    </div>
+                </section>
+
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    {/* Distribution Analytics */}
+                    <div className="lg:col-span-3 space-y-8 animate-reveal stagger-1">
+                        <div className="flex items-center justify-between px-2">
+                            <div className="space-y-1">
+                                <h3 className="text-base font-outfit font-bold text-white uppercase tracking-wider">Distribuição Bio-Demográfica</h3>
+                                <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20">Membros por Categoria JZ</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {[
+                                { label: 'Select Member', count: stats.distribution.Select, color: 'bg-slate-500', icon: 'shield' },
+                                { label: 'Prime Member', count: stats.distribution.Prime, color: 'bg-accent-gold', icon: 'workspace_premium' },
+                                { label: 'Signature Elite', count: stats.distribution.Signature, color: 'bg-emerald-500', icon: 'auto_awesome' },
+                                { label: 'Privé Diamond', count: stats.distribution.Privé, color: 'bg-white', icon: 'diamond', special: true }
+                            ].map((tier, idx) => (
+                                <div key={idx} className="group bg-surface-dark/40 border border-white/5 rounded-[40px] p-8 space-y-6 hover:bg-surface-dark hover:border-white/10 transition-all duration-500 shadow-huge relative overflow-hidden">
+                                    <div className="flex justify-between items-start relative z-10">
+                                        <div className={`size-12 rounded-2xl bg-white/5 flex items-center justify-center transition-all duration-700 group-hover:scale-110 ${tier.special ? 'text-white' : 'text-accent-gold/60'}`}>
+                                            <span className="material-symbols-outlined !text-xl">{tier.icon}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-1">{tier.label}</p>
+                                            <p className="text-3xl font-display font-medium tabular-nums">{tier.count}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 relative z-10">
+                                        <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-white/20">
+                                            <span>Presença em Base</span>
+                                            <span>{Math.round((tier.count / (stats.totalMembers || 1)) * 100)}%</span>
+                                        </div>
+                                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full transition-all duration-[2s] ${tier.color} shadow-lg`}
+                                                style={{ width: `${(tier.count / (stats.totalMembers || 1)) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                    </div>
+
+                                    {tier.special && <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-bl-full pointer-events-none"></div>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Upgrade Matrix Index */}
+                    <div className="lg:col-span-2 space-y-8 animate-reveal stagger-2">
+                        <div className="bg-primary/5 border border-primary/20 rounded-[48px] p-10 space-y-10 shadow-hugest h-full relative overflow-hidden group">
+                            {/* Floating Glow */}
+                            <div className="absolute -top-10 -right-10 size-40 bg-primary/20 blur-[60px] rounded-full animate-float"></div>
+
+                            <div className="space-y-6 relative z-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="size-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-lg">
+                                        <span className="material-symbols-outlined !text-3xl">trending_up</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h3 className="text-xl font-display italic text-white leading-tight">Matriz de Upgrade</h3>
+                                        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/60 font-outfit">High Propensity Targets</p>
+                                    </div>
+                                </div>
+                                <p className="text-sm font-outfit font-light text-white/40 leading-relaxed italic border-l border-white/10 pl-4">Clientes em alta propensão de migração orgânica para o próximo nível vip.</p>
+                            </div>
+
+                            <div className="space-y-4 relative z-10">
+                                {upgradeIndex.length > 0 ? upgradeIndex.map((client, idx) => (
+                                    <div key={idx} className="group/item flex items-center justify-between p-5 rounded-[32px] bg-white/2 border border-white/5 hover:border-accent-gold/40 hover:bg-white/5 transition-all duration-500 animate-reveal" style={{ animationDelay: `${idx * 0.1}s` }}>
+                                        <div className="flex items-center gap-5">
+                                            <div className="relative size-12 rounded-full border border-white/10 flex items-center justify-center bg-surface-dark group-hover/item:border-accent-gold/40 transition-colors overflow-hidden">
+                                                <img src={`https://ui-avatars.com/api/?name=${client.name}&background=122b22&color=c9a961&bold=true`} className="w-full h-full scale-110" alt="" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-outfit font-bold text-white group-hover/item:text-accent-gold transition-colors">{client.name}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-[9px] font-mono text-white/20 tracking-tighter uppercase">{client.points} <span className="text-accent-gold/40">/ {client.target} PTS</span></p>
+                                                    <span className="size-1 rounded-full bg-accent-gold/20"></span>
+                                                    <span className="text-[8px] font-black text-accent-gold uppercase tracking-widest">{client.nextLevel}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleNotifyUpgrade(client.name)}
+                                            className="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-accent-gold hover:bg-accent-gold hover:text-primary transition-all active:scale-90 shadow-lg group-hover/item:scale-105"
+                                        >
+                                            <span className="material-symbols-outlined !text-xl">bolt</span>
+                                        </button>
+                                    </div>
+                                )) : (
+                                    <div className="py-20 text-center opacity-10 space-y-6">
+                                        <span className="material-symbols-outlined !text-5xl">person_search</span>
+                                        <p className="font-display italic text-lg px-10">Monitorando propensões de upgrade...</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button onClick={() => navigate('/admin/jz-prive/members')} className="w-full py-6 text-[9px] font-black text-white/10 hover:text-accent-gold uppercase tracking-[0.4em] text-center transition-colors relative z-10 border-t border-white/5 mt-4">
+                                Auditoria Completa de Base
                             </button>
                         </div>
-                    )) : (
-                        <div className="text-center py-6 text-[10px] text-white/30 uppercase tracking-widest border border-dashed border-white/10 rounded-xl">
-                            Nenhum membro próximo de upgrade no momento
+                    </div>
+                </div>
+
+                {/* Redemption Biometrics Flow */}
+                <section className="mt-12 animate-reveal stagger-3">
+                    <div className="bg-surface-dark/40 border border-white/5 rounded-[56px] p-10 space-y-10 shadow-hugest overflow-hidden relative">
+                        <div className="absolute top-0 left-0 w-64 h-1 bg-gradient-to-r from-emerald-500/30 to-transparent"></div>
+
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/40">Redemption Flow Analytics</p>
+                                <h3 className="text-2xl font-display italic text-white uppercase tracking-tight">Fluxo de Resgates em Volume</h3>
+                            </div>
+                            <span className="text-[9px] font-black text-emerald-500/60 uppercase tracking-widest font-outfit px-4 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/10 shadow-lg">+18% vs Período Anterior</span>
                         </div>
-                    )}
-                </div>
-            </div>
 
-            {/* Redemption Flow Graph */}
-            <div className="mt-8">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[11px] uppercase tracking-[0.2em] font-black text-white/40">Fluxo de Resgates</h3>
-                    <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">+18% vs semana anterior</span>
-                </div>
+                        <div className="h-[280px] w-full relative group">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={redemptionData}>
+                                    <defs>
+                                        <linearGradient id="colorEmerald" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                                            <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#ffffff20', fontSize: 9, fontWeight: '900', letterSpacing: '0.1em' }}
+                                        dy={15}
+                                    />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#0f1115', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', fontSize: '10px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)', padding: '16px' }}
+                                        itemStyle={{ color: '#10b981', fontWeight: 'bold', textTransform: 'uppercase' }}
+                                        cursor={{ stroke: '#10b981', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="value"
+                                        stroke="#10b981"
+                                        strokeWidth={3}
+                                        fillOpacity={1}
+                                        fill="url(#colorEmerald)"
+                                        animationDuration={2500}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+                </section>
 
-                <div className="h-[250px] w-full bg-[#121A16] border border-white/5 rounded-[32px] p-6 relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={redemptionData}>
-                            <defs>
-                                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#059669" stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor="#059669" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <XAxis
-                                dataKey="name"
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: '#4B5563', fontSize: 10, fontWeight: 'bold' }}
-                                dy={10}
-                            />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1C1F24', border: 'none', borderRadius: '12px', fontSize: '10px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
-                                itemStyle={{ color: '#E5E7EB' }}
-                                cursor={{ stroke: '#FFFFFF', strokeWidth: 1, strokeDasharray: '4 4', strokeOpacity: 0.1 }}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="value"
-                                stroke="#10B981"
-                                strokeWidth={3}
-                                fillOpacity={1}
-                                fill="url(#colorValue)"
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
+                {/* Sync Footprint */}
+                <div className="mt-16 mb-8 flex items-center justify-center gap-6 opacity-10">
+                    <div className="h-px w-24 bg-white/20"></div>
+                    <div className="flex items-center gap-3">
+                        <div className="size-1.5 rounded-full bg-accent-gold animate-pulse"></div>
+                        <span className="text-[8px] font-black uppercase tracking-[0.4em] font-outfit">Sincronia Criptográfica Ativa</span>
+                    </div>
+                    <div className="h-px w-24 bg-white/20"></div>
                 </div>
-            </div>
+            </main>
 
-            {/* Footer Sync Status - For effect */}
-            <div className="mt-12 mb-8 flex items-center gap-4 opacity-30">
-                <div className="h-1 flex-1 bg-white/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#C5A059] w-1/3 animate-pulse"></div>
-                </div>
-                <span className="text-[8px] font-black uppercase tracking-[0.2em]">Sincronizando dados...</span>
-            </div>
+            {/* Persistent Command Center Safe Area */}
+            <div className="fixed bottom-0 left-0 w-full h-8 bg-black pointer-events-none z-[130]"></div>
         </div>
     );
 };

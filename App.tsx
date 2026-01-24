@@ -76,32 +76,31 @@ import AdminTestimonials from './pages/AdminTestimonials';
 
 // Container for client-facing pages (mobile-first, 430px max width)
 const AppContainerClient: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex justify-center min-h-screen bg-gray-200 dark:bg-zinc-950">
-    <div className="relative w-full max-w-[430px] bg-background-light dark:bg-background-dark min-h-screen shadow-2xl flex flex-col overflow-x-hidden">
+  <div className="flex justify-center min-h-screen bg-gray-100 dark:bg-stone-950">
+    <div className="relative w-full max-w-[430px] bg-background-light dark:bg-background-dark min-h-screen shadow-hugest flex flex-col overflow-x-hidden border-x border-primary/5">
       {children}
     </div>
   </div>
 );
 
-// Container for admin pages (full width for desktop/tablet)
 // Container for admin pages (full width for desktop/tablet but with Sidebar)
 const AppContainerAdmin: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-[#121417] overflow-hidden">
+    <div className="flex h-screen bg-background-dark overflow-hidden font-outfit">
       <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden relative">
         {/* Mobile Header Trigger */}
-        <div className="lg:hidden p-4 flex items-center gap-4 bg-[#1c1f24] border-b border-white/5 sticky top-0 z-40">
-          <button onClick={() => setSidebarOpen(true)} className="text-white">
-            <span className="material-symbols-outlined">menu</span>
+        <div className="lg:hidden p-5 flex items-center gap-4 bg-surface-dark border-b border-primary/5 sticky top-0 z-40">
+          <button onClick={() => setSidebarOpen(true)} className="text-white hover:text-accent-gold transition-colors">
+            <span className="material-symbols-outlined">menu_open</span>
           </button>
-          <span className="text-sm font-bold text-white uppercase tracking-widest">Menu</span>
+          <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">Gestão Administrativa</span>
         </div>
 
-        <main className="flex-1 overflow-y-auto no-scrollbar w-full max-w-[1920px] mx-auto">
+        <main className="flex-1 overflow-y-auto no-scrollbar w-full max-w-[1920px] mx-auto bg-background-dark">
           {children}
         </main>
       </div>

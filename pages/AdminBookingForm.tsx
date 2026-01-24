@@ -27,7 +27,6 @@ const AdminBookingForm: React.FC = () => {
    const [searchClient, setSearchClient] = useState('');
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [loading, setLoading] = useState(true);
-   const [configs, setConfigs] = useState<any>({});
 
    useEffect(() => {
       const fetchData = async () => {
@@ -44,7 +43,7 @@ const AdminBookingForm: React.FC = () => {
                   id: p.id,
                   name: p.name,
                   role: p.role,
-                  avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}`,
+                  avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=0f3e29&color=C9A961`,
                   active: p.active,
                   specialties: p.specialties || [],
                   rating: p.rating || 5
@@ -83,7 +82,7 @@ const AdminBookingForm: React.FC = () => {
 
    const filteredClients = useMemo(() => {
       if (form.clientId) return [];
-      if (!searchClient || searchClient.length < 1) return []; // Only show after typing
+      if (!searchClient || searchClient.length < 1) return [];
       return clients.filter(c =>
          c.name.toLowerCase().includes(searchClient.toLowerCase()) ||
          (c.phone?.includes(searchClient) ?? false)
@@ -112,7 +111,6 @@ const AdminBookingForm: React.FC = () => {
          const startDate = new Date(`${form.date}T${form.time}:00`);
          let duration = form.type === 'BLOCK' ? parseInt(form.notes.split('|')[1] || '60') : (selectedService?.duration || 30);
 
-         // Special handling for "All Day" block (24 hours to cover everything)
          if (form.type === 'BLOCK' && form.notes.startsWith('ALDAY')) {
             duration = 24 * 60;
          }
@@ -137,20 +135,17 @@ const AdminBookingForm: React.FC = () => {
          });
 
          if (error) {
-            if (error.message.includes('no_overlap') || error.message.includes('overlap')) {
-               alert("ERRO: Este horário entra em conflito com outro agendamento ou bloqueio já existente para esta profissional.");
+            if (error.message.includes('overlap')) {
+               alert("CONFLITO: Este horário já possui uma reserva ativa.");
                setIsSubmitting(false);
                return;
             }
             throw error;
          }
 
-         alert(form.type === 'BLOCK' ? 'Agenda bloqueada com sucesso!' : 'Agendamento cadastrado com sucesso!');
          navigate('/admin/agenda');
       } catch (err: any) {
-         if (err.message) { // Only show if not handled above
-            alert('Erro ao salvar: ' + err.message);
-         }
+         alert('Erro ao salvar: ' + err.message);
       } finally {
          setIsSubmitting(false);
       }
@@ -158,109 +153,159 @@ const AdminBookingForm: React.FC = () => {
 
    if (loading) {
       return (
-         <div className="flex h-screen items-center justify-center bg-background-dark">
-            <div className="size-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+         <div className="flex h-screen items-center justify-center bg-background-dark font-outfit">
+            <div className="relative size-16 flex items-center justify-center">
+               <div className="absolute inset-0 border-2 border-primary/5 rounded-full"></div>
+               <div className="absolute inset-0 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+               <span className="material-symbols-outlined text-accent-gold scale-75">box_edit</span>
+            </div>
          </div>
       );
    }
 
    return (
-      <div className="flex flex-col h-full bg-background-dark text-white">
-         <header className="p-6 lg:p-6 border-b border-white/5 flex items-center justify-center glass-nav !bg-background-dark/90 sticky top-0 z-50">
-            <div className="w-full max-w-4xl flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                  <button onClick={() => navigate(-1)} className="material-symbols-outlined text-accent-gold">arrow_back_ios_new</button>
-                  <div>
-                     <h1 className="text-lg font-bold">Novo Lançamento</h1>
-                     <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Painel Administrativo</p>
+      <div className="flex flex-col min-h-screen bg-background-dark text-white font-outfit antialiased selection:bg-accent-gold/20 selection:text-white">
+         <header className="relative z-[60] premium-blur-dark sticky top-0 px-8 py-10 flex flex-col gap-6 border-b border-white/5 bg-background-dark/80 backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-6">
+                  <button
+                     onClick={() => navigate(-1)}
+                     className="size-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-accent-gold group active:scale-95 transition-all"
+                  >
+                     <span className="material-symbols-outlined !text-xl group-hover:-translate-x-1 transition-transform">west</span>
+                  </button>
+                  <div className="space-y-1">
+                     <p className="text-[8px] font-black uppercase tracking-[0.5em] text-accent-gold/40 leading-none">Curadoria Interna</p>
+                     <h1 className="font-display italic text-2xl text-white">Novo Lançamento</h1>
                   </div>
                </div>
             </div>
          </header>
 
-         <main className="flex-1 p-6 lg:p-8 w-full max-w-4xl mx-auto space-y-8 overflow-y-auto no-scrollbar pb-32">
-            <div className="flex bg-white/5 p-1.5 rounded-3xl border border-white/10">
+         <main className="relative z-10 p-8 lg:p-12 space-y-12 pb-48 w-full max-w-screen-md mx-auto overflow-x-hidden">
+            <div className="flex bg-white/5 p-2 rounded-3xl border border-white/10 shadow-huge animate-reveal">
                <button
                   onClick={() => setForm({ ...form, type: 'APPOINTMENT' })}
-                  className={`flex-1 h-12 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${form.type === 'APPOINTMENT' ? 'bg-primary text-white shadow-lg' : 'text-gray-500'}`}
-               >Atendimento</button>
+                  className={`flex-1 h-16 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-700 flex items-center justify-center gap-3 ${form.type === 'APPOINTMENT' ? 'bg-white text-primary shadow-huge' : 'text-white/20 hover:text-white/40'}`}
+               >
+                  <span className="material-symbols-outlined !text-sm">content_cut</span>
+                  <span>Atendimento</span>
+               </button>
                <button
                   onClick={() => setForm({ ...form, type: 'BLOCK' })}
-                  className={`flex-1 h-12 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all ${form.type === 'BLOCK' ? 'bg-rose-500 text-white shadow-lg' : 'text-gray-500'}`}
-               >Bloqueio</button>
+                  className={`flex-1 h-16 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-700 flex items-center justify-center gap-3 ${form.type === 'BLOCK' ? 'bg-rose-500 text-white shadow-huge' : 'text-white/20 hover:text-white/40'}`}
+               >
+                  <span className="material-symbols-outlined !text-sm">block_flipped</span>
+                  <span>Bloqueio</span>
+               </button>
             </div>
 
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-12 animate-reveal stagger-1">
                {form.type === 'APPOINTMENT' ? (
-                  <section className="space-y-6">
-                     <div className="space-y-3">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">1. Identificar Cliente</label>
+                  <section className="space-y-10 group">
+                     {/* Client Identification */}
+                     <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-accent-gold/40"></span>
+                           <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">01. Identificar Membro</label>
+                        </div>
                         <div className="relative">
+                           <div className={`absolute inset-0 bg-accent-gold/5 blur-2xl transition-opacity duration-300 ${searchClient ? 'opacity-100' : 'opacity-0'}`}></div>
                            <input
                               type="text"
-                              placeholder="Buscar por nome ou celular..."
-                              className="w-full h-15 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-accent-gold"
+                              placeholder="Filtro por nome ou identidade..."
+                              className="relative w-full h-18 bg-surface-dark border border-white/10 rounded-[28px] px-8 text-sm focus:ring-0 focus:border-accent-gold/40 transition-all placeholder:text-white/10 shadow-huge"
                               value={searchClient}
                               onChange={e => { setSearchClient(e.target.value); setForm({ ...form, clientId: '', clientName: e.target.value }); }}
                            />
                            {filteredClients.length > 0 && (
-                              <div className="absolute top-full left-0 w-full mt-2 bg-card-dark border border-white/10 rounded-2xl overflow-hidden z-[60] shadow-2xl">
+                              <div className="absolute top-[calc(100%+12px)] left-0 w-full bg-surface-dark/95 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden z-[100] shadow-hugest animate-reveal">
                                  {filteredClients.map(c => (
                                     <button
                                        key={c.id}
                                        onClick={() => { setForm({ ...form, clientId: c.id, clientName: c.name }); setSearchClient(c.name); }}
-                                       className="w-full p-4 text-left border-b border-white/5 hover:bg-white/5 transition-colors flex items-center justify-between"
+                                       className="w-full p-6 text-left border-b border-white/5 hover:bg-white/5 transition-colors flex items-center justify-between group/item"
                                     >
                                        <div>
-                                          <p className="font-bold text-sm">{c.name}</p>
-                                          <p className="text-[10px] text-gray-500">{c.phone}</p>
+                                          <p className="font-bold text-sm group-hover/item:text-accent-gold transition-colors">{c.name}</p>
+                                          <p className="text-[9px] text-white/20 font-black uppercase tracking-widest mt-1">{c.phone}</p>
                                        </div>
-                                       <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                                       <span className="material-symbols-outlined text-accent-gold/20 group-hover/item:text-accent-gold transition-colors">verified</span>
                                     </button>
                                  ))}
                               </div>
                            )}
                         </div>
-                        {form.clientId && <p className="text-[9px] text-emerald-500 font-bold px-2 flex items-center gap-1"><span className="material-symbols-outlined !text-[12px]">verified</span> Cliente Vinculada ({form.clientName})</p>}
+                        {form.clientId && (
+                           <div className="flex items-center gap-3 px-4 animate-reveal">
+                              <span className="material-symbols-outlined text-emerald-400 !text-sm">verified_user</span>
+                              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{form.clientName} (MEMBRO VIP)</p>
+                           </div>
+                        )}
                      </div>
 
-                     <div className="space-y-3">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">2. Especialista</label>
-                        <div className="grid grid-cols-2 gap-3">
+                     {/* Specialist Selection */}
+                     <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-accent-gold/40"></span>
+                           <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">02. Curador Responsável</label>
+                        </div>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                            {professionals.map(p => (
                               <button
                                  key={p.id}
                                  onClick={() => setForm({ ...form, professionalId: p.id, serviceId: '' })}
-                                 className={`h-14 rounded-2xl border text-[10px] font-bold uppercase tracking-widest transition-all ${form.professionalId === p.id ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}
-                              >{p.name.split(' ')[0]}</button>
+                                 className={`group relative flex flex-col items-center gap-3 p-4 rounded-[32px] border transition-all duration-700 ${form.professionalId === p.id ? 'bg-white border-white scale-[1.05] shadow-huge' : 'bg-white/5 border-white/5 hover:bg-white/10 active:scale-95'}`}
+                              >
+                                 <div className={`size-12 rounded-2xl overflow-hidden border transition-all duration-700 ${form.professionalId === p.id ? 'border-primary/20' : 'border-white/10 opacity-40'}`}>
+                                    <img src={p.avatar} className="w-full h-full object-cover" alt="" />
+                                 </div>
+                                 <span className={`text-[10px] font-black uppercase tracking-widest ${form.professionalId === p.id ? 'text-primary' : 'text-white/30'}`}>{p.name.split(' ')[0]}</span>
+                              </button>
                            ))}
                         </div>
                      </div>
 
-                     <div className="space-y-3">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">3. Procedimento</label>
-                        <select
-                           value={form.serviceId}
-                           onChange={e => setForm({ ...form, serviceId: e.target.value })}
-                           className="w-full h-15 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm appearance-none focus:ring-accent-gold"
-                        >
-                           <option value="" className="bg-background-dark font-bold">Selecione o serviço...</option>
-                           {filteredServices.map(s => <option key={s.id} value={s.id} className="bg-background-dark">
-                              {s.name} - R$ {s.price}
-                           </option>)}
-                        </select>
-                        <p className="text-[9px] text-gray-500 px-2 italic font-medium">Mostrando apenas serviços vinculados à profissional selecionada.</p>
+                     {/* Signature Service Selection */}
+                     <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-accent-gold/40"></span>
+                           <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">03. Experiência de Luxo</label>
+                        </div>
+                        <div className="relative group/select">
+                           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-accent-gold/40">
+                              <span className="material-symbols-outlined !text-xl">auto_awesome</span>
+                           </div>
+                           <select
+                              value={form.serviceId}
+                              onChange={e => setForm({ ...form, serviceId: e.target.value })}
+                              className="w-full h-18 bg-surface-dark border border-white/10 rounded-[28px] pl-16 pr-8 text-sm appearance-none focus:ring-0 focus:border-accent-gold/60 transition-all font-medium italic text-white/80 shadow-huge"
+                           >
+                              <option value="" className="bg-background-dark text-white/20">Selecionar Assinatura...</option>
+                              {filteredServices.map(s => (
+                                 <option key={s.id} value={s.id} className="bg-background-dark py-4">
+                                    {s.name} — R$ {s.price}
+                                 </option>
+                              ))}
+                           </select>
+                           <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-white/10 group-hover/select:text-accent-gold transition-colors">
+                              <span className="material-symbols-outlined">expand_more</span>
+                           </div>
+                        </div>
                      </div>
                   </section>
                ) : (
-                  <section className="space-y-6">
-                     <div className="space-y-3">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Motivo e Duração</label>
-                        <div className="grid grid-cols-2 gap-3">
+                  <section className="space-y-12">
+                     <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-rose-400/40"></span>
+                           <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Motivo da Interrupção</label>
+                        </div>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                            {[
-                              { label: 'Almoço (1h)', val: 'Horário de Almoço|60', icon: 'restaurant' },
-                              { label: 'Particular (1h)', val: 'Compromisso Particular|60', icon: 'person' },
-                              { label: 'Manutenção (30m)', val: 'Manutenção/Limpeza|30', icon: 'cleaning_services' },
+                              { label: 'Almoço (1h)', val: 'Intervalo de Luxo|60', icon: 'restaurant_menu' },
+                              { label: 'Privado (1h)', val: 'Compromisso Elite|60', icon: 'shield_person' },
+                              { label: 'Off Site', val: 'Atendimento Externo|120', icon: 'airport_shuttle' },
                               { label: 'Dia Inteiro', val: 'ALDAY|OFF|1440', icon: 'event_busy' },
                            ].map(p => (
                               <button
@@ -268,77 +313,98 @@ const AdminBookingForm: React.FC = () => {
                                  onClick={() => setForm({
                                     ...form,
                                     notes: p.val,
-                                    time: p.val.startsWith('ALDAY') ? '00:00' : (p.val.includes('Almoço') ? '12:00' : form.time)
+                                    time: p.val.startsWith('ALDAY') ? '00:00' : (p.val.includes('Luxo') ? '12:00' : form.time)
                                  })}
-                                 className={`h-15 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${form.notes === p.val ? 'bg-rose-500 border-rose-500 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                                 className={`group h-20 rounded-[32px] border flex flex-col items-center justify-center gap-2 transition-all duration-700 ${form.notes === p.val ? 'bg-rose-500 border-rose-500 shadow-huge scale-[1.02]' : 'bg-white/5 border-white/5 hover:bg-white/10 active:scale-95'}`}
                               >
-                                 <span className="material-symbols-outlined !text-[18px]">{p.icon}</span>
-                                 <span className="text-[9px] font-bold uppercase">{p.label}</span>
+                                 <span className="material-symbols-outlined !text-[20px]">{p.icon}</span>
+                                 <span className="text-[8px] font-black tracking-widest uppercase">{p.label}</span>
                               </button>
                            ))}
                         </div>
-                        <input
-                           type="text"
-                           placeholder="Ou digite um motivo personalizado..."
-                           className="w-full h-15 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm focus:ring-rose-500"
-                           value={form.notes.includes('|') ? '' : form.notes}
-                           onChange={e => setConfigs({ ...configs, custom_block: e.target.value })}
-                        />
                      </div>
-                     <div className="space-y-3">
-                        <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Especialista Afetada</label>
-                        <div className="grid grid-cols-2 gap-3">
+
+                     <div className="space-y-6">
+                        <div className="flex items-center gap-3">
+                           <span className="w-6 h-px bg-rose-400/40"></span>
+                           <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Curador Impactado</label>
+                        </div>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                            {professionals.map(p => (
                               <button
                                  key={p.id}
                                  onClick={() => setForm({ ...form, professionalId: p.id })}
-                                 className={`h-14 rounded-2xl border text-[10px] font-bold uppercase tracking-widest transition-all ${form.professionalId === p.id ? 'bg-rose-500 border-rose-500 text-white' : 'bg-white/5 border-white/10 text-gray-500'}`}
-                              >{p.name.split(' ')[0]}</button>
+                                 className={`group relative flex flex-col items-center gap-3 p-4 rounded-[32px] border transition-all duration-700 ${form.professionalId === p.id ? 'bg-rose-500 border-rose-500 scale-[1.05] shadow-huge' : 'bg-white/5 border-white/5 hover:bg-white/10 active:scale-95'}`}
+                              >
+                                 <div className={`size-10 rounded-2xl overflow-hidden border border-white/10 transition-all duration-700 ${form.professionalId === p.id ? 'opacity-100' : 'opacity-40'}`}>
+                                    <img src={p.avatar} className="w-full h-full object-cover" alt="" />
+                                 </div>
+                                 <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{p.name.split(' ')[0]}</span>
+                              </button>
                            ))}
                         </div>
                      </div>
                   </section>
                )}
 
-               <section className="grid grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                     <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Data</label>
+               {/* Time and Date Orchestration */}
+               <section className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8">
+                  <div className="space-y-4">
+                     <div className="flex items-center gap-3">
+                        <span className="w-6 h-px bg-white/20"></span>
+                        <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Data da Reserva</label>
+                     </div>
                      <input
                         type="date"
                         value={form.date}
                         onChange={e => setForm({ ...form, date: e.target.value })}
-                        className="w-full h-15 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm"
+                        className="w-full h-18 bg-surface-dark border border-white/10 rounded-[28px] px-8 text-sm focus:border-accent-gold/40 transition-all shadow-huge text-white/60 font-medium"
                      />
                   </div>
-                  <div className="space-y-3">
-                     <label className="text-[10px] uppercase font-black text-gray-600 tracking-[0.2em] pl-2">Horário</label>
+                  <div className="space-y-4">
+                     <div className="flex items-center gap-3">
+                        <span className="w-6 h-px bg-white/20"></span>
+                        <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Instante VIP</label>
+                     </div>
                      <input
                         type="time"
                         value={form.time}
                         onChange={e => setForm({ ...form, time: e.target.value })}
-                        className="w-full h-15 bg-white/5 border border-white/10 rounded-2xl px-6 text-sm font-black text-primary"
+                        className="w-full h-18 bg-surface-dark border border-white/10 rounded-[28px] px-8 text-sm focus:border-accent-gold/60 transition-all shadow-huge text-accent-gold font-bold text-center text-xl tracking-tighter tabular-nums"
                      />
                   </div>
                </section>
             </div>
          </main>
 
-         <div className="p-6 glass-nav !bg-background-dark/95 border-t border-white/10 flex justify-center">
-            <div className="w-full max-w-4xl">
+         {/* EXECUTION BAR */}
+         <div className="fixed bottom-0 inset-x-0 p-8 z-[120]">
+            <div className="max-w-screen-md mx-auto">
                <button
                   onClick={handleSave}
                   disabled={isSubmitting}
-                  className={`w-full h-16 rounded-3xl font-bold uppercase tracking-[0.3em] text-[11px] shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all ${form.type === 'BLOCK' ? 'bg-rose-600 shadow-rose-600/20' : 'bg-primary shadow-primary/30'}`}
+                  className={`group relative w-full h-20 rounded-[32px] overflow-hidden transition-all active:scale-[0.98] ${form.type === 'BLOCK' ? 'bg-rose-600' : 'bg-accent-gold'} shadow-hugest`}
                >
-                  {isSubmitting ? <div className="size-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : (
-                     <>
-                        <span className="material-symbols-outlined">{form.type === 'BLOCK' ? 'lock' : 'calendar_add_on'}</span>
-                        {form.type === 'BLOCK' ? 'BLOQUEAR AGENDA' : 'EFETUAR LANÇAMENTO'}
-                     </>
-                  )}
+                  <div className="relative h-full flex items-center justify-center gap-6 px-10">
+                     {isSubmitting ? (
+                        <div className="size-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                     ) : (
+                        <>
+                           <span className={`material-symbols-outlined !text-2xl ${form.type === 'BLOCK' ? 'text-white' : 'text-primary'}`}>{form.type === 'BLOCK' ? 'lock_person' : 'stylus_laser_pointer'}</span>
+                           <span className={`text-[11px] font-black uppercase tracking-[0.5em] ${form.type === 'BLOCK' ? 'text-white' : 'text-primary'}`}>
+                              {form.type === 'BLOCK' ? 'Confirmar Bloqueio' : 'Publicar Agendamento'}
+                           </span>
+                           <span className={`material-symbols-outlined !text-xl opacity-0 group-hover:opacity-100 group-hover:translate-x-3 transition-all duration-500 ${form.type === 'BLOCK' ? 'text-white' : 'text-primary'}`}>east</span>
+                        </>
+                     )}
+                  </div>
                </button>
             </div>
          </div>
+
+         {/* Decorative Gradients */}
+         <div className="fixed top-0 left-0 w-[50vw] h-[50vh] bg-accent-gold/5 blur-[120px] pointer-events-none z-0"></div>
+         <div className="fixed bottom-0 right-0 w-[40vw] h-[40vh] bg-primary/20 blur-[100px] pointer-events-none z-10 opacity-30"></div>
       </div>
    );
 };

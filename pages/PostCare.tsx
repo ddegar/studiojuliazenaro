@@ -47,44 +47,106 @@ const PostCare: React.FC = () => {
    }, []);
 
    return (
-      <div className="flex flex-col h-full bg-background-light">
-         <header className="glass-nav p-4 flex items-center justify-between border-b">
-            <button onClick={() => navigate(-1)} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
-            <h2 className="font-display font-bold text-lg">Cuidados Pós</h2>
-            <button onClick={() => navigate('/faq')} className="material-symbols-outlined text-accent-gold">help_center</button>
+      <div className="flex flex-col h-full bg-background-dark text-white overflow-y-auto no-scrollbar selection:bg-accent-gold/20 pb-24 relative">
+         {/* Dynamic Background Elements */}
+         <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+            <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+         </div>
+
+         <header className="sticky top-0 z-[100] premium-nav-dark px-6 py-5 flex items-center justify-between border-b border-white/5">
+            <button onClick={() => navigate(-1)} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-accent-gold hover:bg-white/10 active:scale-90 transition-all">
+               <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+            </button>
+            <div className="text-center">
+               <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none mb-1">Dossiê de Manutenção</p>
+               <h2 className="text-xl font-display italic text-white tracking-tight">Cuidado Pós-Encontro</h2>
+            </div>
+            <div className="size-10"></div>
          </header>
 
-         <main className="flex-1 p-6 space-y-8 overflow-y-auto no-scrollbar">
-            <div className="bg-primary/5 p-6 rounded-[40px] text-center space-y-3">
-               <span className="text-accent-gold text-[10px] font-bold uppercase tracking-[0.3em]">Manutenção da Beleza</span>
-               <h1 className="text-2xl font-display font-bold text-primary leading-tight">Como cuidar do seu <br />novo olhar</h1>
-               <p className="text-xs text-gray-500 leading-relaxed">Siga estas instruções para garantir a durabilidade máxima do seu procedimento.</p>
+         <main className="relative z-10 flex-1 p-8 space-y-12">
+            <div className="text-center space-y-6 animate-reveal">
+               <div className="relative size-24 mx-auto">
+                  <div className="absolute inset-0 bg-accent-gold/20 rounded-full blur-2xl animate-pulse"></div>
+                  <div className="relative size-24 rounded-full bg-surface-dark border border-white/5 flex items-center justify-center shadow-huge">
+                     <span className="material-symbols-outlined text-accent-gold !text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>skincare</span>
+                  </div>
+               </div>
+
+               <div className="space-y-3">
+                  <h1 className="text-3xl font-display font-medium text-white italic">Preservando o Brilho</h1>
+                  <p className="text-sm font-outfit text-white/40 font-light leading-relaxed max-w-[280px] mx-auto">
+                     Siga estas diretrizes exclusivas para garantir a longevidade e saúde do seu procedimento.
+                  </p>
+               </div>
             </div>
 
-            <div className="space-y-4">
-               {loading ? <p className="text-center text-gray-500">Carregando...</p> : tips.map((tip, i) => (
-                  <div key={i} className="bg-white p-5 rounded-3xl border border-gray-100 flex gap-4 premium-shadow">
-                     <div className="size-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary shrink-0">
-                        <span className="material-symbols-outlined">{tip.icon || 'star'}</span>
+            <div className="space-y-10 relative">
+               {/* Timeline Connector */}
+               <div className="absolute left-7 top-10 bottom-10 w-px bg-gradient-to-b from-accent-gold/40 via-accent-gold/5 to-transparent"></div>
+
+               {loading ? (
+                  <div className="flex flex-col items-center gap-4 py-10 opacity-20">
+                     <div className="size-8 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+                     <p className="text-[10px] uppercase font-black tracking-widest">Sincronizando Cuidados</p>
+                  </div>
+               ) : tips.map((tip, i) => (
+                  <div key={tip.id} className="flex gap-8 relative group animate-reveal" style={{ animationDelay: `${i * 0.1}s` }}>
+                     <div className="size-14 rounded-2xl bg-surface-dark border border-white/5 text-accent-gold flex items-center justify-center font-display text-xl font-bold shrink-0 relative z-10 shadow-huge group-hover:border-accent-gold/40 transition-colors">
+                        <span className="material-symbols-outlined !text-2xl">{tip.icon || 'star'}</span>
+                        <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
                      </div>
-                     <div className="space-y-1">
-                        <h4 className="font-bold text-primary text-sm">{tip.title}</h4>
-                        <p className="text-xs text-gray-500 leading-relaxed">{tip.content}</p>
+                     <div className="space-y-2 pt-2">
+                        <div className="flex items-center gap-3">
+                           <h4 className="text-base font-outfit font-black text-white uppercase tracking-wider">{tip.title}</h4>
+                           <span className="size-1 rounded-full bg-accent-gold animate-pulse"></span>
+                        </div>
+                        <p className="text-[13px] text-white/40 font-light leading-relaxed italic">{tip.content}</p>
                      </div>
                   </div>
                ))}
-               {!loading && tips.length === 0 && <p className="text-center text-gray-400">Nenhuma instrução encontrada.</p>}
+
+               {!loading && tips.length === 0 && (
+                  <div className="text-center py-10 opacity-20">
+                     <p className="text-[10px] uppercase font-black font-outfit tracking-[0.4em]">Nenhuma recomendação no momento</p>
+                  </div>
+               )}
             </div>
 
-            <div className="bg-accent-gold/5 p-6 rounded-3xl border border-accent-gold/20 flex flex-col items-center gap-4 text-center">
-               <span className="material-symbols-outlined text-accent-gold !text-4xl">calendar_month</span>
-               <div className="space-y-1">
-                  <p className="text-xs font-bold text-primary uppercase">Próxima Manutenção</p>
-                  <p className="text-xs font-bold font-display text-gray-500">Recomendado em 15-20 dias</p>
+            <div className="pt-10">
+               <div className="bg-white/2 border border-white/5 p-10 rounded-[48px] text-center space-y-8 relative overflow-hidden group">
+                  <div className="absolute -top-20 -right-20 size-64 bg-accent-gold/5 blur-[80px] rounded-full group-hover:bg-accent-gold/10 transition-all duration-[2s]"></div>
+
+                  <div className="space-y-2 relative z-10">
+                     <span className="material-symbols-outlined text-accent-gold !text-4xl">calendar_month</span>
+                     <h3 className="text-xl font-display italic text-white">Sua Próxima Manutenção</h3>
+                     <p className="text-xs font-outfit font-light text-white/30 tracking-widest uppercase italic">Ciclo ideal entre 15 e 21 dias</p>
+                  </div>
+
+                  <button
+                     onClick={() => navigate('/booking')}
+                     className="w-full h-18 bg-white/5 border border-white/10 text-white rounded-3xl font-outfit font-black text-[10px] uppercase tracking-[0.4em] hover:bg-white hover:text-primary transition-all active:scale-95 relative z-10"
+                  >
+                     Reservar Novo Horário
+                  </button>
                </div>
-               <button onClick={() => navigate('/booking')} className="px-6 py-2 bg-primary text-white rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-primary/20">Agendar agora</button>
             </div>
          </main>
+
+         <div className="p-8 fixed bottom-0 inset-x-0 glass-nav !bg-background-dark/90 border-t border-white/5 z-[60]">
+            <button
+               onClick={() => navigate('/home')}
+               className="group relative w-full h-16 bg-accent-gold text-primary rounded-2xl font-outfit font-black text-[10px] uppercase tracking-[0.3em] overflow-hidden shadow-2xl shadow-accent-gold/20 flex items-center justify-center gap-3 active:scale-95 transition-all"
+            >
+               <div className="absolute inset-x-0 bottom-0 h-1 bg-primary translate-y-full group-hover:translate-y-0 transition-transform"></div>
+               <span className="material-symbols-outlined !text-xl group-hover:scale-110 transition-transform">done_all</span>
+               <span>Ciente dos Cuidados</span>
+            </button>
+         </div>
+
+         {/* Visual Safe Area Inset */}
+         <div className="fixed bottom-0 left-0 w-full h-8 bg-background-dark pointer-events-none z-[90]"></div>
       </div>
    );
 };

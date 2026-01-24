@@ -55,86 +55,90 @@ const Onboarding: React.FC = () => {
 
   const step = STEPS[currentStep];
 
-  // Layout 1: Fullscreen image with gradient overlay (Tela 1)
+  // Layout 1: Fullscreen experience with narrative focus (Tela 1)
   if (step.layout === 'fullscreen') {
     return (
-      <div className="relative h-full w-full overflow-hidden flex flex-col bg-background-light">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0 h-[65%]">
+      <div className="relative h-full w-full overflow-hidden flex flex-col bg-background-dark text-white selection:bg-accent-gold/20">
+        {/* Background Narrative Image */}
+        <div className="absolute inset-0 z-0 h-[70%]">
           <img
             src={step.image}
             alt="Studio Julia Zenaro"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover grayscale-[0.2]"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-light/80 to-background-light"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background-dark/60 to-background-dark"></div>
+        </div>
+
+        {/* Dynamic Silhouettes */}
+        <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden z-1">
+          <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/20 blur-[100px] animate-float"></div>
         </div>
 
         {/* Content */}
-        <div className="relative z-10 flex flex-col h-full px-8 pb-12">
+        <div className="relative z-10 flex flex-col h-full px-10 pb-16">
           <div className="flex-grow"></div>
 
-          {/* Text Section */}
-          <div className="text-center space-y-4 mb-12">
+          {/* Narrative Text Section */}
+          <div className="text-center space-y-6 mb-12 animate-reveal">
             {step.badge && (
-              <div className="inline-block px-4 py-1.5 bg-primary/10 rounded-full mb-2">
-                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-primary">
+              <div className="inline-flex items-center gap-3 px-5 py-2 bg-white/5 border border-white/10 rounded-full mb-2">
+                <span className="h-px w-3 bg-accent-gold/60"></span>
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-accent-gold/80">
                   {step.badge}
                 </span>
+                <span className="h-px w-3 bg-accent-gold/60"></span>
               </div>
             )}
 
-            <h1 className="font-display text-4xl text-primary leading-tight flex flex-col items-center">
+            <h1 className="font-display text-4xl text-white italic leading-tight flex flex-col items-center">
               {step.title}
               {step.titleHighlight === 'LOGO_PLACEHOLDER' ? (
-                <div className="mt-2 transform scale-90">
-                  <Logo size="xl" className="w-[240px]" />
+                <div className="mt-4 drop-shadow-huge">
+                  <Logo size="xl" variant="gold" className="w-[240px]" />
                 </div>
               ) : (
-                <span className="italic">{step.titleHighlight}</span>
+                <span className="text-accent-gold not-italic font-bold tracking-tight mt-2">{step.titleHighlight}</span>
               )}
             </h1>
 
-            {step.emoji && (
-              <div className="text-2xl">{step.emoji}</div>
-            )}
-
-            <p className="text-gray-600 text-lg leading-relaxed max-w-[280px] mx-auto">
+            <p className="text-white/40 text-sm font-outfit font-light leading-relaxed max-w-[280px] mx-auto italic">
               {step.description}
             </p>
 
             {step.subdescription && (
-              <p className="text-gray-400 text-sm font-medium pt-2">
+              <p className="text-accent-gold/60 text-[9px] font-black uppercase tracking-[0.4em] pt-4 select-none">
                 {step.subdescription}
               </p>
             )}
           </div>
 
-          {/* Progress & Buttons */}
-          <div className="space-y-8">
-            <div className="flex justify-center items-center gap-2">
+          {/* Progress & Interaction */}
+          <div className="space-y-10">
+            <div className="flex justify-center items-center gap-3">
               {STEPS.map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1 rounded-full transition-all duration-300 ${i === currentStep ? 'w-8 bg-accent-gold' : 'w-2 bg-gray-300'
+                  className={`h-1 rounded-full transition-all duration-700 ${i === currentStep ? 'w-12 bg-accent-gold shadow-[0_0_15px_rgba(201,169,97,0.4)]' : 'w-2 bg-white/10'
                     }`}
                 />
               ))}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <button
                 onClick={handleNext}
-                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-5 px-6 rounded-full flex justify-center items-center gap-2 shadow-xl shadow-primary/20 transition-all active:scale-95 group"
+                className="group relative w-full h-20 bg-accent-gold text-primary rounded-[32px] font-outfit font-black text-[10px] uppercase tracking-[0.4em] shadow-2xl shadow-accent-gold/10 overflow-hidden active:scale-95 transition-all"
               >
-                {step.buttonText}
-                <span className="material-symbols-outlined text-accent-gold group-hover:translate-x-1 transition-transform">
-                  arrow_forward
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-primary translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                <span className="relative z-10 flex items-center justify-center gap-3">
+                  {step.buttonText}
+                  <span className="material-symbols-outlined !text-xl group-hover:translate-x-2 transition-transform">east</span>
                 </span>
               </button>
 
               <button
                 onClick={handleSkip}
-                className="w-full text-gray-400 hover:text-primary font-medium text-sm py-2 transition-colors"
+                className="w-full text-white/20 hover:text-white font-black text-[9px] uppercase tracking-[0.4em] py-2 transition-colors"
               >
                 {step.skipText}
               </button>
@@ -145,75 +149,91 @@ const Onboarding: React.FC = () => {
     );
   }
 
-  // Layout 2 & 3: Centered image card (Tela 2 e 3)
+  // Layout 2 & 3: Centered portrait experience (Tela 2 e 3)
   return (
-    <div className="flex flex-col min-h-full bg-background-light relative px-6 py-12 overflow-hidden">
-      {/* Decorative blurs */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-      <div className="absolute bottom-0 right-0 w-64 h-64 bg-accent-gold/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
+    <div className="flex flex-col h-full bg-background-dark text-white px-10 py-16 overflow-hidden relative selection:bg-accent-gold/20">
+      {/* Dynamic Background */}
+      <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-20%] w-[70%] aspect-square organic-shape-1 bg-emerald-500/10 blur-[120px] animate-float"></div>
+        <div className="absolute bottom-[-5%] right-[-10%] w-[60%] aspect-square organic-shape-2 bg-accent-gold/10 blur-[100px] animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
 
-      {/* Image Section */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="relative w-full aspect-[4/5] max-h-[400px]">
-          {/* Border decoration */}
-          <div className="absolute -right-2 -bottom-2 w-full h-full border border-accent-gold/30 rounded-[2.5rem] pointer-events-none"></div>
+      {/* Image Artwork Section */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center animate-reveal">
+        <div className="relative w-full aspect-[4/5] max-h-[420px]">
+          {/* Elite Framing */}
+          <div className="absolute -right-4 -bottom-4 w-full h-full border border-accent-gold/20 rounded-[56px] pointer-events-none scale-105"></div>
+          <div className="absolute -left-4 -top-4 w-full h-full border border-white/5 rounded-[56px] pointer-events-none -rotate-3"></div>
 
-          {/* Image */}
-          <div className="relative w-full h-full overflow-hidden rounded-[2.5rem] shadow-2xl">
+          {/* Portrait Image */}
+          <div className="relative w-full h-full overflow-hidden rounded-[56px] shadow-hugest border-4 border-white/5">
             <img
               src={step.image}
               alt="Onboarding"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover grayscale-[0.3] hover:grayscale-0 transition-all duration-[2000ms]"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-background-dark/80 via-transparent to-transparent"></div>
+
+            <div className="absolute top-6 left-6">
+              <div className="premium-blur px-4 py-2 rounded-full border border-white/10">
+                <p className="text-[8px] font-black uppercase tracking-widest text-accent-gold/80">Signature Art</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Text Section */}
-      <div className="flex flex-col items-center text-center mt-8 space-y-4">
-        <h1 className="font-display text-3xl font-semibold text-primary leading-tight">
-          {step.title} <br />
-          <span className="italic">{step.titleHighlight}</span>
-        </h1>
+      {/* Narrative Progress Section */}
+      <div className="relative z-10 flex flex-col items-center text-center mt-12 space-y-8 animate-reveal" style={{ animationDelay: '0.2s' }}>
+        <div className="space-y-4">
+          <h1 className="font-display text-4xl text-white italic leading-tight">
+            {step.title} <br />
+            <span className="text-accent-gold not-italic font-bold tracking-tight">{step.titleHighlight}</span>
+          </h1>
 
-        <p className="text-gray-600 text-sm leading-relaxed max-w-[280px]">
-          {step.description}
-          {step.highlightWord && (
-            <span className="font-semibold text-primary"> {step.highlightWord}</span>
-          )}
-          {step.highlightWord && '.'}
-        </p>
+          <p className="text-white/40 text-[13px] font-outfit font-light leading-relaxed max-w-[300px] mx-auto italic px-4">
+            {step.description}
+            {step.highlightWord && (
+              <span className="text-accent-gold font-bold not-italic"> {step.highlightWord}</span>
+            )}
+          </p>
+        </div>
 
-        {/* Progress Dots */}
-        <div className="flex gap-2 py-4">
+        {/* Progress Timeline */}
+        <div className="flex gap-3 py-2">
           {STEPS.map((_, i) => (
             <div
               key={i}
-              className={`rounded-full transition-all duration-300 ${i === currentStep ? 'h-1.5 w-8 bg-accent-gold' : 'h-1.5 w-1.5 bg-gray-300'
+              className={`rounded-full transition-all duration-700 ${i === currentStep ? 'h-1.5 w-12 bg-accent-gold shadow-huge' : 'h-1.5 w-1.5 bg-white/10'
                 }`}
             />
           ))}
         </div>
 
-        {/* Buttons */}
-        <div className="w-full space-y-4 pt-2">
+        {/* Action Controls */}
+        <div className="w-full space-y-6 pt-4">
           <button
             onClick={handleNext}
-            className="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-4 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all active:scale-95"
+            className="group relative w-full h-18 bg-white/5 border border-white/10 text-white rounded-[32px] font-outfit font-black text-[10px] uppercase tracking-[0.4em] overflow-hidden shadow-2xl active:scale-95 transition-all hover:bg-white hover:text-primary hover:border-white"
           >
-            {step.buttonText}
-            <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-accent-gold translate-y-full group-hover:translate-y-0 transition-transform"></div>
+            <span className="relative z-10 flex items-center justify-center gap-3">
+              {step.buttonText}
+              <span className="material-symbols-outlined !text-xl group-hover:translate-x-2 transition-transform">east</span>
+            </span>
           </button>
 
           <button
             onClick={handleSkip}
-            className="w-full text-gray-500 font-medium py-2 text-sm hover:text-primary transition-colors"
+            className="w-full text-white/10 hover:text-white font-black py-2 text-[9px] uppercase tracking-[0.4em] transition-colors"
           >
             {step.skipText}
           </button>
         </div>
       </div>
+
+      {/* Visual Safe Area Inset */}
+      <div className="fixed bottom-0 left-0 w-full h-8 bg-background-dark pointer-events-none z-[90]"></div>
     </div>
   );
 };

@@ -50,150 +50,190 @@ const Testimonials: React.FC = () => {
    const stats = getStats();
 
    return (
-      <div className="flex flex-col h-full min-h-screen bg-[#f8f7f4] relative">
-         {/* Top Bar with Back Button */}
-         <div className="p-6 pb-2 flex items-center justify-between sticky top-0 z-40 bg-[#f8f7f4]/95 backdrop-blur-sm">
-            <button onClick={() => navigate('/home')} className="size-10 flex items-center justify-center rounded-full bg-white border border-[#2D5043]/10 shadow-sm text-[#2D5043]">
-               <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
-            </button>
-            <div className="flex items-center justify-center flex-1">
-               <Logo size="md" className="w-[180px]" />
-            </div>
-            <div className="size-10"></div>
+      <div className="flex flex-col h-full bg-background-dark text-white overflow-y-auto no-scrollbar selection:bg-accent-gold/20 pb-32 relative">
+         {/* Dynamic Background Elements */}
+         <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+            <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
          </div>
 
-         <main className="flex-1 px-6 pb-32">
-            {/* Rating Header */}
-            <div className="text-center py-8">
-               <div className="flex justify-center items-start gap-2 mb-2">
-                  <h1 className="text-6xl font-display font-medium text-[#C5A059]">{stats.rating.toFixed(1)}</h1>
-                  <span className="material-symbols-outlined text-[#C5A059] !text-xl mt-2">auto_awesome</span>
+         {/* Premium Header */}
+         <header className="sticky top-0 z-[100] premium-nav-dark px-6 py-5 flex items-center justify-between border-b border-white/5">
+            <button onClick={() => navigate('/home')} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-accent-gold hover:bg-white/10 active:scale-90 transition-all">
+               <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+            </button>
+            <div className="text-center">
+               <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none mb-1">Elite Testimonials</p>
+               <h2 className="text-xl font-display italic text-white tracking-tight">Vozes JZ Privé</h2>
+            </div>
+            <div className="size-10"></div>
+         </header>
+
+         <main className="relative z-10 flex-1 p-8 space-y-12">
+            {/* Excellence Dashboard */}
+            <div className="text-center space-y-8 animate-reveal">
+               <div className="relative inline-flex items-center justify-center">
+                  <div className="absolute inset-0 bg-accent-gold/20 blur-3xl rounded-full"></div>
+                  <div className="relative flex items-baseline gap-2">
+                     <h1 className="text-7xl font-display italic text-accent-gold">{stats.rating.toFixed(1)}</h1>
+                     <span className="material-symbols-outlined text-accent-gold !text-2xl animate-pulse" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
+                  </div>
                </div>
-               <div className="flex justify-center gap-1.5 text-[#C5A059] mb-3">
+
+               <div className="flex justify-center gap-2 text-accent-gold mb-3">
                   {[1, 2, 3, 4, 5].map(i => (
                      <span key={i} className="material-symbols-outlined !text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
                   ))}
                </div>
-               <p className="text-[10px] uppercase tracking-[0.1em] text-[#2D5043]/60 font-medium mb-6">
-                  Baseado em {stats.total} avaliações impecáveis
-               </p>
 
-               {/* Excellence Bar */}
-               <div className="flex items-center gap-3 max-w-[200px] mx-auto">
-                  <div className="h-1 flex-1 bg-[#2D5043]/10 rounded-full overflow-hidden">
-                     <div className="h-full w-[96%] bg-[#2D5043] rounded-full"></div>
+               <div className="space-y-4">
+                  <p className="text-[10px] font-black font-outfit uppercase tracking-[0.3em] text-white/40">
+                     Sinfonia de satisfação baseada em <span className="text-white">{stats.total}</span> relatos de elite
+                  </p>
+
+                  <div className="bg-surface-dark border border-white/5 rounded-full px-6 py-3 flex items-center gap-4 max-w-[240px] mx-auto shadow-huge">
+                     <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                           className="h-full bg-accent-gold rounded-full transition-all duration-1000"
+                           style={{ width: `${stats.excellence}%` }}
+                        ></div>
+                     </div>
+                     <span className="text-[9px] font-black font-outfit uppercase tracking-widest text-accent-gold">{stats.excellence}% de Excelência</span>
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-[#2D5043]/40">96% Excelente</span>
                </div>
             </div>
 
-            {/* Section Title */}
-            <div className="flex items-baseline justify-between mb-6 border-b border-[#2D5043]/5 pb-2">
-               <h3 className="font-display font-medium text-2xl text-[#1a1c1a] italic">Histórias Reais</h3>
-               <span className="text-[9px] font-black uppercase tracking-widest text-[#2D5043]/40">Membro VIP</span>
-            </div>
-
-            {/* Testimonials List */}
-            {loading ? (
-               <div className="flex justify-center py-10">
-                  <div className="size-8 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin"></div>
+            {/* Stories Section */}
+            <div className="space-y-10">
+               <div className="flex items-center gap-3 px-2 border-b border-white/5 pb-4">
+                  <div className="h-px w-8 bg-accent-gold/40"></div>
+                  <h3 className="text-[10px] font-black font-outfit uppercase tracking-[0.4em] text-white/60">Fragmentos de Prestigio</h3>
                </div>
-            ) : testimonials.length === 0 ? (
-               <div className="text-center py-20 opacity-30">
-                  <p className="italic text-[#2D5043]">Ainda não há novas histórias.</p>
-               </div>
-            ) : (
-               <div className="space-y-6">
-                  {testimonials.map(item => (
-                     <div key={item.id} className="bg-white p-6 rounded-[24px] shadow-[0_2px_20px_-10px_rgba(0,0,0,0.05)] border border-[#2D5043]/5">
-                        {/* Card Header */}
-                        <div className="flex items-center gap-4 mb-4">
-                           <div className="size-12 rounded-full overflow-hidden border border-[#f8f7f4]">
-                              <img
-                                 src={item.profiles?.profile_pic || `https://ui-avatars.com/api/?name=${item.profiles?.name}&background=ebdccb&color=2d5043`}
-                                 alt={item.profiles?.name}
-                                 className="w-full h-full object-cover"
-                              />
-                           </div>
-                           <div>
-                              <h4 className="font-display font-bold text-lg text-[#2D5043] leading-none mb-1">
-                                 {item.profiles?.name || 'Cliente Secreta'}
-                              </h4>
-                              <p className="text-[9px] font-black uppercase tracking-widest text-[#C5A059]">
-                                 {item.professionals?.name ? `Atendida por ${item.professionals.name}` : 'Cliente Verificada'}
-                              </p>
-                           </div>
-                        </div>
 
-                        {/* Stars */}
-                        <div className="flex gap-0.5 text-[#C5A059] mb-4">
-                           {[...Array(item.stars || 5)].map((_, i) => (
-                              <span key={i} className="material-symbols-outlined !text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                           ))}
-                        </div>
-
-                        {/* Text */}
-                        <p className="font-display italic text-[#1a1c1a]/80 leading-relaxed text-[15px] mb-6">
-                           "{item.text}"
-                        </p>
-
-                        {/* Photos (Thumbnails) */}
-                        {item.photo_url && (
-                           <div className="flex gap-3 mb-6">
-                              <div
-                                 onClick={() => setSelectedImage(item.photo_url)}
-                                 className="relative h-16 w-24 rounded-xl overflow-hidden cursor-zoom-in group border border-[#2D5043]/5"
-                              >
-                                 <img src={item.photo_url} alt="Resultado" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                 <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/50 backdrop-blur rounded text-[7px] font-bold text-white uppercase tracking-wider">
-                                    Resultado
+               {loading ? (
+                  <div className="flex flex-col items-center gap-4 py-20 opacity-20">
+                     <div className="size-8 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+                     <p className="text-[10px] uppercase font-black tracking-widest">Sincronizando Histórias</p>
+                  </div>
+               ) : testimonials.length === 0 ? (
+                  <div className="text-center py-20 bg-surface-dark/40 rounded-[40px] border border-white/5">
+                     <p className="text-sm font-outfit font-light italic text-white/20">O Mural de Praises aguarda seu relato.</p>
+                  </div>
+               ) : (
+                  <div className="space-y-8">
+                     {testimonials.map((item, idx) => (
+                        <div
+                           key={item.id}
+                           className="group relative bg-surface-dark/40 backdrop-blur-xl p-8 rounded-[48px] border border-white/5 shadow-huge animate-reveal"
+                           style={{ animationDelay: `${idx * 0.1}s` }}
+                        >
+                           {/* Narrative Header */}
+                           <div className="flex items-center gap-5 mb-8">
+                              <div className="size-14 rounded-2xl overflow-hidden border-2 border-accent-gold/20 shadow-xl group-hover:scale-110 transition-transform duration-500">
+                                 <img
+                                    src={item.profiles?.profile_pic || `https://ui-avatars.com/api/?name=${item.profiles?.name}&background=122b22&color=c9a961`}
+                                    alt={item.profiles?.name}
+                                    className="w-full h-full object-cover"
+                                 />
+                              </div>
+                              <div>
+                                 <h4 className="font-display text-xl text-white italic leading-tight mb-1">
+                                    {item.profiles?.name || 'Membro Privé'}
+                                 </h4>
+                                 <div className="flex items-center gap-2">
+                                    <span className="size-1 rounded-full bg-accent-gold"></span>
+                                    <p className="text-[9px] font-black font-outfit uppercase tracking-[0.2em] text-accent-gold/60">
+                                       {item.professionals?.name ? `Signature by ${item.professionals.name}` : 'Membro VIP Verificado'}
+                                    </p>
                                  </div>
                               </div>
                            </div>
-                        )}
 
-                        {/* Footer Badge */}
-                        <div className="flex items-center gap-2 pt-4 border-t border-[#f8f7f4]">
-                           <span className="material-symbols-outlined text-[#2D5043] !text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                           <span className="text-[9px] font-bold uppercase tracking-widest text-[#2D5043]/40">Avaliação Verificada</span>
+                           {/* Stars */}
+                           <div className="flex gap-1 text-accent-gold/40 mb-6">
+                              {[...Array(5)].map((_, i) => (
+                                 <span key={i} className={`material-symbols-outlined !text-sm ${i < (item.stars || 5) ? 'text-accent-gold' : ''}`} style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                              ))}
+                           </div>
+
+                           {/* Testimony */}
+                           <blockquote className="font-display italic text-white/70 leading-relaxed text-lg mb-8 relative">
+                              <span className="absolute -top-4 -left-2 text-white/5 !text-6xl material-symbols-outlined select-none">format_quote</span>
+                              "{item.text}"
+                           </blockquote>
+
+                           {/* Visual Evidence */}
+                           {item.photo_url && (
+                              <div className="mb-10 animate-reveal">
+                                 <div
+                                    onClick={() => setSelectedImage(item.photo_url)}
+                                    className="relative aspect-[16/10] rounded-[32px] overflow-hidden cursor-zoom-in group border border-white/5 shadow-huge"
+                                 >
+                                    <img src={item.photo_url} alt="Resultado" className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-105" />
+                                    <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-background-dark/80 to-transparent">
+                                       <span className="text-[9px] font-black uppercase tracking-[0.3em] text-white/80 flex items-center gap-2">
+                                          <span className="size-1 bg-accent-gold rounded-full"></span> Portrait da Beleza
+                                       </span>
+                                    </div>
+                                    <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                 </div>
+                              </div>
+                           )}
+
+                           {/* Verification Badge */}
+                           <div className="flex items-center gap-3 pt-6 border-t border-white/5">
+                              <div className="size-6 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                 <span className="material-symbols-outlined !text-[12px] text-emerald-500" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+                              </div>
+                              <span className="text-[9px] font-black font-outfit uppercase tracking-[0.3em] text-white/20">Elite Experience Certified</span>
+                           </div>
                         </div>
-                     </div>
-                  ))}
-               </div>
-            )}
+                     ))}
+                  </div>
+               )}
+            </div>
          </main>
 
-         {/* Floating CTA */}
-         <div className="fixed bottom-8 left-0 right-0 px-6 z-40 flex justify-center pointer-events-none">
+         {/* Persistent Invitation */}
+         <div className="fixed bottom-10 left-0 right-0 px-8 z-[110] flex justify-center pointer-events-none">
             <button
                onClick={() => navigate('/services')}
-               className="pointer-events-auto bg-[#2D5043] text-white px-8 py-4 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-xl flex items-center gap-3 active:scale-95 transition-all w-full max-w-[320px] justify-center hover:bg-[#1f3a30]"
+               className="pointer-events-auto group relative h-18 w-full max-w-[340px] bg-primary text-white rounded-[32px] font-outfit font-black text-[10px] uppercase tracking-[0.4em] shadow-hugest overflow-hidden active:scale-95 transition-all"
             >
-               Agendar Experiência
-               <span className="material-symbols-outlined !text-sm">calendar_month</span>
+               <div className="absolute inset-x-0 bottom-0 h-1 bg-accent-gold translate-y-full group-hover:translate-y-0 transition-transform"></div>
+               <span className="relative z-10 flex items-center justify-center gap-4">
+                  Viver meu Momento
+                  <span className="material-symbols-outlined !text-xl text-accent-gold transition-transform group-hover:translate-x-2">calendar_month</span>
+               </span>
             </button>
          </div>
 
-         {/* Lightbox Modal */}
+         {/* Immersive Lightbox */}
          {selectedImage && (
             <div
-               className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 animate-fade-in"
+               className="fixed inset-0 z-[200] bg-background-dark/98 backdrop-blur-3xl flex items-center justify-center p-8 animate-fade-in"
                onClick={() => setSelectedImage(null)}
             >
                <button
                   onClick={() => setSelectedImage(null)}
-                  className="absolute top-6 right-6 text-white/50 hover:text-white p-2"
+                  className="absolute top-10 right-10 text-white/30 hover:text-white p-2 transition-colors"
                >
-                  <span className="material-symbols-outlined !text-3xl">close</span>
+                  <span className="material-symbols-outlined !text-4xl">close</span>
                </button>
-               <img
-                  src={selectedImage}
-                  alt="Zoom"
-                  className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain"
-                  onClick={(e) => e.stopPropagation()}
-               />
+               <div className="relative max-w-full max-h-[80vh] group animate-reveal">
+                  <div className="absolute -inset-4 bg-accent-gold/10 blur-3xl opacity-50"></div>
+                  <img
+                     src={selectedImage}
+                     alt="Zoom"
+                     className="relative max-w-full max-h-full rounded-[40px] shadow-hugest object-contain border border-white/10"
+                     onClick={(e) => e.stopPropagation()}
+                  />
+               </div>
             </div>
          )}
+
+         {/* Visual Safe Area Inset */}
+         <div className="fixed bottom-0 left-0 w-full h-8 bg-background-dark pointer-events-none z-[90]"></div>
       </div>
    );
 };

@@ -18,7 +18,6 @@ const Register: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Mask CPF: 000.000.000-00
   const formatCpf = (value: string) => {
     const numbers = value.replace(/\D/g, '').slice(0, 11);
     return numbers
@@ -55,7 +54,6 @@ const Register: React.FC = () => {
       if (error) throw error;
 
       if (data.user) {
-        // Sync with Professionals table
         const { data: pro } = await supabase
           .from('professionals')
           .select('*')
@@ -63,8 +61,6 @@ const Register: React.FC = () => {
           .single();
 
         if (pro) {
-          // 1. Update Profile Role and Permissions
-          // Note: the trigger to create profile might take a ms, so we retry or update auth metadata
           await supabase
             .from('profiles')
             .update({
@@ -73,7 +69,6 @@ const Register: React.FC = () => {
             })
             .eq('id', data.user.id);
 
-          // 2. Link professional record
           await supabase
             .from('professionals')
             .update({ profile_id: data.user.id })
@@ -90,206 +85,231 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-background-light">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-primary hover:bg-gray-50 transition-colors"
-        >
-          <span className="material-symbols-outlined text-lg">chevron_left</span>
-        </button>
+    <div className="flex flex-col min-h-screen bg-background-light font-outfit overflow-y-auto no-scrollbar selection:bg-accent-gold/30 selection:text-primary">
+      {/* Background Decorative Elements */}
+      <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+        <div className="absolute top-[-5%] right-[-10%] w-[70%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+        <div className="absolute bottom-[-5%] left-[-10%] w-[60%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
 
-        <Logo size="lg" className="mt-2" />
+      <main className="relative z-10 w-full max-w-[420px] mx-auto px-8 flex-1 flex flex-col pt-10 pb-20">
+        {/* Header Navigation */}
+        <header className="flex items-center justify-between mb-12 animate-reveal">
+          <button
+            onClick={() => navigate(-1)}
+            className="size-12 rounded-2xl bg-white shadow-sm border border-primary/5 flex items-center justify-center text-primary group active:scale-95 transition-all"
+          >
+            <span className="material-symbols-outlined !text-xl group-hover:-translate-x-1 transition-transform">west</span>
+          </button>
+          <div className="transform scale-90">
+            <Logo size="lg" />
+          </div>
+          <div className="size-12"></div>
+        </header>
 
-        <div className="w-10"></div>
-      </header>
-
-      {/* Content */}
-      <main className="flex-1 px-8 pb-8 overflow-y-auto no-scrollbar">
-        {/* Title Section */}
-        <div className="text-center mb-10">
-          <h1 className="font-display text-4xl text-primary leading-tight mb-1">
-            Sua jornada
+        {/* Narrative Title */}
+        <div className="text-center mb-16 space-y-4 animate-reveal">
+          <h1 className="font-display text-4xl text-primary leading-tight tracking-tight">
+            Sua jornada <br />
+            <span className="italic text-accent-gold font-serif">começa agora.</span>
           </h1>
-          <h2 className="font-display text-4xl text-accent-gold italic">
-            começa aqui
-          </h2>
-          <p className="text-gray-500 text-sm mt-4 leading-relaxed max-w-[280px] mx-auto">
-            A porta de entrada para experiências exclusivas e atendimento personalizado.
+          <p className="text-primary/40 text-[10px] font-black uppercase tracking-[0.3em] max-w-[280px] mx-auto leading-relaxed">
+            A porta de entrada para experiências sensoriais exclusivas.
           </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleRegister} className="space-y-5">
-          {/* Nome Completo */}
-          <div className="bg-white rounded-[24px] border border-gray-100 px-6 py-4 shadow-sm focus-within:border-primary/30 transition-colors">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60 block mb-1">
-              Nome Completo
-            </label>
-            <input
-              required
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Digite seu nome completo"
-              className="w-full text-primary text-base bg-transparent border-none outline-none placeholder:text-gray-300"
-            />
+        {/* Dynamic Form */}
+        <form onSubmit={handleRegister} className="space-y-12 animate-reveal stagger-1">
+          <div className="space-y-10">
+            {/* Field: Name */}
+            <div className="group relative">
+              <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                Nome Completo
+              </label>
+              <input
+                required
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Sua identidade"
+                className="w-full bg-transparent border-b border-primary/10 py-4 text-lg font-light text-primary placeholder:text-primary/10 focus:border-accent-gold transition-all outline-none"
+              />
+            </div>
+
+            {/* Field: Email */}
+            <div className="group relative">
+              <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                E-mail Pessoal
+              </label>
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="seu@destino.com"
+                className="w-full bg-transparent border-b border-primary/10 py-4 text-lg font-light text-primary placeholder:text-primary/10 focus:border-accent-gold transition-all outline-none"
+              />
+            </div>
+
+            {/* Twin Row: CPF & Birth */}
+            <div className="grid grid-cols-2 gap-8">
+              <div className="group relative">
+                <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                  CPF
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={cpf}
+                  onChange={e => setCpf(formatCpf(e.target.value))}
+                  placeholder="000.000.000-00"
+                  className="w-full bg-transparent border-b border-primary/10 py-4 text-sm font-light text-primary placeholder:text-primary/10 focus:border-accent-gold transition-all outline-none"
+                />
+              </div>
+              <div className="group relative text-primary/10 focus-within:text-primary transition-colors">
+                <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                  Nascimento
+                </label>
+                <input
+                  required
+                  type="date"
+                  value={birthdate}
+                  onChange={e => setBirthdate(e.target.value)}
+                  className="w-full bg-transparent border-b border-primary/10 py-4 text-sm font-light text-primary focus:border-accent-gold transition-all outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Field: Phone */}
+            <div className="group relative">
+              <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                WhatsApp / Contato
+              </label>
+              <input
+                required
+                type="tel"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="(00) 00000-0000"
+                className="w-full bg-transparent border-b border-primary/10 py-4 text-lg font-light text-primary placeholder:text-primary/10 focus:border-accent-gold transition-all outline-none"
+              />
+            </div>
+
+            {/* Field: Password */}
+            <div className="group relative">
+              <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                Senha de Acesso
+              </label>
+              <input
+                required
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Sua chave secreta"
+                className="w-full bg-transparent border-b border-primary/10 py-4 text-lg font-light text-primary placeholder:text-primary/10 focus:border-accent-gold transition-all outline-none"
+              />
+            </div>
+
+            {/* Field: Confirm Password */}
+            <div className="group relative">
+              <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                Confirmar Senha
+              </label>
+              <input
+                required
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Digite novamente"
+                className="w-full bg-transparent border-b border-primary/10 py-4 text-lg font-light text-primary placeholder:text-primary/10 focus:border-accent-gold transition-all outline-none"
+              />
+            </div>
+
+            {/* Referral Experience */}
+            <div className="group relative bg-accent-gold/5 rounded-3xl p-6 border border-accent-gold/10 focus-within:border-accent-gold/40 transition-all backdrop-blur-sm">
+              <label className="text-[8px] font-black uppercase tracking-[0.3em] text-accent-gold block mb-2 opacity-60 transition-all group-focus-within:opacity-100">
+                Código de Indicação (Opcional)
+              </label>
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-accent-gold/40 !text-lg">loyalty</span>
+                <input
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="EX: JULIA-123"
+                  className="flex-1 bg-transparent border-none text-base font-bold text-accent-gold placeholder:text-accent-gold/20 outline-none tracking-[0.1em]"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* E-mail Pessoal */}
-          <div className="bg-white rounded-[24px] border border-gray-100 px-6 py-4 shadow-sm focus-within:border-primary/30 transition-colors">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60 block mb-1">
-              E-mail Pessoal
-            </label>
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="exemplo@dominio.com"
-              className="w-full text-primary text-base bg-transparent border-none outline-none placeholder:text-gray-300"
-            />
-          </div>
+          {/* Action Area */}
+          <div className="space-y-8 pt-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full py-6 bg-primary text-white rounded-[32px] overflow-hidden shadow-2xl shadow-primary/40 hover:bg-primary-dark active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              <div className="relative z-10 flex items-center justify-center gap-4">
+                <span className="text-[11px] font-black uppercase tracking-[0.4em] text-accent-gold group-hover:text-white transition-colors">
+                  {loading ? 'Aguarde...' : 'Criar minha conta'}
+                </span>
+                <span className="material-symbols-outlined !text-xl text-accent-gold group-hover:translate-x-2 transition-transform">auto_fix_high</span>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s]"></div>
+            </button>
 
-          {/* CPF */}
-          <div className="bg-white rounded-[24px] border border-gray-100 px-6 py-4 shadow-sm focus-within:border-primary/30 transition-colors">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60 block mb-1">
-              CPF
-            </label>
-            <input
-              required
-              type="text"
-              value={cpf}
-              onChange={e => setCpf(formatCpf(e.target.value))}
-              placeholder="000.000.000-00"
-              className="w-full text-primary text-base bg-transparent border-none outline-none placeholder:text-gray-300"
-            />
-          </div>
-
-          {/* Data de Nascimento */}
-          <div className="bg-white rounded-[24px] border border-gray-100 px-6 py-4 shadow-sm focus-within:border-primary/30 transition-colors">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60 block mb-1">
-              Data de Nascimento
-            </label>
-            <input
-              required
-              type="date"
-              value={birthdate}
-              onChange={e => setBirthdate(e.target.value)}
-              className="w-full text-primary text-base bg-transparent border-none outline-none"
-            />
-          </div>
-
-          {/* Telefone (mantido mas com novo design) */}
-          <div className="bg-white rounded-[24px] border border-gray-100 px-6 py-4 shadow-sm focus-within:border-primary/30 transition-colors">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60 block mb-1">
-              Telefone / WhatsApp
-            </label>
-            <input
-              required
-              type="tel"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="(00) 00000-0000"
-              className="w-full text-primary text-base bg-transparent border-none outline-none placeholder:text-gray-300"
-            />
-          </div>
-
-          {/* Senha (mantido mas com novo design) */}
-          <div className="bg-white rounded-[24px] border border-gray-100 px-6 py-4 shadow-sm focus-within:border-primary/30 transition-colors">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60 block mb-1">
-              Senha
-            </label>
-            <input
-              required
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Crie uma senha segura"
-              className="w-full text-primary text-base bg-transparent border-none outline-none placeholder:text-gray-300"
-            />
-          </div>
-
-          {/* Confirmar Senha */}
-          <div className="bg-white rounded-[24px] border border-gray-100 px-6 py-4 shadow-sm focus-within:border-primary/30 transition-colors">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-primary/60 block mb-1">
-              Confirmar Senha
-            </label>
-            <input
-              required
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder="Digite a senha novamente"
-              className="w-full text-primary text-base bg-transparent border-none outline-none placeholder:text-gray-300"
-            />
-          </div>
-
-          {/* Código de Indicação (opcional, colapsável) */}
-          <div className="bg-accent-gold/5 rounded-[24px] border border-accent-gold/20 px-6 py-4 focus-within:border-accent-gold/40 transition-colors">
-            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-accent-gold block mb-1">
-              Código de Indicação (Opcional)
-            </label>
-            <input
-              type="text"
-              value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-              placeholder="Ex: JULIA-123"
-              className="w-full text-accent-gold text-base bg-transparent border-none outline-none placeholder:text-accent-gold/40 font-semibold tracking-wider"
-            />
+            <p className="text-center text-[10px] font-bold uppercase tracking-[0.2em] text-primary/40">
+              Já é uma de nós?
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="ml-3 text-primary font-black border-b border-accent-gold/30 hover:border-accent-gold transition-all"
+              >
+                Fazer Login
+              </button>
+            </p>
           </div>
         </form>
       </main>
 
-      {/* Bottom CTA */}
-      <div className="px-8 pb-8 pt-4 bg-background-light">
-        <button
-          onClick={handleRegister}
-          disabled={loading}
-          className="w-full h-14 bg-primary text-white rounded-full font-medium text-[15px] shadow-lg shadow-primary/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            <>
-              Entrar para o Clube
-              <span className="text-accent-gold">+</span>
-              <span className="text-accent-gold">✧</span>
-            </>
-          )}
-        </button>
-
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Já sou membro. <button onClick={() => navigate('/login')} className="font-bold text-primary">Fazer login</button>
-        </p>
-      </div>
-
-      {/* Modal de Boas-vindas e Perfil do Olhar */}
+      {/* Immersive Onboarding Modal */}
       {showWelcomeModal && (
-        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white w-full max-w-sm rounded-[48px] p-10 text-center space-y-8 animate-slide-up shadow-2xl">
-            <div className="size-20 bg-primary/5 rounded-full flex items-center justify-center mx-auto ring-8 ring-primary/5">
-              <span className="material-symbols-outlined text-primary !text-4xl">auto_awesome</span>
+        <div className="fixed inset-0 z-[1000] p-6 flex items-center justify-center animate-reveal">
+          <div className="absolute inset-0 bg-primary/95 backdrop-blur-xl"></div>
+
+          <div className="relative w-full max-w-sm bg-background-light rounded-[48px] p-10 text-center space-y-10 shadow-huge overflow-hidden">
+            {/* Visual Flare */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-2 bg-gradient-to-r from-transparent via-accent-gold to-transparent"></div>
+
+            <div className="relative mx-auto size-24 flex items-center justify-center">
+              <div className="absolute inset-0 organic-shape-1 bg-primary/5 animate-spin-slow"></div>
+              <div className="size-20 bg-background-light border border-primary/5 rounded-full flex items-center justify-center shadow-xl">
+                <span className="material-symbols-outlined !text-4xl text-accent-gold" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+              </div>
             </div>
-            <div className="space-y-3">
-              <h2 className="text-2xl font-display font-bold text-primary">Bem-vinda ao Clube! ✨</h2>
-              <p className="text-sm text-gray-500 leading-relaxed italic px-2">
-                Seu cadastro foi realizado. Quer preencher agora seu <b>Perfil do Olhar</b> para um atendimento ainda mais personalizado?
+
+            <div className="space-y-4">
+              <h2 className="text-3xl font-display text-primary italic">Seja <br /> Bem-vinda.</h2>
+              <div className="h-px w-8 bg-accent-gold mx-auto"></div>
+              <p className="text-xs font-outfit font-light text-primary/60 leading-relaxed px-4">
+                Seu portal de beleza está ativo. Vamos personalizar sua experiência através do seu <span className="font-bold text-primary">Perfil do Olhar</span>?
               </p>
             </div>
-            <div className="flex flex-col gap-4 pt-4">
+
+            <div className="space-y-5 pt-4">
               <button
                 onClick={() => navigate('/profile/aesthetic')}
-                className="w-full h-14 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20 active:scale-95 transition-all"
+                className="w-full py-5 bg-primary text-accent-gold rounded-2xl font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3"
               >
-                SIM, PERSONALIZAR MEU OLHAR ✨
+                Acessar Perfil
+                <span className="material-symbols-outlined !text-sm">visibility</span>
               </button>
               <button
                 onClick={() => navigate('/home')}
-                className="text-[10px] font-black text-gray-400 uppercase tracking-widest underline underline-offset-8"
+                className="text-[9px] font-black text-primary/30 uppercase tracking-[0.4em] hover:text-primary transition-colors"
               >
-                Preencher depois
+                Talvez mais tarde
               </button>
             </div>
           </div>

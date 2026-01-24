@@ -17,10 +17,8 @@ const Login: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
     try {
       let loginEmail = email.trim();
 
-      // Check if it's a CPF (contains only digits, or is in CPF format)
       const cleanInput = loginEmail.replace(/\D/g, '');
       if (cleanInput.length === 11 && !loginEmail.includes('@')) {
-        // Find email by CPF
         const { data: profileWithCpf, error: cpfError } = await supabase
           .from('profiles')
           .select('email')
@@ -75,134 +73,138 @@ const Login: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background-light font-sans overflow-y-auto no-scrollbar">
-      {/* Header Area */}
-      <header className="w-full flex flex-col items-center pt-10 pb-0 px-4">
-        <div className="w-full max-w-[400px] transform scale-90 origin-bottom">
-          <Logo size="xl" className="w-full" />
-        </div>
-      </header>
+    <div className="flex flex-col min-h-screen bg-background-light font-outfit overflow-y-auto no-scrollbar selection:bg-accent-gold/30 selection:text-primary">
+      {/* Background Decorative Elements */}
+      <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+        <div className="absolute top-[-5%] right-[-10%] w-[70%] aspect-square organic-shape-1 bg-accent-gold/30 blur-[100px] animate-float"></div>
+        <div className="absolute bottom-[-5%] left-[-10%] w-[60%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+      </div>
 
-      {/* Main Content Area */}
-      <main className="w-full max-w-[420px] mx-auto px-8 flex-1 flex flex-col -mt-4">
-        <div className="mb-10 text-center">
-          <h2 className="font-display text-[#0f3e29] text-[42px] font-normal leading-tight italic">
-            Seu momento começa aqui
-          </h2>
-          <p className="text-[#0f3e29]/40 text-[10px] font-black tracking-[0.25em] uppercase mt-2">
-            Identifique-se para continuar sua experiência
-          </p>
-        </div>
-
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="flex flex-col gap-10">
-          {/* Email / CPF Field */}
-          <div className="flex flex-col w-full group">
-            <label className="text-[#0f3e29]/50 text-[10px] font-bold uppercase tracking-[0.15em] pb-2 ml-1">
-              E-mail ou CPF
-            </label>
-            <input
-              className="w-full bg-transparent border-b border-[#0f3e29]/10 focus:border-[#C9A961] py-3 text-base font-medium text-[#0f3e29] transition-all outline-none placeholder:text-[#0f3e29]/20"
-              placeholder="Insira seus dados"
-              type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+      <main className="relative z-10 w-full max-w-[420px] mx-auto px-8 flex-1 flex flex-col pt-16">
+        {/* Brand Header */}
+        <header className="flex flex-col items-center mb-16 animate-reveal">
+          <div className="mb-8">
+            <Logo size="lg" className="mx-auto" />
           </div>
+          <div className="text-center space-y-3">
+            <h2 className="text-4xl font-display text-primary leading-tight italic">
+              Bem-vinda de <br /> <span className="text-accent-gold">volta.</span>
+            </h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/30">Identifique sua essência</p>
+          </div>
+        </header>
 
-          {/* Password Field */}
-          <div className="flex flex-col w-full group">
-            <label className="text-[#0f3e29]/50 text-[10px] font-bold uppercase tracking-[0.15em] pb-2 ml-1">
-              Senha
-            </label>
-            <div className="relative flex items-center">
+        {/* Auth Form */}
+        <form onSubmit={handleLogin} className="space-y-12 animate-reveal stagger-1">
+          <div className="space-y-8">
+            {/* Identity Field */}
+            <div className="group relative">
+              <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                E-mail ou CPF
+              </label>
               <input
-                className="w-full bg-transparent border-b border-[#0f3e29]/10 focus:border-[#C9A961] py-3 pr-12 text-base font-medium text-[#0f3e29] transition-all outline-none placeholder:text-[#0f3e29]/20"
-                placeholder="Sua senha pessoal"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-transparent border-b border-primary/10 py-5 text-lg font-light text-primary placeholder:text-primary/10 focus:border-accent-gold transition-all outline-none"
+                placeholder="Seu identificador"
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 bg-transparent p-2 text-[#C9A961]/40 hover:text-[#C9A961] transition-colors focus:outline-none"
-              >
-                <span className="material-symbols-outlined !text-xl">
-                  {showPassword ? 'visibility_off' : 'visibility'}
-                </span>
-              </button>
             </div>
-            <div className="flex justify-end mt-4">
-              <button
-                type="button"
-                onClick={() => navigate('/forgot-password')}
-                className="text-[#0f3e29]/30 hover:text-[#C9A961] text-[10px] font-bold uppercase tracking-widest transition-colors"
-              >
-                Esqueceu a senha?
-              </button>
+
+            {/* Secure Field */}
+            <div className="group relative">
+              <label className="absolute -top-3 left-1 text-[9px] font-black uppercase tracking-[0.2em] text-primary/40 transition-all group-focus-within:text-accent-gold">
+                Sua Senha
+              </label>
+              <div className="relative">
+                <input
+                  className="w-full bg-transparent border-b border-primary/10 py-5 pr-14 text-lg font-light text-primary placeholder:text-primary/10 focus:border-accent-gold transition-all outline-none"
+                  placeholder="••••••••"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 bottom-4 size-10 flex items-center justify-center text-primary/20 hover:text-accent-gold transition-colors"
+                >
+                  <span className="material-symbols-outlined !text-xl">
+                    {showPassword ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+              </div>
+              <div className="flex justify-end pt-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-[9px] font-black uppercase tracking-widest text-primary/30 hover:text-accent-gold transition-colors"
+                >
+                  Esqueceu o acesso?
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Action Button */}
-          <div className="mt-6">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#0f3e29] h-16 rounded-[32px] flex items-center justify-between px-8 hover:bg-[#0a2b1d] transition-all active:scale-[0.98] shadow-xl shadow-[#0f3e29]/20 disabled:opacity-50 group"
-            >
-              <span className="text-[#C9A961] font-bold uppercase tracking-[0.3em] text-[11px]">
-                {loading ? 'Entrando...' : 'Iniciar sessão'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="group relative w-full h-18 py-6 bg-primary text-white rounded-3xl overflow-hidden shadow-2xl shadow-primary/30 hover:bg-primary-dark active:scale-[0.98] transition-all disabled:opacity-50"
+          >
+            <div className="relative z-10 flex items-center justify-center gap-4">
+              <span className="text-[11px] font-black uppercase tracking-[0.4em] text-accent-gold group-hover:text-white transition-colors">
+                {loading ? 'Aguarde...' : 'Iniciar Jornada'}
               </span>
-              <span className="material-symbols-outlined text-[#C9A961] !text-xl group-hover:translate-x-1 transition-transform">arrow_right_alt</span>
-            </button>
-          </div>
+              <span className="material-symbols-outlined !text-xl text-accent-gold group-hover:translate-x-2 transition-transform">east</span>
+            </div>
+            {/* Subtle Shimmer */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s]"></div>
+          </button>
         </form>
 
-        {/* Social Dividers */}
-        <div className="mt-12 flex flex-col items-center gap-6">
-          <div className="flex items-center gap-4 w-full px-10">
-            <div className="h-[1px] flex-1 bg-[#0f3e29]/5"></div>
-            <span className="text-[8px] font-black text-[#0f3e29]/20 uppercase tracking-widest">Ou acesse com</span>
-            <div className="h-[1px] flex-1 bg-[#0f3e29]/5"></div>
+        {/* Social Integration */}
+        <div className="mt-16 space-y-10 animate-reveal stagger-2">
+          <div className="flex items-center gap-6">
+            <div className="h-px flex-1 bg-primary/5"></div>
+            <span className="text-[8px] font-black text-primary/20 uppercase tracking-[0.4em]">Integração Digital</span>
+            <div className="h-px flex-1 bg-primary/5"></div>
           </div>
 
-          <div className="flex gap-6">
-            <button
-              onClick={() => handleOAuthLogin('google')}
-              className="size-14 rounded-full border border-[#0f3e29]/5 flex items-center justify-center hover:bg-white transition-all shadow-sm active:scale-90"
-            >
-              <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/google.svg" className="size-6 opacity-70" alt="Google" />
-            </button>
-            <button
-              onClick={() => handleOAuthLogin('apple')}
-              className="size-14 rounded-full border border-[#0f3e29]/5 flex items-center justify-center hover:bg-white transition-all shadow-sm active:scale-90"
-            >
-              <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apple.svg" className="size-6 opacity-70" alt="Apple" />
-            </button>
+          <div className="flex justify-center gap-8">
+            {[
+              { provider: 'google', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/google.svg' },
+              { provider: 'apple', icon: 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/apple.svg' }
+            ].map((item, i) => (
+              <button
+                key={item.provider}
+                onClick={() => handleOAuthLogin(item.provider as any)}
+                className="size-16 rounded-[24px] bg-white border border-primary/5 flex items-center justify-center shadow-lg shadow-primary/5 hover:border-accent-gold/20 hover:-translate-y-1 transition-all active:scale-90"
+              >
+                <img src={item.icon} className="size-6 opacity-60" alt={item.provider} />
+              </button>
+            ))}
           </div>
         </div>
       </main>
 
-      {/* Footer Area */}
-      <footer className="w-full max-w-[420px] mx-auto px-8 py-14 text-center mt-auto">
-        <p className="text-[#0f3e29]/40 text-[11px] font-bold uppercase tracking-wider">
-          Ainda não é membro?
+      {/* Footer Navigation */}
+      <footer className="relative z-10 px-8 py-16 text-center mt-auto animate-reveal" style={{ animationDelay: '0.6s' }}>
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/40">
+          É nova por aqui?
           <button
             onClick={() => navigate('/register')}
-            className="text-[#0f3e29] font-black ml-2 hover:underline underline-offset-8 decoration-[#C9A961]/40 transition-all border-b border-[#0f3e29]/10 pb-0.5"
+            className="ml-3 text-primary font-black border-b-2 border-accent-gold/30 hover:border-accent-gold transition-all pb-0.5"
           >
             Criar Cadastro
           </button>
         </p>
 
-        {/* Aesthetic Detail Divider */}
-        <div className="mt-12 flex items-center justify-center gap-4 opacity-10">
-          <div className="w-16 h-[1px] bg-[#0f3e29]"></div>
-          <span className="material-symbols-outlined !text-[12px] filled">star</span>
-          <div className="w-16 h-[1px] bg-[#0f3e29]"></div>
+        <div className="mt-12 flex items-center justify-center gap-6 opacity-20">
+          <div className="h-px w-10 bg-primary"></div>
+          <span className="font-display italic text-xs tracking-widest">Excelência Studio</span>
+          <div className="h-px w-10 bg-primary"></div>
         </div>
       </footer>
     </div>

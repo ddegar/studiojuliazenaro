@@ -13,19 +13,11 @@ const AdminTimeline: React.FC = () => {
    const [selectedProId, setSelectedProId] = useState<string>(searchParams.get('proId') || '');
    const [appointments, setAppointments] = useState<any[]>([]);
    const [loading, setLoading] = useState(true);
-   const [currentUser, setCurrentUser] = useState<any>(null);
    const [currentTime, setCurrentTime] = useState(new Date());
 
-   // Inject Playfair Display
    useEffect(() => {
-      const link = document.createElement('link');
-      link.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&display=swap';
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-
       const timer = setInterval(() => setCurrentTime(new Date()), 60000);
       return () => {
-         document.head.removeChild(link);
          clearInterval(timer);
       }
    }, []);
@@ -48,13 +40,12 @@ const AdminTimeline: React.FC = () => {
             id: p.id,
             name: p.name,
             role: p.role,
-            avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}`,
+            avatar: p.image_url || `https://ui-avatars.com/api/?name=${p.name}&background=0f3e29&color=C9A961`,
             active: p.active,
             specialties: p.specialties || [],
             rating: p.rating || 5
          }));
 
-         // Sort: Julia First
          mapped.sort((a, b) => {
             const isJuliaA = a.name.toLowerCase().includes('julia') || a.name.toLowerCase().includes('júlia');
             const isJuliaB = b.name.toLowerCase().includes('julia') || b.name.toLowerCase().includes('júlia');
@@ -91,8 +82,8 @@ const AdminTimeline: React.FC = () => {
                ...d,
                start: new Date(d.start_time),
                end: new Date(d.end_time),
-               clientName: d.profiles?.name || d.professional_name || 'Cliente',
-               clientAvatar: d.profiles?.profile_pic || `https://ui-avatars.com/api/?name=${d.profiles?.name || 'C'}`,
+               clientName: d.profiles?.name || d.professional_name || 'Membro do Clube',
+               clientAvatar: d.profiles?.profile_pic || `https://ui-avatars.com/api/?name=${d.profiles?.name || 'C'}&background=0f3e29&color=C9A961`,
                clientPhone: d.profiles?.phone || ''
             })));
          }
@@ -123,7 +114,7 @@ const AdminTimeline: React.FC = () => {
 
    const handleWhatsApp = async (apt: any) => {
       if (!apt.clientPhone) {
-         alert('Cliente sem telefone cadastrado.');
+         alert('Membro sem telefone cadastrado.');
          return;
       }
       try {
@@ -143,162 +134,102 @@ const AdminTimeline: React.FC = () => {
    const handleStatusUpdate = async (apt: any, newStatus: string) => {
       const statusLabels: Record<string, string> = {
          'completed': 'Finalizado',
-         'no_show': 'Não Compareceu',
+         'no_show': 'Faltou',
          'cancelled': 'Cancelado'
       };
-      if (!window.confirm(`Tem certeza que deseja marcar como ${statusLabels[newStatus] || newStatus}?`)) return;
+      if (!window.confirm(`Mudar status para ${statusLabels[newStatus] || newStatus}?`)) return;
       try {
-         // 1. Update Appointment Status
          const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', apt.id);
          if (error) throw error;
 
-         // 2. If COMPLETED, generate automatic transaction and loyalty points
          if (newStatus === 'completed') {
-            // A. TRANSACTION: Try to get professional's profile_id first
             let targetProfileId: string | null = null;
-
             const { data: pro } = await supabase.from('professionals').select('profile_id').eq('id', apt.professional_id).single();
             targetProfileId = pro?.profile_id || null;
 
-            // Fallback: if no profile_id, try to get the logged-in user's ID
             if (!targetProfileId) {
                const { data: { user: currentUser } } = await supabase.auth.getUser();
                targetProfileId = currentUser?.id || null;
             }
 
-            // Check if transaction already exists for this appointment
             const { data: existing } = await supabase.from('transactions').select('id').eq('appointment_id', apt.id).single();
 
             if (!existing) {
                const servicePrice = apt.services?.price || apt.price || 0;
-
-               // Build transaction payload - user_id is optional
                const txPayload: any = {
                   type: 'INCOME',
                   category: 'Serviço',
-                  description: `Atendimento: ${apt.services?.name || apt.service_name || 'Serviço'}`,
+                  description: `Atendimento VIP: ${apt.services?.name || apt.service_name || 'Serviço'}`,
                   amount: servicePrice,
                   date: apt.date,
                   appointment_id: apt.id
                };
-
-               // Only add user_id if we have a valid profile_id
-               if (targetProfileId) {
-                  txPayload.user_id = targetProfileId;
-               }
-
-               const { error: txError } = await supabase.from('transactions').insert(txPayload);
-               if (txError) {
-                  console.error('Transaction error:', txError);
-                  // Don't throw - let the status update succeed even if transaction fails
-               }
+               if (targetProfileId) txPayload.user_id = targetProfileId;
+               await supabase.from('transactions').insert(txPayload);
             }
 
-            // B. LOYALTY POINTS (Zenaro Credits)
             if (apt.user_id && apt.services?.points_reward) {
-               console.log('Updating loyalty points for user:', apt.user_id);
-
-               // Always use 'lash_points' column in DB (renamed to Zenaro Credits in UI only)
-               const { data: clientProfile, error: fetchError } = await supabase
-                  .from('profiles')
-                  .select('lash_points')
-                  .eq('id', apt.user_id)
-                  .single();
-
-               if (fetchError) {
-                  console.error('Error fetching client profile for points:', fetchError);
-               } else {
-                  const currentPoints = clientProfile?.lash_points || 0;
-                  const newPoints = currentPoints + apt.services.points_reward;
-                  console.log(`Updating points: ${currentPoints} -> ${newPoints}`);
-
-                  const { error: updateError } = await supabase
-                     .from('profiles')
-                     .update({ lash_points: newPoints })
-                     .eq('id', apt.user_id);
-
-                  if (updateError) console.error('Error updating points:', updateError);
+               const { data: clientProfile } = await supabase.from('profiles').select('lash_points').eq('id', apt.user_id).single();
+               if (clientProfile) {
+                  const newPoints = (clientProfile.lash_points || 0) + apt.services.points_reward;
+                  await supabase.from('profiles').update({ lash_points: newPoints }).eq('id', apt.user_id);
                }
             }
 
-            // C. MILESTONE NOTIFICATION: 50 POINTS (IMPROVED)
+            // 5. AUTO NOTIFICATION: Create post-care notification
             if (apt.user_id) {
-               // Get current points to check if threshold reached
-               const { data: profile } = await supabase.from('profiles').select('lash_points').eq('id', apt.user_id).single();
-               const currentPts = profile?.lash_points || 0;
-
-               if (currentPts >= 50) {
-                  // Check if user already has an evaluation notification or testimonial
-                  const [{ data: evaluationNotif }, { data: existingTestimonial }] = await Promise.all([
-                     supabase.from('notifications').select('id').eq('user_id', apt.user_id).eq('type', 'evaluation').limit(1).single(),
-                     supabase.from('testimonials').select('id').eq('user_id', apt.user_id).limit(1).single()
-                  ]);
-
-                  if (!evaluationNotif && !existingTestimonial) {
-                     await supabase.from('notifications').insert({
-                        user_id: apt.user_id,
-                        title: 'Sua Experiência ✨',
-                        message: 'Você atingiu seus primeiros 50 pontos! Que tal nos contar o que está achando e ganhar ainda mais mimos?',
-                        link: '/evaluation',
-                        icon: 'auto_awesome',
-                        type: 'evaluation'
-                     });
-                  }
-               }
+               await supabase.from('notifications').insert({
+                  user_id: apt.user_id,
+                  title: 'Como cuidar do seu novo olhar? ✨',
+                  message: `Sua experiência de ${apt.services?.name || apt.service_name || 'procedimento'} foi concluída! Preparamos um guia de cuidados pós especial para você.`,
+                  link: '/care/post',
+                  icon: 'skincare',
+                  type: 'post_care'
+               });
             }
          }
-
          fetchAppointments();
       } catch (err: any) {
-         alert('Erro ao atualizar: ' + err.message);
+         alert('Erro: ' + err.message);
       }
    };
 
-   // Safe hours calculation
+   const handleDeleteAppointment = async (apt: any) => {
+      if (!window.confirm(`Tem certeza que deseja EXCLUIR permanentemente o agendamento de ${apt.clientName}?`)) return;
+      try {
+         const { error } = await supabase.from('appointments').delete().eq('id', apt.id);
+         if (error) throw error;
+         fetchAppointments();
+      } catch (err: any) {
+         alert('Erro ao excluir: ' + err.message);
+      }
+   };
+
    const hours = (() => {
       if (!date) return [];
-
       try {
          const currentSelectedPro = professionals.find(p => p.id === selectedProId);
-         // Default to 8am-10pm if anything is missing
-         let startH = 8;
-         let endH = 22;
-
+         let startH = 8, endH = 22;
          if (currentSelectedPro) {
             const dayOfWeek = new Date(date + 'T12:00:00').getDay();
-            if (!isNaN(dayOfWeek)) {
-               const dayConfig = (currentSelectedPro as any).working_hours?.[dayOfWeek];
-
-               const sStr = dayConfig?.start || (currentSelectedPro as any).start_hour;
-               const eStr = dayConfig?.end || (currentSelectedPro as any).end_hour;
-
-               if (sStr) startH = parseInt(sStr.split(':')[0]) || 8;
-               if (eStr) endH = parseInt(eStr.split(':')[0]) || 22;
-            }
+            const dayConfig = (currentSelectedPro as any).working_hours?.[dayOfWeek];
+            const sStr = dayConfig?.start || (currentSelectedPro as any).start_hour;
+            const eStr = dayConfig?.end || (currentSelectedPro as any).end_hour;
+            if (sStr) startH = parseInt(sStr.split(':')[0]) || 8;
+            if (eStr) endH = parseInt(eStr.split(':')[0]) || 22;
          }
-
-         // Ensure end is after start
          endH = Math.max(startH + 1, endH);
-
-         const range = (endH - startH) * 2 + 1;
-         const finalRange = Math.max(1, Math.min(range, 48)); // Safety cap
-
-         return Array.from({ length: finalRange }).map((_, i) => {
+         return Array.from({ length: (endH - startH) * 2 + 1 }).map((_, i) => {
             const totalMinutes = (startH * 60) + (i * 30);
-            const h = Math.floor(totalMinutes / 60).toString().padStart(2, '0');
-            const m = (totalMinutes % 60).toString().padStart(2, '0');
-            return `${h}:${m}`;
+            return `${Math.floor(totalMinutes / 60).toString().padStart(2, '0')}:${(totalMinutes % 60).toString().padStart(2, '0')}`;
          });
-      } catch (e) {
-         console.warn('Timeline calc error, using fallback:', e);
-         return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
-      }
-   })(); // End of hours calculation
+      } catch (e) { return ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']; }
+   })();
+
    const getAppointmentAt = (timeStr: string) => {
       if (!date) return null;
       const [h, m] = timeStr.split(':').map(Number);
       const slotMinutes = h * 60 + m;
-
       return appointments.find(a => {
          const startMinutes = a.start.getHours() * 60 + a.start.getMinutes();
          const endMinutes = a.end.getHours() * 60 + a.end.getMinutes();
@@ -307,206 +238,218 @@ const AdminTimeline: React.FC = () => {
    };
 
    const currentPro = professionals.find(p => p.id === selectedProId);
-
-   // Current time indicator logic
-   const nowStr = currentTime.toLocaleDateString('en-CA');
-   const isToday = date === nowStr;
+   const isToday = date === currentTime.toLocaleDateString('en-CA');
    const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+   const dayOfWeekIndicator = date ? new Date(date + 'T12:00:00').getDay() : 0;
+   const dayConfigIndicator = (currentPro as any)?.working_hours?.[dayOfWeekIndicator];
+   const startOfAgenda = parseInt((dayConfigIndicator?.start || (currentPro as any)?.start_hour || '08:00').split(':')[0]) * 60;
+   const indicatorTop = ((currentMinutes - startOfAgenda) / 30) * 120; // 120px is new slot height
 
-   const selectedPro = professionals.find(p => p.id === selectedProId);
-   const dayOfWeek = date ? new Date(date + 'T12:00:00').getDay() : 0;
-   const dayConfig = (selectedPro as any)?.working_hours?.[dayOfWeek];
-   const startOfAgenda = parseInt((dayConfig?.start || (selectedPro as any)?.start_hour || '08:00').split(':')[0]) * 60;
-
-   const agendaMinutes = currentMinutes - startOfAgenda;
-   const indicatorTop = (agendaMinutes / 30) * 105; // 105px is the slot height
+   if (loading && professionals.length === 0) {
+      return (
+         <div className="flex h-screen items-center justify-center bg-background-dark font-outfit">
+            <div className="relative size-16 flex items-center justify-center">
+               <div className="absolute inset-0 border-2 border-primary/5 rounded-full"></div>
+               <div className="absolute inset-0 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
+               <span className="material-symbols-outlined text-accent-gold scale-75">history_toggle_off</span>
+            </div>
+         </div>
+      );
+   }
 
    return (
-      <div className="flex flex-col h-full bg-[#0f1110] text-slate-100 font-sans antialiased overflow-hidden">
-         {/* HEADER PREMIUM */}
-         <header className="sticky top-0 z-50 bg-[#0f1110]/80 backdrop-blur-md border-b border-white/5 px-6 lg:px-6 pt-12 pb-4">
-            <div className="w-full max-w-7xl mx-auto">
-               <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                     <button onClick={() => navigate('/admin/agenda')} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 hover:text-white transition-colors">
-                        <span className="material-symbols-outlined">chevron_left</span>
-                     </button>
-                     <div>
-                        <h1 className="text-[10px] font-bold tracking-widest uppercase text-slate-500">Timeline Diária</h1>
-                        <p className="text-lg font-bold font-display italic text-accent-gold">
-                           {date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' }) : ''}
-                        </p>
-                     </div>
-                  </div>
-                  <div className="flex gap-2">
-                     <button onClick={() => fetchAppointments()} className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-slate-400 border border-white/5 hover:border-white/10 transition-all">
-                        <span className="material-symbols-outlined">refresh</span>
-                     </button>
-                     <button
-                        onClick={() => navigate('/admin/agenda/new', { state: { date, proId: selectedProId } })}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-                     >
-                        <span className="material-symbols-outlined">add</span>
-                     </button>
+      <div className="flex flex-col min-h-screen bg-background-dark text-white font-outfit antialiased selection:bg-accent-gold/20 selection:text-white overflow-hidden">
+         {/* HEADER STRATEGY */}
+         <header className="relative z-[60] premium-blur-dark sticky top-0 px-8 pt-12 pb-6 flex flex-col gap-8 border-b border-white/5 bg-background-dark/80 backdrop-blur-xl">
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-6">
+                  <button
+                     onClick={() => navigate('/admin/agenda')}
+                     className="size-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-accent-gold group active:scale-95 transition-all"
+                  >
+                     <span className="material-symbols-outlined !text-xl group-hover:-translate-x-1 transition-transform">west</span>
+                  </button>
+                  <div className="space-y-1">
+                     <p className="text-[8px] font-black uppercase tracking-[0.5em] text-accent-gold/40 leading-none">Cronograma de Horários</p>
+                     <h1 className="font-display italic text-2xl text-white">
+                        {date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }) : ''}
+                        <span className="font-light not-italic text-white/20 ml-3">{date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long' }) : ''}</span>
+                     </h1>
                   </div>
                </div>
 
-               <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                  {professionals.map(p => (
-                     <button
-                        key={p.id}
-                        onClick={() => handleProChange(p.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all border whitespace-nowrap ${selectedProId === p.id ? 'bg-primary border-primary text-white shadow-lg shadow-primary/10' : 'bg-white/5 border-transparent text-slate-400'}`}
-                     >
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${selectedProId === p.id ? 'bg-white/20' : 'bg-slate-700'}`}>
-                           {p.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                        </div>
-                        <span className="text-sm font-medium">{p.name}</span>
-                     </button>
-                  ))}
+               <div className="flex gap-4">
+                  <button
+                     onClick={() => fetchAppointments()}
+                     className="size-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center text-white/40 hover:text-white transition-all active:rotate-180 duration-500"
+                  >
+                     <span className="material-symbols-outlined !text-xl">sync</span>
+                  </button>
+                  <button
+                     onClick={() => navigate('/admin/agenda/new', { state: { date, proId: selectedProId } })}
+                     className="size-12 rounded-2xl bg-accent-gold flex items-center justify-center text-primary shadow-huge active:scale-90 transition-all"
+                  >
+                     <span className="material-symbols-outlined">add</span>
+                  </button>
                </div>
+            </div>
+
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1 mask-fade-horizontal">
+               {professionals.map(p => (
+                  <button
+                     key={p.id}
+                     onClick={() => handleProChange(p.id)}
+                     className={`flex items-center gap-3 px-6 h-12 rounded-2xl transition-all duration-500 border whitespace-nowrap ${selectedProId === p.id ? 'bg-white text-primary border-white shadow-huge' : 'bg-white/5 border-white/5 text-white/30'}`}
+                  >
+                     <img src={p.avatar} className="size-6 rounded-lg opacity-80" alt="" />
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">{p.name.split(' ')[0]}</span>
+                  </button>
+               ))}
             </div>
          </header>
 
-         {/* MAIN TIMELINE */}
-         <main className="flex-1 w-full max-w-6xl mx-auto overflow-y-auto no-scrollbar relative px-6 lg:px-6 py-6 pb-40">
-            <div className="flex items-center justify-between mb-8">
-               <h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-slate-500 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-                  Agenda: {currentPro?.name}
-               </h2>
-               <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-widest">{appointments.length} Sessões</span>
+         {/* TIMELINE ARCHITECTURE */}
+         <main className="relative z-10 flex-1 w-full max-w-screen-xl mx-auto overflow-y-auto no-scrollbar overflow-x-hidden px-8 lg:px-12 py-10 pb-40">
+            <div className="flex items-center gap-4 mb-10">
+               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+               <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Fluxo Operacional</p>
+               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
             </div>
 
             <div className="relative">
                {/* CURRENT TIME INDICATOR */}
-               {isToday && agendaMinutes >= 0 && (
-                  <div className="absolute left-0 right-0 z-30 flex items-center pointer-events-none transition-all duration-1000" style={{ top: `${indicatorTop}px` }}>
-                     <div className="w-14 text-right pr-2 text-[10px] font-bold text-primary">{currentTime.getHours()}:{currentTime.getMinutes().toString().padStart(2, '0')}</div>
-                     <div className="flex-1 h-[1.5px] bg-primary relative overflow-visible">
-                        <div className="absolute -left-1 -top-[4px] w-2.5 h-2.5 rounded-full bg-primary border-2 border-[#0f1110]"></div>
-                        <div className="absolute left-0 top-0 w-full h-full bg-primary/20 blur-sm"></div>
+               {isToday && currentMinutes >= startOfAgenda && (
+                  <div className="absolute left-0 right-0 z-40 flex items-center pointer-events-none transition-all duration-1000" style={{ top: `${indicatorTop}px` }}>
+                     <div className="w-20 text-right pr-4 text-[11px] font-bold text-accent-gold tabular-nums">{currentTime.getHours()}:{currentTime.getMinutes().toString().padStart(2, '0')}</div>
+                     <div className="flex-1 h-px bg-accent-gold/40 relative">
+                        <div className="absolute -left-1.5 -top-1.5 size-3 rounded-full bg-accent-gold shadow-[0_0_15px_rgba(201,169,97,0.8)] border border-primary"></div>
                      </div>
                   </div>
                )}
 
-               <div className="space-y-0">
-                  {(() => {
-                     return hours.map((hour, index) => {
-                        const apt = getAppointmentAt(hour);
-                        const isStart = apt && apt.time?.slice(0, 5) === hour;
-                        const aptIndex = isStart ? appointments.findIndex(a => a.id === apt.id) : -1;
+               <div className="space-y-0 relative border-l border-white/5 ml-20">
+                  {hours.map((hour, index) => {
+                     const apt = getAppointmentAt(hour);
+                     const isStart = apt && apt.time?.slice(0, 5) === hour;
+                     const apptDuration = apt ? (apt.end.getTime() - apt.start.getTime()) / (1000 * 60) : 0;
+                     const cardHeight = (apptDuration / 30) * 120;
 
-                        const calculateHeight = (a: any) => {
-                           const startMinutes = a.start.getHours() * 60 + a.start.getMinutes();
-                           const endMinutes = a.end.getHours() * 60 + a.end.getMinutes();
-                           return ((endMinutes - startMinutes) / 30) * 105;
-                        };
+                     return (
+                        <div key={hour} className="flex min-h-[120px] relative group">
+                           {/* TIME MARK */}
+                           <div className="absolute right-full mr-8 top-0 text-[11px] font-black text-white/20 tabular-nums group-hover:text-accent-gold transition-colors">
+                              {hour}
+                           </div>
 
-                        return (
-                           <div key={hour} className="flex min-h-[105px]">
-                              {/* TIME LABEL */}
-                              <div className="w-14 pt-1 text-right pr-4 text-[11px] font-medium text-slate-600 border-r border-white/5 shrink-0">
-                                 {hour}
-                              </div>
-
-                              <div className="flex-1 relative border-t border-white/5 py-2 pl-4">
-                                 {isStart ? (
-                                    <div
-                                       className={`absolute left-4 right-0 z-20 flex flex-col justify-between rounded-2xl p-4 shadow-xl border overflow-hidden transition-all duration-500 ${apt.status === 'blocked' || apt.status === 'BLOCKED'
-                                          ? 'bg-rose-950/20 border-rose-900/30'
-                                          : apt.status === 'completed'
-                                             ? 'bg-emerald-950/20 border-emerald-900/30'
-                                             : apt.status === 'no_show'
-                                                ? 'bg-red-950/20 border-red-900/30 opacity-60'
-                                                : aptIndex % 2 === 0
-                                                   ? 'bg-white/[0.04] border-white/10'
-                                                   : 'bg-white/[0.02] border-white/5'
-                                          }`}
-                                       style={{ height: `${calculateHeight(apt) - 8}px`, top: '4px' }}
-                                    >
-                                       {/* BADGE TOP */}
-                                       <div className="flex justify-between items-start">
-                                          <div className="space-y-1">
-                                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase border ${apt.status === 'blocked' || apt.status === 'BLOCKED'
-                                                ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                                                : 'bg-primary/10 text-primary-light border-primary/20'
+                           <div className="flex-1 relative py-4 px-8 border-t border-white/5 group-hover:bg-white/[0.02] transition-all">
+                              {isStart ? (
+                                 <div
+                                    className={`absolute left-4 right-4 z-20 flex flex-col justify-between rounded-[32px] p-8 shadow-hugest border transition-all duration-700 animate-reveal ${apt.status === 'blocked' || apt.status === 'BLOCKED'
+                                       ? 'bg-rose-500/10 border-rose-500/20'
+                                       : apt.status === 'completed'
+                                          ? 'bg-emerald-500/10 border-emerald-500/20'
+                                          : apt.status === 'no_show'
+                                             ? 'bg-orange-500/10 border-orange-500/20 opacity-80'
+                                             : apt.status === 'rescheduled'
+                                                ? 'bg-sky-500/10 border-sky-500/20'
+                                                : 'bg-surface-dark/60 border-white/10'
+                                       }`}
+                                    style={{ height: `${cardHeight - 16}px`, top: '8px' }}
+                                 >
+                                    <div className="flex justify-between items-start gap-4">
+                                       <div className="space-y-2 min-w-0">
+                                          <div className="flex items-center gap-3">
+                                             <span className={`px-3 py-1 rounded-xl text-[8px] font-black tracking-widest uppercase border ${apt.status === 'blocked' ? 'bg-rose-900/40 text-rose-200 border-rose-500/20' : 'bg-primary/40 text-accent-gold border-accent-gold/20'
                                                 }`}>
-                                                {apt.status === 'blocked' || apt.status === 'BLOCKED' ? 'BLOQUEIO / INTERVALO' : apt.service_name || apt.services?.name}
+                                                {apt.status === 'blocked' ? 'Indisponível' : (apt.services?.name || apt.service_name)}
                                              </span>
-                                             <h3 className={`text-lg font-display italic mt-1 ${apt.status === 'blocked' || apt.status === 'BLOCKED' ? 'text-rose-200/50' : 'text-white'}`}>
-                                                {apt.status === 'blocked' || apt.status === 'BLOCKED' ? (apt.notes || 'Horário Reservado') : apt.clientName}
-                                             </h3>
-                                          </div>
-
-                                          <div className="flex gap-1">
-                                             {!(apt.status === 'blocked' || apt.status === 'BLOCKED') && (
-                                                <>
-                                                   <button onClick={() => handleWhatsApp(apt)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-[#25D366] transition-colors">
-                                                      <span className="material-symbols-outlined !text-[18px]">chat_bubble</span>
-                                                   </button>
-                                                   <button onClick={() => handleStatusUpdate(apt, 'completed')} className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" title="Finalizar Atendimento">
-                                                      <span className="material-symbols-outlined !text-[18px]">verified</span>
-                                                   </button>
-                                                   <button onClick={() => handleStatusUpdate(apt, 'no_show')} className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all" title="Não Compareceu">
-                                                      <span className="material-symbols-outlined !text-[18px]">person_off</span>
-                                                   </button>
-                                                   <button onClick={() => handleStatusUpdate(apt, 'cancelled')} className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 text-gray-400 hover:bg-red-600 hover:text-white transition-all" title="Cancelar Agendamento">
-                                                      <span className="material-symbols-outlined !text-[18px]">close</span>
-                                                   </button>
-                                                </>
+                                             {apt.status === 'completed' && (
+                                                <div className="flex items-center gap-1.5 text-emerald-400">
+                                                   <span className="material-symbols-outlined !text-sm">verified</span>
+                                                   <span className="text-[8px] font-black uppercase tracking-widest">Finalizado</span>
+                                                </div>
                                              )}
-                                          </div>
-                                       </div>
-
-                                       {/* FOOTER CARD */}
-                                       <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-                                          <div className="flex items-center gap-4 text-slate-500 font-bold text-[10px] tracking-wide">
-                                             <div className="flex items-center gap-1">
-                                                <span className="material-symbols-outlined !text-[14px]">schedule</span>
-                                                {hour} - {apt.end.getHours().toString().padStart(2, '0')}:{apt.end.getMinutes().toString().padStart(2, '0')}
-                                             </div>
-                                             {apt.services?.price && (
-                                                <div className="flex items-center gap-1 text-emerald-500/80">
-                                                   <span className="material-symbols-outlined !text-[14px]">payments</span>
-                                                   R$ {apt.services.price}
+                                             {apt.status === 'no_show' && (
+                                                <div className="flex items-center gap-1.5 text-orange-400">
+                                                   <span className="material-symbols-outlined !text-sm">person_off</span>
+                                                   <span className="text-[8px] font-black uppercase tracking-widest">Não Compareceu</span>
                                                 </div>
                                              )}
                                           </div>
-                                          {apt.status === 'completed' && (
-                                             <div className="px-3 py-1 rounded-full bg-emerald-500 text-[#0f1110] text-[9px] font-black tracking-widest flex items-center gap-1">
-                                                <span className="material-symbols-outlined !text-[12px] filled">check</span>
-                                                COMPARECEU
-                                             </div>
+                                          <h3 className="text-2xl font-display italic text-white truncate pr-4">
+                                             {apt.status === 'blocked' ? (apt.notes || 'Curadoria Interna') : apt.clientName}
+                                          </h3>
+                                       </div>
+
+                                       <div className="flex gap-2 shrink-0">
+                                          {apt.status !== 'blocked' && (
+                                             <>
+                                                <button onClick={() => handleWhatsApp(apt)} className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:bg-[#25D366] hover:text-white transition-all shadow-lg">
+                                                   <span className="material-symbols-outlined !text-xl">chat</span>
+                                                </button>
+                                                <button onClick={() => handleStatusUpdate(apt, 'completed')} className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 hover:bg-emerald-500 hover:text-white transition-all shadow-lg">
+                                                   <span className="material-symbols-outlined !text-xl">check_box</span>
+                                                </button>
+                                                <button onClick={() => handleStatusUpdate(apt, 'no_show')} className={`size-10 rounded-xl flex items-center justify-center transition-all shadow-lg ${apt.status === 'no_show' ? 'bg-orange-500 text-white' : 'bg-white/5 text-white/40 hover:bg-orange-500 hover:text-white'}`}>
+                                                   <span className="material-symbols-outlined !text-xl">person_off</span>
+                                                </button>
+                                                <button onClick={() => handleDeleteAppointment(apt)} className="size-10 rounded-xl bg-white/5 flex items-center justify-center text-white/10 hover:bg-rose-500 hover:text-white transition-all shadow-lg">
+                                                   <span className="material-symbols-outlined !text-lg">delete</span>
+                                                </button>
+                                             </>
                                           )}
                                        </div>
                                     </div>
-                                 ) : !apt ? (
-                                    <div
-                                       onClick={() => navigate('/admin/agenda/new', { state: { hour, date, proId: selectedProId } })}
-                                       className="flex items-center gap-2 text-slate-700 hover:text-accent-gold cursor-pointer transition-colors pt-2 group"
-                                    >
-                                       <span className="material-symbols-outlined !text-[18px] opacity-30 group-hover:opacity-100 transition-opacity">add_circle</span>
-                                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Livre</span>
+
+                                    <div className="flex items-center justify-between pt-4 border-t border-white/5 mt-auto">
+                                       <div className="flex items-center gap-6">
+                                          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/20">
+                                             <span className="material-symbols-outlined !text-sm">schedule</span>
+                                             {hour} — {apt.end.getHours().toString().padStart(2, '0')}:{apt.end.getMinutes().toString().padStart(2, '0')}
+                                          </div>
+                                          {apt.services?.price && (
+                                             <div className="flex items-center gap-2 text-[10px] font-black text-emerald-400 tracking-widest">
+                                                <span className="material-symbols-outlined !text-sm">payments</span>
+                                                R$ {apt.services.price}
+                                             </div>
+                                          )}
+                                       </div>
+
+                                       {apt.status !== 'blocked' && (
+                                          <div className="relative size-10 rounded-2xl overflow-hidden border border-white/5 group-hover:scale-110 transition-transform">
+                                             <img src={apt.clientAvatar} className="w-full h-full object-cover" alt="" />
+                                          </div>
+                                       )}
                                     </div>
-                                 ) : (
-                                    <div className="min-h-full" />
-                                 )}
-                              </div>
+                                 </div>
+                              ) : !apt ? (
+                                 <div
+                                    onClick={() => navigate('/admin/agenda/new', { state: { hour, date, proId: selectedProId } })}
+                                    className="h-full flex items-center gap-4 text-white/5 hover:text-accent-gold/40 cursor-pointer transition-all group/slot"
+                                 >
+                                    <span className="material-symbols-outlined !text-xl group-hover/slot:scale-110 transition-transform">add_circle</span>
+                                    <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-0 group-hover/slot:opacity-100 transition-opacity">Reservar Horário</span>
+                                 </div>
+                              ) : null}
                            </div>
-                        );
-                     });
-                  })()}
+                        </div>
+                     );
+                  })}
                </div>
             </div>
          </main >
 
-         {/* FLOAT REFRESH */}
-         < div className="fixed bottom-24 right-6 z-30" >
-            <button onClick={() => fetchAppointments()} className="w-14 h-14 rounded-full bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl flex items-center justify-center text-accent-gold hover:scale-110 active:scale-95 transition-all">
-               <span className="material-symbols-outlined !text-2xl">refresh</span>
-            </button>
-         </div >
+         {(isToday) && (
+            <div className="fixed bottom-32 right-8 z-[100] animate-reveal">
+               <button onClick={() => fetchAppointments()} className="size-16 rounded-[24px] bg-accent-gold text-primary shadow-huge flex items-center justify-center hover:scale-110 active:scale-95 transition-all">
+                  <span className="material-symbols-outlined !text-2xl">sync</span>
+               </button>
+            </div>
+         )}
+
+         {/* Elite Layout Gradients */}
+         <div className="fixed top-0 right-0 w-[40vw] h-[40vh] bg-accent-gold/5 blur-[120px] pointer-events-none z-0"></div>
+         <div className="fixed bottom-0 left-0 w-[40vw] h-[40vh] bg-primary/20 blur-[120px] pointer-events-none z-0 opacity-40"></div>
       </div >
    );
 };

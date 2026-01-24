@@ -25,5 +25,20 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "pages",
+    "components",
+    "services",
+    "types",
+    "App.tsx",
+    "main.tsx",
+    "vite.config.ts",
+    "*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "supabase",
+    "dist"
+  ]
 }

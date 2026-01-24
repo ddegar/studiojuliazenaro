@@ -146,3 +146,13 @@ export interface LoyaltyConfig {
 }
 
 export const LOYALTY_PROGRAM_NAME = "JZ Privé Club";
+export interface FeedPost {
+  id: string;
+  type: 'image' | 'video';
+  image_url: string;
+  caption?: string;
+  category?: string;
+  service_link_id?: string;
+  active: boolean;
+  created_at?: string;
+}
