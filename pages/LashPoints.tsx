@@ -59,7 +59,7 @@ const LashPoints: React.FC = () => {
       <div className="flex flex-col h-full bg-background-light">
          <header className="glass-nav p-8 flex items-center justify-between border-b">
             <button onClick={() => navigate(-1)} className="material-symbols-outlined text-primary">arrow_back_ios_new</button>
-            <h2 className="font-display font-bold text-xl text-primary">Seus Zenaro Credits ✨</h2>
+            <h2 className="font-display font-bold text-xl text-primary">Seu JZ Balance ✨</h2>
             <span className="size-6"></span>
          </header>
 
@@ -67,10 +67,10 @@ const LashPoints: React.FC = () => {
             {/* Card VIP Emocional */}
             <div className="bg-primary rounded-[48px] p-10 text-white relative overflow-hidden shadow-2xl shadow-primary/30">
                <div className="relative z-10 space-y-4">
-                  <p className="text-[10px] uppercase font-black tracking-[0.3em] opacity-60">Você ganhou pontos ✨</p>
+                  <p className="text-[10px] uppercase font-black tracking-[0.3em] opacity-60">Você acumulou JZ Balance ✨</p>
                   <div className="flex items-baseline gap-3">
                      <h3 className="text-7xl font-display font-bold tracking-tighter">{points}</h3>
-                     <span className="text-sm font-black uppercase tracking-[0.2em] opacity-60">Zenaro Credits</span>
+                     <span className="text-sm font-black uppercase tracking-[0.2em] opacity-60">JZ Balance</span>
                   </div>
                   <p className="text-sm italic opacity-80">Cada visita te aproxima de benefícios especiais</p>
                </div>
@@ -104,7 +104,7 @@ const LashPoints: React.FC = () => {
                               </div>
                               <div>
                                  <p className="text-xl font-bold text-primary">{reward.title}</p>
-                                 <p className="text-[11px] font-black text-accent-gold uppercase tracking-[0.2em] mt-1">{reward.points} Pontos ✨</p>
+                                 <p className="text-[11px] font-black text-accent-gold uppercase tracking-[0.2em] mt-1">{reward.points} JZ Balance ✨</p>
                               </div>
                            </div>
                         </div>

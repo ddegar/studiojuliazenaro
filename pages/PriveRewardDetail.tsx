@@ -160,7 +160,7 @@ const PriveRewardDetail: React.FC = () => {
                             <span className="text-[9px] font-black tracking-[0.4em] uppercase text-accent-gold">{reward.category}</span>
                             <div className="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-2xl border border-primary/5">
                                 <span className="material-symbols-outlined text-accent-gold !text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
-                                <span className="text-sm font-black text-primary uppercase tracking-widest">{reward.points} pontos</span>
+                                <span className="text-sm font-black text-primary uppercase tracking-widest">{reward.points} JZ Balance</span>
                             </div>
                         </div>
                         <h2 className="font-display text-4xl font-bold leading-tight italic text-primary">{reward.title}</h2>
@@ -174,7 +174,7 @@ const PriveRewardDetail: React.FC = () => {
                                     <p className="text-[9px] font-black uppercase tracking-[0.4em] text-primary/30">Progresso de Conquista</p>
                                     <p className="text-lg font-display italic text-primary">{Math.floor(progress)}% Concluído</p>
                                 </div>
-                                <p className="text-[10px] font-black text-accent-gold uppercase tracking-widest">Faltam {reward.points - points} pts</p>
+                                <p className="text-[10px] font-black text-accent-gold uppercase tracking-widest">Faltam {reward.points - points} JZ Balance</p>
                             </div>
                             <div className="h-3 w-full bg-primary/5 rounded-full overflow-hidden p-[2px] border border-primary/5">
                                 <div className="h-full bg-accent-gold rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(201,169,97,0.4)]" style={{ width: `${progress}%` }}></div>
@@ -219,7 +219,7 @@ const PriveRewardDetail: React.FC = () => {
                 <div className="premium-blur-light rounded-[32px] border border-white shadow-hugest px-8 py-5 flex items-center justify-between gap-10">
                     <div className="flex-1 min-w-0">
                         <p className="text-[9px] font-black uppercase tracking-[0.3em] text-primary/30 leading-none mb-1">Seu Saldo</p>
-                        <p className="text-2xl font-display font-bold text-accent-gold leading-none">{points} <span className="text-[10px] text-primary/40 not-italic uppercase tracking-widest ml-1">pts</span></p>
+                        <p className="text-2xl font-display font-bold text-accent-gold leading-none">{points} <span className="text-[10px] text-primary/40 not-italic uppercase tracking-widest ml-1">JZ Balance</span></p>
                     </div>
                     <button
                         onClick={handleRedeem}

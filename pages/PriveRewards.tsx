@@ -239,7 +239,7 @@ const PriveRewards: React.FC = () => {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     <span className="text-xl font-outfit font-black text-white">{reward.points_cost.toLocaleString()}</span>
-                                                    <span className="text-[9px] text-white/40 font-black tracking-widest uppercase font-outfit">Credits</span>
+                                                    <span className="text-[9px] text-white/40 font-black tracking-widest uppercase font-outfit">JZ Balance</span>
                                                 </div>
 
                                                 <button
@@ -269,7 +269,7 @@ const PriveRewards: React.FC = () => {
                 </div>
 
                 <div className="mt-20">
-                    <JZReferralCard />
+                    <JZReferralCard variant="dark" />
                 </div>
             </main>
 
@@ -309,7 +309,7 @@ const PriveRewards: React.FC = () => {
                                     <p className="text-[8px] font-black uppercase tracking-widest text-white/20 mb-1">Requisito</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-2xl font-display text-white">{selectedReward.points_cost.toLocaleString()}</span>
-                                        <span className="text-[8px] font-black text-accent-gold uppercase tracking-[0.2em]">Credits</span>
+                                        <span className="text-[8px] font-black text-accent-gold uppercase tracking-[0.2em]">JZ Balance</span>
                                     </div>
                                 </div>
                                 <div className="p-6 rounded-[32px] bg-white/5 border border-white/5">

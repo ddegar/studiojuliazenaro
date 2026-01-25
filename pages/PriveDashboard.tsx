@@ -52,7 +52,7 @@ const PriveDashboard: React.FC = () => {
                         await supabase.from('notifications').insert({
                             user_id: user.id,
                             title: 'Sua Experiência ✨',
-                            message: 'Você atingiu seus primeiros 50 pontos! Que tal nos contar o que está achando e ganhar ainda mais mimos?',
+                            message: 'Você atingiu seus primeiros 50 JZ Balance! Que tal nos contar o que está achando e ganhar ainda mais mimos?',
                             link: '/evaluation',
                             icon: 'auto_awesome',
                             type: 'evaluation'
@@ -145,7 +145,7 @@ const PriveDashboard: React.FC = () => {
                                     <p className={`text-[10px] font-black uppercase tracking-[0.3em] font-outfit opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Seu Saldo Ativo</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className={`text-6xl font-display font-medium leading-none tracking-tighter ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950' : 'text-white'}`}>{points.toLocaleString()}</span>
-                                        <span className={`text-[10px] font-black uppercase tracking-widest opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>Credits</span>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest opacity-40 ${tierStyle.bg.includes('C9A961') ? 'text-zinc-950/60' : 'text-white'}`}>JZ Balance</span>
                                     </div>
                                 </div>
                                 <div className={`px-5 h-10 rounded-2xl flex items-center justify-center border font-outfit text-[9px] font-black uppercase tracking-[0.2em] shadow-lg ${tierStyle.bg.includes('C9A961') ? 'bg-zinc-950 text-white border-zinc-950' : 'bg-white/10 border-white/10 text-white backdrop-blur-md'}`}>
@@ -220,7 +220,7 @@ const PriveDashboard: React.FC = () => {
                         <div className="bg-white/2 border border-white/5 p-6 rounded-3xl text-center space-y-2">
                             <p className="text-[10px] text-white/30 font-black uppercase tracking-[0.3em] font-outfit">Progresso de Categoria</p>
                             <p className="text-sm font-display italic text-white/80">
-                                Oculte <span className="text-accent-gold font-bold">{Math.max(0, nextLevel.min_points - points)} credits</span> para despertar o nível <span className="text-white font-bold">{nextLevel.name}</span>
+                                Oculte <span className="text-accent-gold font-bold">{Math.max(0, nextLevel.min_points - points)} JZ Balance</span> para despertar o nível <span className="text-white font-bold">{nextLevel.name}</span>
                             </p>
                         </div>
                     )}
@@ -300,7 +300,7 @@ const PriveDashboard: React.FC = () => {
                             <span className="material-symbols-outlined !text-2xl">list_alt</span>
                         </div>
                         <div className="text-left">
-                            <p className="text-base font-display italic text-white group-hover:text-accent-gold transition-colors">Extrato de Credits</p>
+                            <p className="text-base font-display italic text-white group-hover:text-accent-gold transition-colors">Extrato de JZ Balance</p>
                             <p className="text-[10px] text-white/20 font-black uppercase tracking-[0.3em] font-outfit">Journal of Performance</p>
                         </div>
                         <div className="absolute right-8 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500">
@@ -311,7 +311,7 @@ const PriveDashboard: React.FC = () => {
 
                 {/* Integrated Referral */}
                 <div className="mt-16 animate-reveal stagger-5">
-                    <JZReferralCard />
+                    <JZReferralCard variant="dark" />
                 </div>
             </main>
 

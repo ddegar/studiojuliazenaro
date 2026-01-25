@@ -153,7 +153,7 @@ const PriveHistory: React.FC = () => {
                             onClick={() => setFilter(f)}
                             className={`pb-3 text-[10px] font-black uppercase tracking-[0.3em] font-outfit transition-all relative whitespace-nowrap ${filter === f ? 'text-accent-gold' : 'text-white/20 hover:text-white/40'}`}
                         >
-                            {f === 'all' ? 'Visão Geral' : f === 'earned' ? 'Créditos' : 'Utilizações'}
+                            {f === 'all' ? 'Visão Geral' : f === 'earned' ? 'JZ Balance' : 'Utilizações'}
                             {filter === f && (
                                 <div className="absolute bottom-[-1px] left-0 right-0 h-[2px] bg-accent-gold shadow-[0_0_10px_#C9A961]"></div>
                             )}
@@ -174,7 +174,7 @@ const PriveHistory: React.FC = () => {
                                 </div>
                                 <div className="flex items-baseline gap-4">
                                     <span className="text-6xl font-display font-medium text-white tracking-tighter tabular-nums group-hover:text-accent-gold transition-colors">{points.toLocaleString()}</span>
-                                    <span className="text-xs font-black text-accent-gold tracking-[0.4em] uppercase font-outfit">Credits</span>
+                                    <span className="text-xs font-black text-accent-gold tracking-[0.4em] uppercase font-outfit">JZ Balance</span>
                                 </div>
                             </div>
 
@@ -261,6 +261,10 @@ const PriveHistory: React.FC = () => {
                 </div>
             </main>
 
+            {/* Integrated Referral */}
+            <div className="mt-8 animate-reveal stagger-5">
+                <JZReferralCard variant="dark" />
+            </div>
             {/* Fixed Visual Safe Area */}
             <div className="fixed bottom-0 left-0 w-full h-12 bg-black/40 backdrop-blur-3xl border-t border-white/5 pointer-events-none z-[130]"></div>
         </div>

@@ -33,7 +33,7 @@ const FidelityLevels: React.FC = () => {
                            <span className="material-symbols-outlined !text-4xl">{level.icon}</span>
                            <div>
                               <h3 className="text-xl font-bold font-display">{level.name}</h3>
-                              <p className="text-[10px] uppercase font-bold tracking-widest opacity-80">A partir de {level.minPoints} pontos</p>
+                              <p className="text-[10px] uppercase font-bold tracking-widest opacity-80">A partir de {level.minPoints} JZ Balance</p>
                            </div>
                         </div>
                         {i === 2 && (

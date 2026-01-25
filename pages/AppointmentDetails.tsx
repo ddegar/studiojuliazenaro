@@ -178,7 +178,7 @@ const AppointmentDetails: React.FC = () => {
                      <p className="text-[9px] font-black uppercase tracking-[0.3em] opacity-40 mb-4">Experiência de Fidelidade</p>
                      <div className="flex items-center gap-3 mb-2">
                         <span className="h-px w-6 bg-accent-gold/40"></span>
-                        <h3 className="text-3xl font-display italic text-accent-gold">+{appointment.services?.points_reward || 50} Points</h3>
+                        <h3 className="text-3xl font-display italic text-accent-gold">+{appointment.services?.points_reward || 50} JZ Balance</h3>
                         <span className="h-px w-6 bg-accent-gold/40"></span>
                      </div>
                      <p className="text-[10px] font-black text-white/60 uppercase tracking-widest leading-none">Sincronizados com JZ Privé</p>
@@ -192,7 +192,7 @@ const AppointmentDetails: React.FC = () => {
                   </div>
                   <div className="flex-1">
                      <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Recompensa Exclusiva</p>
-                     <p className="text-xs text-primary/60 leading-snug">Ao concluir esta experiência, você receberá <span className="text-primary font-bold">{appointment.services?.points_reward || 50} Lash Points</span>.</p>
+                     <p className="text-xs text-primary/60 leading-snug">Ao concluir esta experiência, você receberá <span className="text-primary font-bold">{appointment.services?.points_reward || 50} JZ Balance</span>.</p>
                   </div>
                </div>
             )}

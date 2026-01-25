@@ -174,7 +174,7 @@ const JZPriveCard: React.FC<JZPriveCardProps> = ({ variant = 'compact' }) => {
                     <h2 className="text-6xl font-outfit font-light text-white tracking-tighter">
                         {points.toLocaleString()}
                     </h2>
-                    <p className="text-[12px] font-outfit font-black uppercase tracking-[0.4em] text-accent-gold/60">Pontos Privé</p>
+                    <p className="text-[12px] font-outfit font-black uppercase tracking-[0.4em] text-accent-gold/60">JZ Balance</p>
                 </div>
 
                 <div className="w-full max-w-xs space-y-4">

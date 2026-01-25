@@ -173,7 +173,7 @@ const Profile: React.FC = () => {
     { icon: 'person', label: 'Identidade e Dados', desc: 'Sua essência cadastrada no clube', path: '#', action: () => setIsEditing(true) },
     { icon: 'auto_awesome', label: 'Seu Perfil do Olhar', desc: 'Design, curvaturas e preferências VIP', path: '/profile/aesthetic', hide: isPro },
     { icon: 'dashboard', label: 'Gestão Estratégica', desc: 'Acesso ao painel administrativo', path: '/admin', show: isPro },
-    { icon: 'workspace_premium', label: 'JZ Privé Club', desc: `Status: ${profile?.lash_points >= 3000 ? 'Privé' : profile?.lash_points >= 1500 ? 'Signature' : profile?.lash_points >= 500 ? 'Prime' : 'Select'} • ${profile?.lash_points || 0} Pontos`, path: '/prive', hide: isPro },
+    { icon: 'workspace_premium', label: 'JZ Privé Club', desc: `Status: ${profile?.lash_points >= 3000 ? 'Privé' : profile?.lash_points >= 1500 ? 'Signature' : profile?.lash_points >= 500 ? 'Prime' : 'Select'} • ${profile?.lash_points || 0} JZ Balance`, path: '/prive', hide: isPro },
     { icon: 'verified_user', label: 'Segurança de Acesso', desc: 'Gerenciar senhas e chaves', path: '#', action: () => setIsChangingPassword(true) },
     { icon: 'help_center', label: 'Concierge e FAQ', desc: 'Suporte especializado para você', path: '/faq' },
   ];
@@ -355,7 +355,7 @@ const Profile: React.FC = () => {
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary/30">Convites Exclusivos</p>
                     <div className="flex-1 h-px bg-gradient-to-r from-primary/5 to-transparent"></div>
                   </div>
-                  <JZReferralCard />
+                  <JZReferralCard variant="light" />
                 </div>
               )}
 

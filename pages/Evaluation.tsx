@@ -115,7 +115,7 @@ const Evaluation: React.FC = () => {
 
          await supabase.from('profiles').update({ lash_points: currentPoints + totalReward }).eq('id', user.id);
 
-         alert(`Avaliação enviada! Você ganhou ${totalReward} pontos JZ Privé! ✨💎`);
+         alert(`Avaliação enviada! Você ganhou ${totalReward} JZ Balance 💎✨`);
          navigate('/home');
       } catch (err: any) {
          alert('Erro ao enviar avaliação: ' + err.message);

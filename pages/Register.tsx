@@ -37,21 +37,47 @@ const Register: React.FC = () => {
     }
 
     try {
+      const cleanCpf = cpf.replace(/\D/g, '');
+
+      // 1. Check if CPF already exists in profiles
+      const { data: cpfCheck } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('cpf', cleanCpf)
+        .maybeSingle();
+
+      if (cpfCheck) {
+        alert('Este CPF já está cadastrado em nosso clube. Por favor, faça login.');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Format Referral Code
+      const finalReferral = referralCode.trim().toUpperCase() || null;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name,
+            full_name: name, // Redundant for triggers
             phone,
-            cpf: cpf.replace(/\D/g, ''),
-            birthdate,
-            referred_by: referralCode,
+            phone_number: phone, // Redundant for triggers
+            cpf: cleanCpf,
+            birthdate: birthdate || null,
+            referred_by: finalReferral,
+            role: 'CLIENT' // Explicit default
           }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('Database error')) {
+          throw new Error('Erro técnico de banco de dados. Isso pode ser um conflito de permissões ou campos obrigatórios. Por favor, contate o suporte.');
+        }
+        throw error;
+      }
 
       if (data.user) {
         const { data: pro } = await supabase
@@ -78,6 +104,7 @@ const Register: React.FC = () => {
         setShowWelcomeModal(true);
       }
     } catch (error: any) {
+      console.error('Registration error details:', error);
       alert('Erro ao cadastrar: ' + error.message);
     } finally {
       setLoading(false);

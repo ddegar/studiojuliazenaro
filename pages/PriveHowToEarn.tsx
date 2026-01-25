@@ -9,26 +9,26 @@ const PriveHowToEarn: React.FC = () => {
         {
             icon: 'calendar_month',
             title: 'Agendamentos',
-            desc: 'Ganhe 1 ponto a cada R$ 1,00 gasto em serviços.',
-            points: '1 pts / R$1'
+            desc: 'Ganhe 1 JZ Balance a cada R$ 1,00 gasto em serviços.',
+            points: '1 JZ Balance / R$1'
         },
         {
             icon: 'diversity_3',
             title: 'Indique Amigas',
-            desc: 'Sua amiga ganha 10% OFF e você ganha pontos extras.',
-            points: '+200 pts'
+            desc: 'Sua amiga e você ganham JZ Balance extras.',
+            points: '+200 JZ Balance'
         },
         {
             icon: 'check_circle',
             title: 'Check-in',
             desc: 'Realize o check-in ao chegar no estúdio pelo App.',
-            points: '+10 pts'
+            points: '+10 JZ Balance'
         },
         {
             icon: 'share',
             title: 'Stories',
             desc: 'Poste um story marcando @studiojuliazenaro.',
-            points: '+50 pts'
+            points: '+50 JZ Balance'
         }
     ];
 

@@ -399,7 +399,7 @@ const ClientDetailsAdmin: React.FC = () => {
                         </div>
                         <div className="flex items-baseline gap-2">
                            <h3 className="text-7xl font-display font-medium leading-none tracking-tighter tabular-nums">{clientData.lash_points || 0}</h3>
-                           <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Credits</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest opacity-60">JZ Balance</span>
                         </div>
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/5 border border-primary/5">
                            <span className="size-1.5 rounded-full bg-primary animate-pulse"></span>

@@ -193,7 +193,7 @@ const AdminLoyaltySettings: React.FC = () => {
                                  </div>
                                  <div>
                                     <h4 className="font-display italic text-xl text-white group-hover:text-accent-gold transition-colors">{tier.name}</h4>
-                                    <p className="text-[9px] text-white/20 uppercase font-black tracking-[0.3em] mt-0.5">Threshold: {tier.min_points} PTS</p>
+                                    <p className="text-[9px] text-white/20 uppercase font-black tracking-[0.3em] mt-0.5">Threshold: {tier.min_points} JZ Balance</p>
                                  </div>
                               </div>
                               <button onClick={() => { setEditingTier(tier); setTierForm(tier); }} className="size-11 rounded-2xl bg-white/5 flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 active:scale-95 transition-all relative z-10 shadow-lg">
@@ -222,7 +222,7 @@ const AdminLoyaltySettings: React.FC = () => {
 
                   <div className="space-y-6">
                      <div className="space-y-3">
-                        <label className="text-[9px] font-black text-white/20 uppercase tracking-widest px-2">Créditos por Ritual</label>
+                        <label className="text-[9px] font-black text-white/20 uppercase tracking-widest px-2">JZ Balance por Ritual</label>
                         <input type="number"
                            className="w-full bg-white/5 border border-white/5 rounded-2xl px-8 py-4 text-sm focus:border-accent-gold/40 outline-none font-display italic text-xl transition-all"
                            value={editingAction.points_reward}

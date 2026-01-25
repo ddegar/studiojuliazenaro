@@ -7,9 +7,18 @@ const ReferFriend: React.FC = () => {
    const [copied, setCopied] = useState(false);
    const [referralCode, setReferralCode] = useState('...');
    const [referrals, setReferrals] = useState<any[]>([]);
+   const [rewardPoints, setRewardPoints] = useState(200);
 
    React.useEffect(() => {
       const fetchRefData = async () => {
+         // 1. Fetch Points Config
+         const { data: config } = await supabase
+            .from('loyalty_actions')
+            .select('points_reward')
+            .eq('code', 'REFERRAL')
+            .single();
+         if (config?.points_reward) setRewardPoints(config.points_reward);
+
          const { data: { user } } = await supabase.auth.getUser();
          if (user) {
             const { data: profile } = await supabase.from('profiles').select('referral_code').eq('id', user.id).single();
@@ -22,13 +31,11 @@ const ReferFriend: React.FC = () => {
                   .eq('referred_by', profile.referral_code);
 
                if (refs) {
-                  // Check status for each (mocking logic: if exists, assume pending unless checked against appointments)
-                  // For valid MVP transition, just listing them is good.
                   setReferrals(refs.map(r => ({
                      name: r.name || 'Usuário',
-                     status: 'PENDING', // Logic to check appointments later
+                     status: 'PENDING',
                      date: new Date(r.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-                     points: 0 // Fetch real points from ledger if needed
+                     points: 0
                   })));
                }
             }
@@ -46,7 +53,7 @@ const ReferFriend: React.FC = () => {
    const handleShare = async () => {
       const shareData = {
          title: 'Studio Julia Zenaro',
-         text: `Use meu código ${referralCode} e ganhe 10% de desconto no seu primeiro procedimento no Studio Julia Zenaro! ✨`,
+         text: `Use meu código ${referralCode} e ganhe ${rewardPoints} JZ Balance de presente no seu primeiro procedimento no Studio Julia Zenaro! ✨`,
          url: window.location.origin
       };
 
@@ -91,7 +98,7 @@ const ReferFriend: React.FC = () => {
                <div className="space-y-2">
                   <h1 className="text-4xl font-display text-primary leading-tight">Espalhe beleza,<br /><span className="italic">compartilhe</span> brilho.</h1>
                   <p className="text-xs font-outfit text-primary/50 leading-relaxed font-light max-w-[80%] mx-auto">
-                     Sua indicação vale ouro. Ganhe <span className="text-primary font-bold">50 Lash Points</span> por amiga e presenteie-a com <span className="text-primary font-bold">10% OFF</span>.
+                     Sua indicação vale ouro. Ganhe <span className="text-primary font-bold">{rewardPoints} JZ Balance</span> por amiga e presenteie-a com mais <span className="text-primary font-bold">{rewardPoints} JZ Balance</span>.
                   </p>
                </div>
             </div>
@@ -141,7 +148,7 @@ const ReferFriend: React.FC = () => {
                            <div>
                               <p className="text-sm font-outfit font-bold text-primary">{item.name}</p>
                               {item.points > 0 ? (
-                                 <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest">+ {item.points} Lash Points</p>
+                                 <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest">+ {item.points} JZ Balance</p>
                               ) : (
                                  <p className="text-[8px] text-primary/40 font-bold uppercase tracking-widest">{item.date}</p>
                               )}

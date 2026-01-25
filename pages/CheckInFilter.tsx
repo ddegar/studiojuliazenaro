@@ -283,7 +283,7 @@ const CheckInFilter: React.FC = () => {
                                 </h1>
 
                                 <p className="text-xs font-outfit text-white/40 leading-relaxed font-light italic">
-                                    Aplique o overlay diamantado JZ Privé e receba <span className="text-accent-gold font-bold">50 Lash Points</span> pela sua arte.
+                                    Aplique o overlay diamantado JZ Privé e receba <span className="text-accent-gold font-bold">50 JZ Balance</span> pela sua arte.
                                 </p>
                             </div>
                         </div>
@@ -401,7 +401,7 @@ const CheckInFilter: React.FC = () => {
                         <div className="space-y-2">
                             <p className="text-[10px] font-black text-accent-gold uppercase tracking-[0.6em]">Recompensa Desbloqueada</p>
                             <h2 className="text-5xl font-display font-bold text-white mb-2">+{pointsEarned.amount}</h2>
-                            <p className="text-lg font-outfit text-white/60 font-light tracking-widest uppercase">Lash Points</p>
+                            <p className="text-lg font-outfit text-white/60 font-light tracking-widest uppercase">JZ Balance</p>
                         </div>
 
                         <p className="text-white/40 text-sm font-outfit italic leading-relaxed max-w-[240px] mx-auto">

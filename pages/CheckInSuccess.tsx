@@ -15,7 +15,7 @@ const CheckInSuccess: React.FC = () => {
          window.open('https://instagram.com', '_blank');
          alert("Abra o Instagram, poste seu momento e marque @studiojuliazenaro para validar seus pontos! ✨");
       } else {
-         alert("Foto enviada para a timeline do Studio! Você ganhou +20 Lash Points ✨");
+         alert("Foto enviada para a timeline do Studio! Você ganhou +20 JZ Balance ✨");
       }
       setActions(prev => ({ ...prev, [type]: true }));
    };
@@ -67,7 +67,7 @@ const CheckInSuccess: React.FC = () => {
                         <div className="text-left flex-1">
                            <p className={`text-sm font-outfit font-bold ${actions.story ? 'text-white/40 line-through' : 'text-white'}`}>Timeline JZ Privé</p>
                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[9px] text-accent-gold font-black uppercase tracking-widest">+20 Lash Points</span>
+                              <span className="text-[9px] text-accent-gold font-black uppercase tracking-widest">+20 JZ Balance</span>
                            </div>
                         </div>
                         <span className="material-symbols-outlined text-white/10 group-hover:text-accent-gold transition-colors">east</span>
@@ -86,7 +86,7 @@ const CheckInSuccess: React.FC = () => {
                         <div className="text-left flex-1">
                            <p className={`text-sm font-outfit font-bold ${actions.instagram ? 'text-white/40 line-through' : 'text-white'}`}>Social Presence</p>
                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[9px] text-accent-gold font-black uppercase tracking-widest">+30 Lash Points</span>
+                              <span className="text-[9px] text-accent-gold font-black uppercase tracking-widest">+30 JZ Balance</span>
                            </div>
                         </div>
                         <span className="material-symbols-outlined text-white/10 group-hover:text-accent-gold transition-colors">east</span>

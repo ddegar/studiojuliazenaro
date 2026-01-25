@@ -147,7 +147,7 @@ const PriveSelection: React.FC = () => {
                 </div>
 
                 <div className="mt-20">
-                    <JZReferralCard />
+                    <JZReferralCard variant="dark" />
                 </div>
             </main>
 

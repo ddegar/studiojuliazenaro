@@ -202,10 +202,10 @@ const AdminPriveMembers: React.FC = () => {
                                         <div className="p-6 rounded-[32px] bg-white/2 border border-white/5 space-y-4">
                                             <div className="flex justify-between items-end">
                                                 <div className="space-y-1">
-                                                    <p className="text-[9px] uppercase font-black text-white/20 tracking-[0.2em]">Prive Balance</p>
+                                                    <p className="text-[9px] uppercase font-black text-white/20 tracking-[0.2em]">JZ Balance</p>
                                                     <p className="font-display text-4xl text-white tracking-tighter tabular-nums group-hover:text-accent-gold transition-colors">{(member.lash_points || 0).toLocaleString()}</p>
                                                 </div>
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-1">Credits</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-1">JZ Balance</span>
                                             </div>
                                         </div>
 
@@ -222,7 +222,7 @@ const AdminPriveMembers: React.FC = () => {
                                                 className="flex-1 h-16 rounded-[24px] bg-accent-gold text-primary border border-accent-gold flex items-center justify-center gap-3 hover:bg-white hover:text-primary transition-all active:scale-95 shadow-lg group/btn"
                                             >
                                                 <span className="material-symbols-outlined !text-xl group-hover/btn:scale-110 transition-transform">bolt</span>
-                                                <span className="text-[9px] font-black uppercase tracking-widest font-outfit">Credits</span>
+                                                <span className="text-[9px] font-black uppercase tracking-widest font-outfit">JZ Balance</span>
                                             </button>
                                         </div>
                                     </div>
@@ -272,7 +272,7 @@ const AdminPriveMembers: React.FC = () => {
                                     onChange={e => setAdjustValue(parseInt(e.target.value) || 0)}
                                     autoFocus
                                 />
-                                <span className="absolute right-12 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/10 uppercase tracking-[0.4em] pointer-events-none">Credits</span>
+                                <span className="absolute right-12 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/10 uppercase tracking-[0.4em] pointer-events-none">JZ Balance</span>
                             </div>
 
                             <div className="flex flex-wrap gap-3 justify-center">

@@ -169,10 +169,82 @@ const AdminTimeline: React.FC = () => {
             }
 
             if (apt.user_id && apt.services?.points_reward) {
-               const { data: clientProfile } = await supabase.from('profiles').select('lash_points').eq('id', apt.user_id).single();
+               const { data: clientProfile } = await supabase.from('profiles').select('name, lash_points, referred_by').eq('id', apt.user_id).single();
                if (clientProfile) {
-                  const newPoints = (clientProfile.lash_points || 0) + apt.services.points_reward;
-                  await supabase.from('profiles').update({ lash_points: newPoints }).eq('id', apt.user_id);
+                  // 1. Regular Service Points
+                  let pointsToAdd = apt.services.points_reward;
+
+                  // 2. REFERRAL LOGIC
+                  // Only reward if it's the FIRST completed appointment
+                  const { count: completedCount } = await supabase
+                     .from('appointments')
+                     .select('*', { count: 'exact', head: true })
+                     .eq('user_id', apt.user_id)
+                     .eq('status', 'completed');
+
+                  // If count is 0 (this one being updated is not yet in the count if using head: true on same query, 
+                  // but we just updated it above, so count will be at least 1)
+                  // However, to be safe, we check if a referral transaction already exists.
+                  const { data: existingRefTx } = await supabase
+                     .from('point_transactions')
+                     .select('id')
+                     .eq('user_id', apt.user_id)
+                     .eq('source', 'REFERRAL_REWARD_BONUS')
+                     .maybeSingle();
+
+                  if (clientProfile.referred_by && !existingRefTx && (completedCount || 0) <= 1) {
+                     // Fetch Config
+                     const { data: refConfig } = await supabase
+                        .from('loyalty_actions')
+                        .select('points_reward')
+                        .eq('code', 'REFERRAL')
+                        .eq('is_active', true)
+                        .single();
+
+                     const bonusPoints = refConfig?.points_reward || 200;
+
+                     // Find Referrer
+                     const { data: referrerProfile } = await supabase
+                        .from('profiles')
+                        .select('id, name, lash_points')
+                        .eq('referral_code', clientProfile.referred_by)
+                        .single();
+
+                     if (referrerProfile) {
+                        // Reward Referrer
+                        await supabase.from('profiles').update({
+                           lash_points: (referrerProfile.lash_points || 0) + bonusPoints
+                        }).eq('id', referrerProfile.id);
+
+                        await supabase.from('point_transactions').insert({
+                           user_id: referrerProfile.id,
+                           amount: bonusPoints,
+                           source: 'REFERRAL_SUCCESS',
+                           description: `Bônus: Sua indicação ${clientProfile.name || 'Amiga'} completou o primeiro ritual! ✨`
+                        });
+
+                        await supabase.from('notifications').insert({
+                           user_id: referrerProfile.id,
+                           title: 'Sua indicação completou um ritual! ✨',
+                           message: `Você ganhou ${bonusPoints} JZ Balance porque ${clientProfile.name || 'sua amiga'} finalizou o primeiro atendimento.`,
+                           icon: 'card_giftcard',
+                           type: 'loyalty'
+                        });
+
+                        // Reward Referred (The current client)
+                        pointsToAdd += bonusPoints;
+
+                        // Add bônus transaction for current client too
+                        await supabase.from('point_transactions').insert({
+                           user_id: apt.user_id,
+                           amount: bonusPoints,
+                           source: 'REFERRAL_REWARD_BONUS',
+                           description: `Boas-vindas: Bônus de Indicação aplicado! ✨`
+                        });
+                     }
+                  }
+
+                  await supabase.from('profiles').update({ lash_points: (clientProfile.lash_points || 0) + pointsToAdd }).eq('id', apt.user_id);
                }
             }
 

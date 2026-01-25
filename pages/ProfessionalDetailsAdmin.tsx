@@ -399,7 +399,7 @@ const ProfessionalDetailsAdmin: React.FC = () => {
                            { key: 'canViewOwnFinance', label: 'Financial Journal Profissional', desc: 'Transparência em faturamento individual.' },
                            { key: 'canPostStories', label: 'Curadoria de Conteúdo (Feed)', desc: 'Autoridade para publicar na Inspiration Wall.' },
                            { key: 'canManageOwnServices', label: 'Gestão de Especialidades', desc: 'Controle sobre as técnicas oferecidas.' },
-                           { key: 'canFinalizeAppointments', label: 'Ritual de Finalização', desc: 'Concluir atendimentos e validar pontos.' },
+                           { key: 'canFinalizeAppointments', label: 'Ritual de Finalização', desc: 'Concluir atendimentos e validar JZ Balance.' },
                            { key: 'canViewGlobalFinances', label: 'ACESSO MASTER FINANCEIRO', desc: 'VISÃO HOLÍSTICA: Faturamento total da marca.' }
                         ].map((perm, idx) => (
                            <div

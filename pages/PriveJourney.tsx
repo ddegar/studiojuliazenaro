@@ -204,7 +204,7 @@ const PriveJourney: React.FC = () => {
                 </div>
 
                 <div className="mt-16">
-                    <JZReferralCard />
+                    <JZReferralCard variant="dark" />
                 </div>
             </main>
 
