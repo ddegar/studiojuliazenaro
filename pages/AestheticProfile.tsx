@@ -34,7 +34,7 @@ const AestheticProfile: React.FC = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+          const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
           if (data) {
             setProfile(data);
             if (data.preferences) {

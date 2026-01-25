@@ -152,7 +152,7 @@ const AdminTimeline: React.FC = () => {
                targetProfileId = currentUser?.id || null;
             }
 
-            const { data: existing } = await supabase.from('transactions').select('id').eq('appointment_id', apt.id).single();
+            const { data: existing } = await supabase.from('transactions').select('id').eq('appointment_id', apt.id).maybeSingle();
 
             if (!existing) {
                const servicePrice = apt.services?.price || apt.price || 0;
@@ -169,7 +169,7 @@ const AdminTimeline: React.FC = () => {
             }
 
             if (apt.user_id && apt.services?.points_reward) {
-               const { data: clientProfile } = await supabase.from('profiles').select('name, lash_points, referred_by').eq('id', apt.user_id).single();
+               const { data: clientProfile } = await supabase.from('profiles').select('name, lash_points, referred_by').eq('id', apt.user_id).maybeSingle();
                if (clientProfile) {
                   // 1. Regular Service Points
                   let pointsToAdd = apt.services.points_reward;
@@ -199,7 +199,7 @@ const AdminTimeline: React.FC = () => {
                         .select('points_reward')
                         .eq('code', 'REFERRAL')
                         .eq('is_active', true)
-                        .single();
+                        .maybeSingle();
 
                      const bonusPoints = refConfig?.points_reward || 200;
 
@@ -208,7 +208,7 @@ const AdminTimeline: React.FC = () => {
                         .from('profiles')
                         .select('id, name, lash_points')
                         .eq('referral_code', clientProfile.referred_by)
-                        .single();
+                        .maybeSingle();
 
                      if (referrerProfile) {
                         // Reward Referrer

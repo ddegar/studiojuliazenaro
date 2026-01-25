@@ -28,7 +28,7 @@ const PriveJourney: React.FC = () => {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
                     const [profileRes, tiersRes] = await Promise.all([
-                        supabase.from('profiles').select('lash_points, name').eq('id', user.id).single(),
+                        supabase.from('profiles').select('lash_points, name').eq('id', user.id).maybeSingle(),
                         supabase.from('loyalty_tiers').select('*').order('min_points')
                     ]);
 

@@ -31,7 +31,7 @@ const AppointmentDetails: React.FC = () => {
             professionals (name, role, phone)
           `)
                .eq('id', id)
-               .single();
+               .maybeSingle();
 
             if (data) setAppointment(data);
          } catch (err) {

@@ -38,10 +38,10 @@ const FinancialControl: React.FC = () => {
 
    const fetchCategories = async () => {
       try {
-         const { data: incomeConfig } = await supabase.from('studio_config').select('value').eq('key', 'finance_income_categories').single();
+         const { data: incomeConfig } = await supabase.from('studio_config').select('value').eq('key', 'finance_income_categories').maybeSingle();
          if (incomeConfig?.value) setIncomeCategories(JSON.parse(incomeConfig.value));
 
-         const { data: expenseConfig } = await supabase.from('studio_config').select('value').eq('key', 'finance_expense_categories').single();
+         const { data: expenseConfig } = await supabase.from('studio_config').select('value').eq('key', 'finance_expense_categories').maybeSingle();
          if (expenseConfig?.value) setExpenseCategories(JSON.parse(expenseConfig.value));
       } catch (error) {
          console.error('Error fetching categories:', error);

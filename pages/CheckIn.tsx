@@ -28,7 +28,7 @@ const CheckIn: React.FC = () => {
                .from('profiles')
                .select('name')
                .eq('id', user.id)
-               .single();
+               .maybeSingle();
             setUserName(profile?.name?.split(' ')[0] || 'Cliente');
 
             // Check for Today's Appointment
@@ -41,7 +41,7 @@ const CheckIn: React.FC = () => {
                .in('status', ['PENDING', 'ARRIVED', 'CONFIRMED'])
                .order('time', { ascending: true })
                .limit(1)
-               .single();
+               .maybeSingle();
 
             if (appt) {
                setAppointment(appt);

@@ -199,7 +199,7 @@ const CheckInFilter: React.FC = () => {
             .from('loyalty_actions')
             .select('points_reward, is_active')
             .eq('code', actionCode)
-            .single();
+            .maybeSingle();
 
         if (!rule || !rule.is_active) return;
 

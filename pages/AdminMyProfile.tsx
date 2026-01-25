@@ -41,8 +41,8 @@ const AdminMyProfile: React.FC = () => {
                 return;
             }
 
-            const { data: profileData } = await supabase.from('profiles').select('*').eq('id', authUser.id).single();
-            const { data: proData } = await supabase.from('professionals').select('*').eq('email', authUser.email).single();
+            const { data: profileData } = await supabase.from('profiles').select('*').eq('id', authUser.id).maybeSingle();
+            const { data: proData } = await supabase.from('professionals').select('*').eq('email', authUser.email).maybeSingle();
 
             if (profileData) {
                 setProfile(profileData);

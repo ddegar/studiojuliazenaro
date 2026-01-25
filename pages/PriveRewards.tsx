@@ -47,7 +47,7 @@ const PriveRewards: React.FC = () => {
     const fetchData = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-            const { data } = await supabase.from('profiles').select('lash_points').eq('id', user.id).single();
+            const { data } = await supabase.from('profiles').select('lash_points').eq('id', user.id).maybeSingle();
             if (data) setPoints(data.lash_points || 0);
         }
 

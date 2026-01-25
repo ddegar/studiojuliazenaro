@@ -43,7 +43,7 @@ const AdminDashboard: React.FC = () => {
           .from('profiles')
           .select('id, name, role')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (!profile) {
           console.warn('Profile not found for user', user.id);
@@ -74,7 +74,7 @@ const AdminDashboard: React.FC = () => {
               .from('professionals')
               .select('id')
               .ilike('name', `%${profile.name?.split(' ')[0] || ''}%`)
-              .single();
+              .maybeSingle();
 
             if (matchingPro) {
               upcomingQuery.eq('professional_id', matchingPro.id);

@@ -33,7 +33,7 @@ const AdminAgenda: React.FC = () => {
             .from('profiles')
             .select('id, role')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
          if (profile) {
             setCurrentUser(profile as { id: string, role: UserRole });
@@ -61,7 +61,7 @@ const AdminAgenda: React.FC = () => {
                .from('profiles')
                .select('name')
                .eq('id', profile.id)
-               .single();
+               .maybeSingle();
 
             const matchingPro = formattedPros.find(p =>
                p.name.toLowerCase().includes(profileData?.name?.split(' ')[0]?.toLowerCase() || '')

@@ -26,7 +26,7 @@ const ClientDetailsAdmin: React.FC = () => {
       setLoading(true);
       try {
          const [profileRes, apptsRes, pointsRes] = await Promise.all([
-            supabase.from('profiles').select('*').eq('id', id).single(),
+            supabase.from('profiles').select('*').eq('id', id).maybeSingle(),
             supabase.from('appointments').select('*').eq('user_id', id).order('date', { ascending: false }),
             supabase.from('point_transactions').select('*').eq('user_id', id).order('created_at', { ascending: false })
          ]);

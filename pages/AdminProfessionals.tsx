@@ -43,7 +43,7 @@ const AdminProfessionals: React.FC = () => {
          const { data: { user } } = await supabase.auth.getUser();
          if (!user) return navigate('/login');
 
-         const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+         const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
          if (profile?.role !== 'MASTER_ADMIN') {
             alert('Acesso restrito ao Master Admin.');
             navigate('/admin');

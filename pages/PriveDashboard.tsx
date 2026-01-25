@@ -44,8 +44,8 @@ const PriveDashboard: React.FC = () => {
                 const currentPts = profileRes.data.lash_points || 0;
                 if (currentPts >= 50 && user) {
                     const [{ data: evaluationNotif }, { data: existingTestimonial }] = await Promise.all([
-                        supabase.from('notifications').select('id').eq('user_id', user.id).eq('type', 'evaluation').limit(1).single(),
-                        supabase.from('testimonials').select('id').eq('user_id', user.id).limit(1).single()
+                        supabase.from('notifications').select('id').eq('user_id', user.id).eq('type', 'evaluation').limit(1).maybeSingle(),
+                        supabase.from('testimonials').select('id').eq('user_id', user.id).limit(1).maybeSingle()
                     ]);
 
                     if (!evaluationNotif && !existingTestimonial) {

@@ -64,7 +64,7 @@ const Evaluation: React.FC = () => {
             .from('testimonials')
             .select('id')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
          if (existing) {
             alert('Você já enviou sua avaliação de boas-vindas! Obrigada pelo carinho ✨');

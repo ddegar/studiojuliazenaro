@@ -16,12 +16,12 @@ const ReferFriend: React.FC = () => {
             .from('loyalty_actions')
             .select('points_reward')
             .eq('code', 'REFERRAL')
-            .single();
+            .maybeSingle();
          if (config?.points_reward) setRewardPoints(config.points_reward);
 
          const { data: { user } } = await supabase.auth.getUser();
          if (user) {
-            const { data: profile } = await supabase.from('profiles').select('referral_code').eq('id', user.id).single();
+            const { data: profile } = await supabase.from('profiles').select('referral_code').eq('id', user.id).maybeSingle();
             if (profile) setReferralCode(profile.referral_code || '...');
 
             // Fetch referrals

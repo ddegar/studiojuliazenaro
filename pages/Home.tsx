@@ -32,7 +32,7 @@ const Home: React.FC = () => {
             `)
             .gt('expires_at', new Date(Date.now() - 60 * 60 * 1000).toISOString())
             .order('created_at', { ascending: false }),
-          user ? supabase.from('profiles').select('name, profile_pic').eq('id', user.id).single() : Promise.resolve({ data: null })
+          user ? supabase.from('profiles').select('name, profile_pic').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null })
         ]);
 
         if (storiesRes.data) {

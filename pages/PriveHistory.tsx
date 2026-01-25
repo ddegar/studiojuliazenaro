@@ -41,7 +41,7 @@ const PriveHistory: React.FC = () => {
                         .from('profiles')
                         .select('name, lash_points')
                         .eq('id', user.id)
-                        .single()
+                        .maybeSingle()
                 ]);
 
                 const unified: UnifiedTransaction[] = [];

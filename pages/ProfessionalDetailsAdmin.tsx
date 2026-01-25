@@ -26,14 +26,14 @@ const ProfessionalDetailsAdmin: React.FC = () => {
       setLoading(true);
       try {
          // 1. First fetch the professional record
-         const { data: proBase, error: proBaseErr } = await supabase.from('professionals').select('*').eq('id', id).single();
+         const { data: proBase, error: proBaseErr } = await supabase.from('professionals').select('*').eq('id', id).maybeSingle();
          if (proBaseErr || !proBase) throw new Error('Profissional não encontrado');
 
          // 2. Try to fetch profile by id OR email
          let profileId = proBase.profile_id;
          let { data: profileData } = profileId
-            ? await supabase.from('profiles').select('*').eq('id', profileId).single()
-            : await supabase.from('profiles').select('*').eq('email', proBase.email).single();
+            ? await supabase.from('profiles').select('*').eq('id', profileId).maybeSingle()
+            : await supabase.from('profiles').select('*').eq('email', proBase.email).maybeSingle();
 
          // 3. Auto-link if we found it by email but it wasn't linked
          if (profileData && !proBase.profile_id) {

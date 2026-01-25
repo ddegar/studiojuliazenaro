@@ -42,7 +42,7 @@ const Login: React.FC<{ onAuth: () => void }> = ({ onAuth }) => {
         .from('profiles')
         .select('role')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       onAuth();
 

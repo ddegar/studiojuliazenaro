@@ -15,7 +15,7 @@ const BookingConfirmed: React.FC = () => {
             .from('studio_config')
             .select('value')
             .eq('key', 'studio_address')
-            .single();
+            .maybeSingle();
 
          if (data) {
             setStudioAddress(data.value);
