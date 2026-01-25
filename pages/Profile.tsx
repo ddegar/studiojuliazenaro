@@ -67,7 +67,7 @@ const Profile: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        const { data } = await supabase.from('profiles').select('name, phone, profile_pic, email, cpf, role, lash_points').eq('id', user.id).maybeSingle();
         if (data) {
           setProfile(data);
           setEditForm({

@@ -8,6 +8,7 @@ const PriveDashboard: React.FC = () => {
     const navigate = useNavigate();
     const [points, setPoints] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [isPriveEnabled, setIsPriveEnabled] = useState(true);
     const [userName, setUserName] = useState('Membro');
     const [memberSince, setMemberSince] = useState('');
     const [levels, setLevels] = useState<any[]>([]);
@@ -20,10 +21,15 @@ const PriveDashboard: React.FC = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            const [profileRes, levelsRes] = await Promise.all([
-                user ? supabase.from('profiles').select('name, lash_points, created_at').eq('id', user.id).single() : Promise.resolve({ data: null, error: null }),
-                supabase.from('loyalty_tiers').select('*').order('min_points', { ascending: true })
+            const [profileRes, levelsRes, configRes] = await Promise.all([
+                user ? supabase.from('profiles').select('name, lash_points, created_at').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+                supabase.from('loyalty_tiers').select('*').order('min_points', { ascending: true }),
+                supabase.from('studio_config').select('value').eq('key', 'prive_enabled').maybeSingle()
             ]);
+
+            if (configRes.data) {
+                setIsPriveEnabled(configRes.data.value === 'true');
+            }
 
             if (levelsRes.data) {
                 setLevels(levelsRes.data);
@@ -91,6 +97,70 @@ const PriveDashboard: React.FC = () => {
             <div className="w-8 h-8 border-2 border-[#C9A961] border-t-transparent rounded-full animate-spin"></div>
         </div>
     );
+
+    if (!isPriveEnabled) {
+        return (
+            <div className="flex flex-col h-full bg-background-dark text-white overflow-hidden selection:bg-accent-gold/20 relative">
+                {/* Dynamic Background Elements */}
+                <div className="fixed inset-0 pointer-events-none opacity-20 overflow-hidden">
+                    <div className="absolute top-[-5%] right-[-15%] w-[60%] aspect-square organic-shape-1 bg-accent-gold/20 blur-[120px] animate-float"></div>
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[50%] aspect-square organic-shape-2 bg-primary/10 blur-[80px] animate-float" style={{ animationDelay: '2s' }}></div>
+                </div>
+
+                <header className="sticky top-0 z-[100] premium-nav-dark p-6 border-b border-white/5 flex flex-col gap-6 bg-background-dark/80 backdrop-blur-xl">
+                    <div className="flex items-center justify-between">
+                        <button onClick={() => navigate('/home')} className="size-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-accent-gold hover:bg-white/10 active:scale-90 transition-all">
+                            <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
+                        </button>
+                        <div className="text-center">
+                            <p className="text-[8px] font-black uppercase tracking-[0.4em] text-accent-gold/40 leading-none mb-1">Coming Soon</p>
+                            <h2 className="font-display italic text-xl leading-tight text-white tracking-tight">Expansão de Elite</h2>
+                        </div>
+                        <div className="size-10"></div>
+                    </div>
+                </header>
+
+                <main className="relative z-10 flex-1 flex flex-col items-center justify-center p-10 text-center space-y-12">
+                    <div className="relative group">
+                        <div className="absolute inset-0 bg-accent-gold/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
+                        <div className="size-32 rounded-[40px] bg-surface-dark border border-white/10 flex items-center justify-center shadow-hugest relative z-10 overflow-hidden group-hover:rotate-6 transition-transform duration-700">
+                            <span className="material-symbols-outlined !text-6xl text-accent-gold animate-reveal">diamond</span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6 max-w-sm animate-reveal stagger-1">
+                        <h1 className="text-4xl font-display font-medium text-white italic leading-tight">
+                            Algo extraordinário está sendo <span className="text-accent-gold not-italic">preparado.</span>
+                        </h1>
+                        <p className="text-sm font-outfit text-white/40 leading-relaxed font-light">
+                            Em breve, as clientes Club terão acesso a novidades exclusivas, descontos imperdíveis, cashback em rituais, cupons personalizados e muito mais.
+                        </p>
+                    </div>
+
+                    <div className="bg-white/2 border border-white/5 p-8 rounded-[40px] w-full max-w-xs space-y-4 animate-reveal stagger-2">
+                        <p className="text-[10px] font-black uppercase tracking-[0.5em] text-accent-gold/60 leading-none">Status Atual</p>
+                        <div className="space-y-1">
+                            <p className="text-3xl font-display italic text-white">{points.toLocaleString()}</p>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-white/30">JZ Balance Acumulados</p>
+                        </div>
+                        <div className="h-px w-12 bg-white/10 mx-auto"></div>
+                        <p className="text-[11px] font-outfit text-white/50 italic leading-snug">
+                            Continue acumulando pontos em cada ritual. <br /> Seu saldo estará pronto para o grande lançamento.
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={() => navigate('/home')}
+                        className="h-16 px-10 bg-white text-primary rounded-3xl font-black text-[11px] uppercase tracking-[0.3em] font-outfit shadow-huge hover:bg-accent-gold transition-all active:scale-95 animate-reveal stagger-3"
+                    >
+                        Voltar para o Início
+                    </button>
+                </main>
+
+                <div className="fixed bottom-0 left-0 w-full h-12 bg-black/40 backdrop-blur-3xl border-t border-white/5 pointer-events-none z-[130]"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-full bg-background-dark text-white overflow-hidden selection:bg-accent-gold/20 relative">

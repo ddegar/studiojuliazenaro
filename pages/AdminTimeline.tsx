@@ -72,7 +72,7 @@ const AdminTimeline: React.FC = () => {
             `)
             .eq('professional_id', selectedProId)
             .eq('date', date)
-            .not('status', 'in', '("cancelled", "cancelled_by_user")')
+            .not('status', 'in', '(cancelled,cancelled_by_user)')
             .order('start_time');
 
          if (error) throw error;

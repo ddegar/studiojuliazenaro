@@ -27,10 +27,16 @@ const PriveJourney: React.FC = () => {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
-                    const [profileRes, tiersRes] = await Promise.all([
+                    const [profileRes, tiersRes, configRes] = await Promise.all([
                         supabase.from('profiles').select('lash_points, name').eq('id', user.id).maybeSingle(),
-                        supabase.from('loyalty_tiers').select('*').order('min_points')
+                        supabase.from('loyalty_tiers').select('*').order('min_points'),
+                        supabase.from('studio_config').select('value').eq('key', 'prive_enabled').maybeSingle()
                     ]);
+
+                    if (configRes.data?.value === 'false') {
+                        navigate('/prive');
+                        return;
+                    }
 
                     if (profileRes.data) {
                         setPoints(profileRes.data.lash_points || 0);

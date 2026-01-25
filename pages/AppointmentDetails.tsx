@@ -26,8 +26,15 @@ const AppointmentDetails: React.FC = () => {
             const { data } = await supabase
                .from('appointments')
                .select(`
-            *,
-            services (name, points_reward, description),
+            id,
+            date,
+            time,
+            status,
+            service_name,
+            professional_name,
+            price,
+            duration,
+            services (name, points_reward, description, category),
             professionals (name, role, phone)
           `)
                .eq('id', id)

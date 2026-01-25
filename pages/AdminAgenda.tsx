@@ -114,7 +114,7 @@ const AdminAgenda: React.FC = () => {
             .from('appointments')
             .select('date, status')
             .eq('professional_id', selectedProId)
-            .neq('status', 'cancelled')
+            .not('status', 'in', '(cancelled,cancelled_by_user)')
             .gte('date', firstDay)
             .lte('date', lastDay);
 

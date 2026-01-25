@@ -8,7 +8,10 @@ type BookingStep = 'DATE' | 'TIME' | 'CONFIRM';
 const Booking: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const preSelected = location.state as { professional: Professional, service: Service } | null;
+  const state = location.state as { professional: Professional, service: Service, isRescheduling?: boolean, oldApptId?: string } | null;
+  const preSelected = state;
+  const isRescheduling = state?.isRescheduling || false;
+  const oldApptId = state?.oldApptId;
 
   // Validation: If no service/pro selected, redirect to Services
   useEffect(() => {
@@ -73,7 +76,7 @@ const Booking: React.FC = () => {
           .eq('professional_id', selection.professional!.id)
           .gte('date', startOfMonth.split('T')[0])
           .lte('date', endOfMonth.split('T')[0])
-          .not('status', 'in', '("cancelled", "cancelled_by_user", "no_show")');
+          .not('status', 'in', '(cancelled,cancelled_by_user,no_show)');
 
         setAppointmentsOfMonth(data || []);
       };
@@ -473,6 +476,14 @@ const Booking: React.FC = () => {
 
                     const { error } = await supabase.from('appointments').insert(payload);
                     if (error) throw error;
+
+                    if (isRescheduling && oldApptId) {
+                      await supabase
+                        .from('appointments')
+                        .update({ status: 'cancelled' })
+                        .eq('id', oldApptId);
+                    }
+
                     navigate('/booking/confirmed', { state: { selection } });
                   } catch (e: any) { alert('Erro: ' + e.message); }
                   finally { setLoading(false); }

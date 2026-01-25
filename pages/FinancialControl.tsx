@@ -50,8 +50,8 @@ const FinancialControl: React.FC = () => {
 
    const saveCategories = async (newIncome: string[], newExpense: string[]) => {
       try {
-         await supabase.from('studio_config').upsert({ key: 'finance_income_categories', value: JSON.stringify(newIncome), updated_at: new Date().toISOString() });
-         await supabase.from('studio_config').upsert({ key: 'finance_expense_categories', value: JSON.stringify(newExpense), updated_at: new Date().toISOString() });
+         await supabase.from('studio_config').upsert({ key: 'finance_income_categories', value: JSON.stringify(newIncome), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+         await supabase.from('studio_config').upsert({ key: 'finance_expense_categories', value: JSON.stringify(newExpense), updated_at: new Date().toISOString() }, { onConflict: 'key' });
       } catch (error) {
          console.error('Error saving categories:', error);
       }
@@ -112,7 +112,7 @@ const FinancialControl: React.FC = () => {
          return;
       }
 
-      let query = supabase.from('transactions').select('*');
+      let query = supabase.from('transactions').select('id, amount, date, type, category, description, user_id, is_recurring');
 
       // 2. Permission Check on Transactions
       // If NOT master, force filter by user_id

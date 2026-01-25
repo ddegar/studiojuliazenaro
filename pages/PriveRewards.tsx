@@ -46,9 +46,19 @@ const PriveRewards: React.FC = () => {
 
     const fetchData = async () => {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data } = await supabase.from('profiles').select('lash_points').eq('id', user.id).maybeSingle();
-            if (data) setPoints(data.lash_points || 0);
+
+        const [profileRes, configRes] = await Promise.all([
+            user ? supabase.from('profiles').select('lash_points').eq('id', user.id).maybeSingle() : Promise.resolve({ data: null }),
+            supabase.from('studio_config').select('value').eq('key', 'prive_enabled').maybeSingle()
+        ]);
+
+        if (configRes.data?.value === 'false') {
+            navigate('/prive');
+            return;
+        }
+
+        if (profileRes.data) {
+            setPoints(profileRes.data.lash_points || 0);
         }
 
         const { data: rewardsData } = await supabase

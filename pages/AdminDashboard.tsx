@@ -83,7 +83,7 @@ const AdminDashboard: React.FC = () => {
 
           const results = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'CLIENT'),
-            supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today).neq('status', 'cancelled'),
+            supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today).not('status', 'in', '(cancelled,cancelled_by_user)'),
             supabase.from('professionals').select('*', { count: 'exact', head: true }),
             supabase.from('transactions').select('amount, type, date, user_id').gte('date',
               new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]

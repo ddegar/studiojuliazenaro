@@ -28,7 +28,7 @@ const PriveHistory: React.FC = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const [lashPtsRes, pointTxRes, profileRes] = await Promise.all([
+                const [lashPtsRes, pointTxRes, profileRes, configRes] = await Promise.all([
                     supabase
                         .from('lash_points')
                         .select('*')
@@ -41,8 +41,18 @@ const PriveHistory: React.FC = () => {
                         .from('profiles')
                         .select('name, lash_points')
                         .eq('id', user.id)
+                        .maybeSingle(),
+                    supabase
+                        .from('studio_config')
+                        .select('value')
+                        .eq('key', 'prive_enabled')
                         .maybeSingle()
                 ]);
+
+                if (configRes.data?.value === 'false') {
+                    navigate('/prive');
+                    return;
+                }
 
                 const unified: UnifiedTransaction[] = [];
 

@@ -1,12 +1,12 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../services/supabase';
 
 const AdminPriveSettings: React.FC = () => {
-    // Mock settings - in a real app these would come from a 'loyalty_settings' table or 'studio_config'
+    const [loading, setLoading] = useState(true);
     const [settings, setSettings] = useState({
         module_enabled: true,
-        currency_name: 'JZ Privé Balance',
-        currency_abbr: 'PTS',
+        currency_name: 'JZ Balance',
+        currency_abbr: 'JZB',
         expiry_days: 365,
         auto_downgrade: false,
         notification_channels: {
@@ -16,9 +16,34 @@ const AdminPriveSettings: React.FC = () => {
         }
     });
 
-    const handleSave = () => {
-        // Logic to save settings to Supabase
-        alert('Configurações salvas com sucesso! (Simulação)');
+    React.useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const { data } = await supabase.from('studio_config').select('value').eq('key', 'prive_enabled').maybeSingle();
+                if (data) {
+                    setSettings(prev => ({ ...prev, module_enabled: data.value === 'true' }));
+                }
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    const handleSave = async () => {
+        try {
+            const { error } = await supabase.from('studio_config').upsert({
+                key: 'prive_enabled',
+                value: String(settings.module_enabled),
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'key' });
+            if (error) throw error;
+            alert('Diretrizes sincronizadas com sucesso! ✨');
+        } catch (error: any) {
+            alert('Erro ao salvar: ' + error.message);
+        }
     };
 
     return (
