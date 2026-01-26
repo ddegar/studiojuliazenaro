@@ -101,7 +101,7 @@ const ServiceDetails: React.FC = () => {
             {/* Narrative Description */}
             <div className="space-y-6 max-w-2xl mx-auto">
                <div className="flex items-center gap-4">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary/30 whitespace-nowrap">Sobre o Ritual</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary/30 whitespace-nowrap">Sobre a Sessão</h3>
                   <div className="h-px w-full bg-gradient-to-r from-primary/10 to-transparent"></div>
                </div>
                <p className="text-base text-primary/60 leading-relaxed font-outfit font-light text-justify px-2 italic">

@@ -211,11 +211,7 @@ const Feed: React.FC = () => {
 
         {/* Inspiration Wall (Professional Posts + Enhanced Testimonials) */}
         <section className="px-8 space-y-10">
-          <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/5"></div>
-            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-primary/20">Ritual Wall</p>
-            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/5"></div>
-          </div>
+
 
           <div className="grid grid-cols-2 gap-8">
             {feedGrid.map((item, idx) => {

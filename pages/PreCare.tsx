@@ -59,7 +59,7 @@ const PreCare: React.FC = () => {
                <span className="material-symbols-outlined !text-xl">arrow_back_ios_new</span>
             </button>
             <div className="text-center">
-               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-accent-gold leading-none mb-1">Ritual de Preparo</p>
+               <p className="text-[9px] font-black uppercase tracking-[0.4em] text-accent-gold leading-none mb-1">Guia de Preparo</p>
                <h2 className="text-xl font-display italic text-primary tracking-tight">Antes do Encontro</h2>
             </div>
             <div className="size-11"></div>
@@ -89,7 +89,7 @@ const PreCare: React.FC = () => {
                {loading ? (
                   <div className="flex flex-col items-center gap-6 py-10">
                      <div className="size-12 border-2 border-accent-gold border-t-transparent rounded-full animate-spin"></div>
-                     <p className="text-[10px] uppercase font-black tracking-widest text-primary/20">Sincronizando Ritual</p>
+                     <p className="text-[10px] uppercase font-black tracking-widest text-primary/20">Sincronizando Guia</p>
                   </div>
                ) : (
                   <div className="space-y-8">
@@ -126,7 +126,7 @@ const PreCare: React.FC = () => {
                >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-[1.5s]"></div>
                   <span className="relative z-10 text-[11px] font-black uppercase tracking-[0.4em] text-accent-gold group-hover:text-white transition-colors">
-                     Entendi o Ritual
+                     Entendi o Preparo
                   </span>
                   <span className="material-symbols-outlined !text-xl text-accent-gold group-hover:text-white relative z-10 transition-colors">verified</span>
                </button>

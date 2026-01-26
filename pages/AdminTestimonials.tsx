@@ -9,10 +9,23 @@ const AdminTestimonials: React.FC = () => {
     const [testimonials, setTestimonials] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED'>('ALL');
+    const [allowSubmission, setAllowSubmission] = useState(false);
 
     useEffect(() => {
         fetchTestimonials();
+        fetchConfig();
     }, [filter]);
+
+    const fetchConfig = async () => {
+        const { data } = await supabase.from('studio_config').select('value').eq('key', 'allow_public_testimonials').maybeSingle();
+        if (data) setAllowSubmission(data.value === 'true');
+    };
+
+    const toggleSubmission = async () => {
+        const newValue = !allowSubmission;
+        setAllowSubmission(newValue);
+        await supabase.from('studio_config').upsert({ key: 'allow_public_testimonials', value: String(newValue) }, { onConflict: 'key' });
+    };
 
     const fetchTestimonials = async () => {
         try {
@@ -83,20 +96,36 @@ const AdminTestimonials: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 shadow-hugest self-start md:self-center">
-                    {[
-                        { id: 'ALL', label: 'Todos' },
-                        { id: 'PENDING', label: 'Pendentes' },
-                        { id: 'APPROVED', label: 'Aprovados' }
-                    ].map(f => (
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    {/* Submission Toggle */}
+                    <div className="flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-white/40">Submissão Pública</span>
                         <button
-                            key={f.id}
-                            onClick={() => setFilter(f.id as any)}
-                            className={`px-6 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${filter === f.id ? 'bg-primary text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}
+                            onClick={toggleSubmission}
+                            className={`w-12 h-6 rounded-full p-1 transition-all duration-500 ${allowSubmission ? 'bg-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-white/10'}`}
                         >
-                            {f.label}
+                            <div className={`size-4 rounded-full shadow-md transition-all duration-500 ${allowSubmission ? 'bg-emerald-500 translate-x-6' : 'bg-white/20 translate-x-0'}`}></div>
                         </button>
-                    ))}
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${allowSubmission ? 'text-emerald-500' : 'text-white/20'}`}>
+                            {allowSubmission ? 'Aberta' : 'Fechada'}
+                        </span>
+                    </div>
+
+                    <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 shadow-hugest self-start md:self-center">
+                        {[
+                            { id: 'ALL', label: 'Todos' },
+                            { id: 'PENDING', label: 'Pendentes' },
+                            { id: 'APPROVED', label: 'Aprovados' }
+                        ].map(f => (
+                            <button
+                                key={f.id}
+                                onClick={() => setFilter(f.id as any)}
+                                className={`px-6 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${filter === f.id ? 'bg-primary text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </header>
 

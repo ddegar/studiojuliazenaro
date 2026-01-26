@@ -133,7 +133,7 @@ const PriveDashboard: React.FC = () => {
                             Algo extraordinário está sendo <span className="text-accent-gold not-italic">preparado.</span>
                         </h1>
                         <p className="text-sm font-outfit text-white/40 leading-relaxed font-light">
-                            Em breve, as clientes Club terão acesso a novidades exclusivas, descontos imperdíveis, cashback em rituais, cupons personalizados e muito mais.
+                            Em breve, as clientes Club terão acesso a novidades exclusivas, descontos imperdíveis, cashback em atendimentos, cupons personalizados e muito mais.
                         </p>
                     </div>
 
@@ -145,7 +145,7 @@ const PriveDashboard: React.FC = () => {
                         </div>
                         <div className="h-px w-12 bg-white/10 mx-auto"></div>
                         <p className="text-[11px] font-outfit text-white/50 italic leading-snug">
-                            Continue acumulando pontos em cada ritual. <br /> Seu saldo estará pronto para o grande lançamento.
+                            Continue acumulando pontos em cada visita. <br /> Seu saldo estará pronto para o grande lançamento.
                         </p>
                     </div>
 
@@ -300,7 +300,7 @@ const PriveDashboard: React.FC = () => {
                 <section className="grid grid-cols-2 gap-6 mb-12 animate-reveal stagger-2">
                     {[
                         { id: 'selection', label: 'Seleção Privé', sub: 'Serviços Elite', icon: 'auto_awesome_motion', path: '/prive/selection' },
-                        { id: 'birthday', label: 'Ritual Birthday', sub: 'Seu Presente', icon: 'featured_seasonal_and_gifts', path: '/prive/journey' }
+                        { id: 'birthday', label: 'B-Day Experience', sub: 'Seu Presente', icon: 'featured_seasonal_and_gifts', path: '/prive/journey' }
                     ].map(action => (
                         <button
                             key={action.id}
