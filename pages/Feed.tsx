@@ -171,7 +171,50 @@ const Feed: React.FC = () => {
       </nav>
 
       <main className="relative z-10 space-y-16 py-10">
-        {/* Highlights: Prive Experience Carousel */}
+        {/* 1. Ritual Wall (Professional Posts) */}
+        <section className="px-8 space-y-10 animate-reveal">
+          <div className="grid grid-cols-2 gap-8">
+            {feedGrid.filter(i => i.type === 'POST').map((item, idx) => (
+              <div
+                key={item.id}
+                className="space-y-5 group cursor-pointer animate-reveal"
+                style={{ animationDelay: `${idx * 0.05}s` }}
+              >
+                <div className="relative rounded-[40px] overflow-hidden aspect-[4/5] bg-white border border-primary/5 shadow-lg hover:border-accent-gold/40 transition-all duration-700">
+                  <div className="absolute top-5 left-5 z-20">
+                    <span className="premium-blur text-primary text-[7px] font-black px-3 py-1.5 rounded-xl tracking-[0.3em] uppercase border border-primary/10 shadow-sm">
+                      {item.data.category || 'Geral'}
+                    </span>
+                  </div>
+                  <img alt="Post" className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110" src={item.data.image_url} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </div>
+                <div className="flex justify-between items-center px-4">
+                  <div className="space-y-1 flex-1 min-w-0 pr-4">
+                    <p className="text-[8px] font-black text-primary/40 uppercase tracking-widest">Moment</p>
+                    <p className="text-[11px] font-outfit text-primary/60 italic line-clamp-1">{item.data.caption || 'Revelação Studio'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={(e) => handleShare(item.data.caption || 'Inspiration', e)} className="transition-all active:scale-90 size-8 flex items-center justify-center rounded-full bg-primary/5 text-primary/30 hover:text-primary">
+                      <span className="material-symbols-outlined !text-sm">share</span>
+                    </button>
+                    <button onClick={(e) => toggleLike(item.id, e)} className="transition-all active:scale-90 size-8 flex items-center justify-center rounded-full bg-primary/5">
+                      <span className={`material-symbols-outlined !text-sm ${likedItems.has(item.id) ? 'text-accent-gold' : 'text-primary/20'}`} style={{ fontVariationSettings: likedItems.has(item.id) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {feedGrid.filter(i => i.type === 'POST').length === 0 && (
+              <div className="col-span-2 py-20 text-center opacity-20">
+                <span className="material-symbols-outlined !text-6xl mb-4 text-primary">filter_none</span>
+                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Nenhum post no momento</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 2. Prive Experience Carousel */}
         <section className="space-y-8 animate-reveal">
           <div className="px-8 flex items-end justify-between">
             <div className="space-y-1">
@@ -209,102 +252,59 @@ const Feed: React.FC = () => {
           </div>
         </section>
 
-        {/* Inspiration Wall (Professional Posts + Enhanced Testimonials) */}
-        <section className="px-8 space-y-10">
+        {/* 3. Testimonials Section */}
+        <section className="px-8 space-y-10 animate-reveal">
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/5"></div>
+            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-primary/20">Vozes JZ Privé</p>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/5"></div>
+          </div>
 
-
-          <div className="grid grid-cols-2 gap-8">
-            {feedGrid.map((item, idx) => {
-              if (item.type === 'POST') {
-                return (
-                  <div
-                    key={item.id}
-                    className="space-y-5 group cursor-pointer animate-reveal"
-                    style={{ animationDelay: `${idx * 0.05}s` }}
-                  >
-                    <div className="relative rounded-[40px] overflow-hidden aspect-[4/5] bg-white border border-primary/5 shadow-lg hover:border-accent-gold/40 transition-all duration-700">
-                      <div className="absolute top-5 left-5 z-20">
-                        <span className="premium-blur text-primary text-[7px] font-black px-3 py-1.5 rounded-xl tracking-[0.3em] uppercase border border-primary/10 shadow-sm">
-                          {item.data.category || 'Geral'}
-                        </span>
+          <div className="space-y-8">
+            {feedGrid.filter(i => i.type === 'TESTIMONIAL').map((item) => (
+              <div key={item.id} className="relative group animate-reveal">
+                <div className="relative bg-white border border-primary/5 rounded-[48px] p-10 shadow-huge space-y-8 hover:border-accent-gold/20 transition-all duration-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-5">
+                      <div className="size-14 rounded-2xl bg-primary flex items-center justify-center text-accent-gold font-display text-2xl font-bold shadow-huge relative overflow-hidden group-hover:scale-110 transition-transform">
+                        <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        {item.data.profiles?.name?.[0] || 'C'}
                       </div>
-                      <img alt="Post" className="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110" src={item.data.image_url} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    </div>
-                    <div className="flex justify-between items-center px-4">
-                      <div className="space-y-1 flex-1 min-w-0 pr-4">
-                        <p className="text-[8px] font-black text-primary/40 uppercase tracking-widest">Moment</p>
-                        <p className="text-[11px] font-outfit text-primary/60 italic line-clamp-1">{item.data.caption || 'Revelação Studio'}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={(e) => handleShare(item.data.caption || 'Inspiration', e)} className="transition-all active:scale-90 size-8 flex items-center justify-center rounded-full bg-primary/5 text-primary/30 hover:text-primary">
-                          <span className="material-symbols-outlined !text-sm">share</span>
-                        </button>
-                        <button onClick={(e) => toggleLike(item.id, e)} className="transition-all active:scale-90 size-8 flex items-center justify-center rounded-full bg-primary/5">
-                          <span className={`material-symbols-outlined !text-sm ${likedItems.has(item.id) ? 'text-accent-gold' : 'text-primary/20'}`} style={{ fontVariationSettings: likedItems.has(item.id) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
-                        </button>
+                      <div className="space-y-1">
+                        <p className="text-sm font-outfit font-black text-primary uppercase tracking-[0.2em]">{item.data.profiles?.name || 'Membro Elite'}</p>
+                        <div className="flex items-center gap-1 text-accent-gold">
+                          {[...Array(item.data.rating || 5)].map((_, i) => (
+                            <span key={i} className="material-symbols-outlined !text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                          ))}
+                          <span className="text-[8px] font-black uppercase tracking-widest text-primary/30 ml-2 font-outfit">Experiência Verificada</span>
+                        </div>
                       </div>
                     </div>
+                    <span className="material-symbols-outlined !text-5xl text-accent-gold/5 pointer-events-none">format_quote</span>
                   </div>
-                );
-              } else if (item.type === 'TESTIMONIAL') {
-                return (
-                  <div key={item.id} className="relative group animate-reveal col-span-2">
-                    <div className="relative bg-white border border-primary/5 rounded-[48px] p-10 shadow-huge space-y-8 hover:border-accent-gold/20 transition-all duration-700">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-5">
-                          <div className="size-14 rounded-2xl bg-primary flex items-center justify-center text-accent-gold font-display text-2xl font-bold shadow-huge relative overflow-hidden group-hover:scale-110 transition-transform">
-                            <div className="absolute inset-0 bg-accent-gold/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            {item.data.profiles?.name?.[0] || 'C'}
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm font-outfit font-black text-primary uppercase tracking-[0.2em]">{item.data.profiles?.name || 'Membro Elite'}</p>
-                            <div className="flex items-center gap-1 text-accent-gold">
-                              {[...Array(item.data.rating || 5)].map((_, i) => (
-                                <span key={i} className="material-symbols-outlined !text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                              ))}
-                              <span className="text-[8px] font-black uppercase tracking-widest text-primary/30 ml-2 font-outfit">Experiência Verificada</span>
-                            </div>
+
+                  <div className="space-y-6">
+                    <blockquote className="text-xl font-display italic text-primary/80 leading-relaxed max-w-[90%]">
+                      "{item.data.message}"
+                    </blockquote>
+
+                    {item.data.photo_url && (
+                      <div
+                        onClick={() => setExpandedImage(item.data.photo_url)}
+                        className="group/img relative h-64 rounded-[40px] overflow-hidden cursor-zoom-in border border-primary/5 shadow-inner animate-reveal"
+                      >
+                        <img src={item.data.photo_url} className="w-full h-full object-cover grayscale-[20%] group-hover/img:grayscale-0 group-hover/img:scale-105 transition-all duration-[2s]" alt="Result" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="size-14 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white">
+                            <span className="material-symbols-outlined">zoom_in</span>
                           </div>
                         </div>
-                        <span className="material-symbols-outlined !text-5xl text-accent-gold/5 pointer-events-none">format_quote</span>
                       </div>
-
-                      <div className="space-y-6">
-                        <blockquote className="text-xl font-display italic text-primary/80 leading-relaxed max-w-[90%]">
-                          "{item.data.message}"
-                        </blockquote>
-
-                        {item.data.photo_url && (
-                          <div
-                            onClick={() => setExpandedImage(item.data.photo_url)}
-                            className="group/img relative h-96 rounded-[40px] overflow-hidden cursor-zoom-in border border-primary/5 shadow-inner animate-reveal"
-                          >
-                            <img src={item.data.photo_url} className="w-full h-full object-cover grayscale-[20%] group-hover/img:grayscale-0 group-hover/img:scale-105 transition-all duration-[2s]" alt="Result" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-primary/40 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                              <div className="size-14 rounded-full bg-white/20 backdrop-blur-md border border-white/20 flex items-center justify-center text-white">
-                                <span className="material-symbols-outlined">zoom_in</span>
-                              </div>
-                            </div>
-                            <div className="absolute bottom-6 right-8 text-white/40 text-[8px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full bg-black/20 backdrop-blur-sm pointer-events-none">
-                              Ver Resultado em Detalhes
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    )}
                   </div>
-                );
-              }
-              return null;
-            })}
-
-            {feedGrid.length === 0 && (
-              <div className="col-span-2 py-20 text-center opacity-20">
-                <span className="material-symbols-outlined !text-6xl mb-4 text-primary">palette</span>
-                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Telas em preparo</p>
+                </div>
               </div>
-            )}
+            ))}
           </div>
         </section>
       </main>

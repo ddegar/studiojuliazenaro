@@ -16,11 +16,32 @@ const AdminContentCreator: React.FC = () => {
    const [selectedCategory, setSelectedCategory] = useState('Geral');
    const [newCategoryName, setNewCategoryName] = useState('');
    const [isManagingCategories, setIsManagingCategories] = useState(false);
+   const [activeTab, setActiveTab] = useState<'CREATE' | 'MANAGE'>('CREATE');
+   const [existingPosts, setExistingPosts] = useState<any[]>([]);
 
    useEffect(() => {
       fetchServices();
       fetchCategories();
-   }, []);
+      if (activeTab === 'MANAGE') fetchPosts();
+   }, [activeTab]);
+
+   const fetchPosts = async () => {
+      setLoading(true);
+      const { data } = await supabase.from('feed_posts').select('*').order('created_at', { ascending: false });
+      if (data) setExistingPosts(data);
+      setLoading(false);
+   };
+
+   const deletePost = async (id: string) => {
+      if (!confirm('Deseja realmente excluir este post?')) return;
+      try {
+         const { error } = await supabase.from('feed_posts').delete().eq('id', id);
+         if (error) throw error;
+         setExistingPosts(existingPosts.filter(p => p.id !== id));
+      } catch (err: any) {
+         alert('Erro ao excluir: ' + err.message);
+      }
+   };
 
    const fetchServices = async () => {
       const { data } = await supabase.from('services').select('id, name').eq('active', true);
@@ -143,161 +164,210 @@ const AdminContentCreator: React.FC = () => {
                </div>
             </div>
 
-            <button
-               onClick={handlePublish}
-               disabled={loading || !file}
-               className="h-14 px-8 bg-accent-gold text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] font-outfit shadow-huge hover:bg-white transition-all active:scale-95 flex items-center gap-3 disabled:opacity-20"
-            >
-               {loading ? <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div> : (
-                  <>
-                     <span className="material-symbols-outlined !text-xl">send</span>
-                     Transmitir Ritual
-                  </>
-               )}
-            </button>
+            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 shadow-hugest">
+               <button
+                  onClick={() => setActiveTab('CREATE')}
+                  className={`px-6 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${activeTab === 'CREATE' ? 'bg-primary text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}
+               >
+                  Criar
+               </button>
+               <button
+                  onClick={() => setActiveTab('MANAGE')}
+                  className={`px-6 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-500 ${activeTab === 'MANAGE' ? 'bg-primary text-white shadow-lg' : 'text-white/20 hover:text-white/40'}`}
+               >
+                  Gerenciar
+               </button>
+            </div>
          </header>
 
          <main className="relative z-10 flex-1 p-8 overflow-y-auto no-scrollbar pb-32">
-            <div className="max-w-4xl mx-auto space-y-12 animate-reveal">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <button
-                     onClick={() => setContentType('STORY')}
-                     className={`group relative h-32 rounded-[32px] border transition-all duration-500 overflow-hidden text-left p-8 shadow-hugest ${contentType === 'STORY' ? 'bg-accent-gold border-accent-gold' : 'bg-surface-dark/40 border-white/5 hover:border-white/10'}`}
-                  >
-                     <div className="flex flex-col h-full justify-between relative z-10">
-                        <span className={`material-symbols-outlined !text-3xl ${contentType === 'STORY' ? 'text-primary' : 'text-accent-gold'}`}>history_toggle_off</span>
-                        <div>
-                           <p className={`text-[10px] font-black uppercase tracking-[0.2em] font-outfit ${contentType === 'STORY' ? 'text-primary' : 'text-white'}`}>Ephemeral Moment</p>
-                           <p className={`text-xl font-display italic ${contentType === 'STORY' ? 'text-primary/70' : 'text-white/40'}`}>Story (24 Horas)</p>
-                        </div>
-                     </div>
-                  </button>
-                  <button
-                     onClick={() => setContentType('POST')}
-                     className={`group relative h-32 rounded-[32px] border transition-all duration-500 overflow-hidden text-left p-8 shadow-hugest ${contentType === 'POST' ? 'bg-accent-gold border-accent-gold' : 'bg-surface-dark/40 border-white/5 hover:border-white/10'}`}
-                  >
-                     <div className="flex flex-col h-full justify-between relative z-10">
-                        <span className={`material-symbols-outlined !text-3xl ${contentType === 'POST' ? 'text-primary' : 'text-accent-gold'}`}>grid_view</span>
-                        <div>
-                           <p className={`text-[10px] font-black uppercase tracking-[0.2em] font-outfit ${contentType === 'POST' ? 'text-primary' : 'text-white'}`}>Permanent Inspiration</p>
-                           <p className={`text-xl font-display italic ${contentType === 'POST' ? 'text-primary/70' : 'text-white/40'}`}>Post de Feed</p>
-                        </div>
-                     </div>
-                  </button>
-               </div>
+            {activeTab === 'CREATE' ? (
+               <div className="max-w-4xl mx-auto space-y-12 animate-reveal">
+                  {/* ... (Existing Create Content) ... */}
+                  {/* Re-insert original creation form content here in next step if generic replace is hard */}
+                  {/* For specific replace, I will need to target strictly. Since I am replacing the whole Main, I will write the whole Main logic for CREATE tab + MANAGE tab */}
 
-               <div className="bg-surface-dark/40 border border-white/5 rounded-[48px] p-12 space-y-10 shadow-hugest relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-accent-gold/5 blur-[80px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
-
-                  <div className="h-96 w-full max-w-sm mx-auto bg-white/5 border-2 border-dashed border-white/5 rounded-[48px] flex flex-col items-center justify-center gap-6 group/upload cursor-pointer active:scale-95 transition-all relative overflow-hidden shadow-inner hover:border-accent-gold/40">
-                     <input type="file" accept="image/*" onChange={e => {
-                        if (e.target.files && e.target.files[0]) {
-                           setFile(e.target.files[0]);
-                           setIsManagingCategories(false);
-                        }
-                     }} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
-                     {file ? (
-                        <img src={URL.createObjectURL(file)} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover/upload:scale-110" alt="Preview" />
-                     ) : (
-                        <div className="text-center space-y-4">
-                           <div className="size-20 rounded-full bg-accent-gold/10 flex items-center justify-center text-accent-gold group-hover/upload:scale-110 transition-all shadow-huge">
-                              <span className="material-symbols-outlined !text-4xl">add_a_photo</span>
-                           </div>
-                           <div className="space-y-1">
-                              <p className="text-base font-outfit font-bold text-white">Capturar Essência</p>
-                              <p className="text-[10px] text-white/20 uppercase font-black tracking-[0.3em]">Resolução sugerida: 1080x1350</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <button
+                        onClick={() => setContentType('STORY')}
+                        className={`group relative h-32 rounded-[32px] border transition-all duration-500 overflow-hidden text-left p-8 shadow-hugest ${contentType === 'STORY' ? 'bg-accent-gold border-accent-gold' : 'bg-surface-dark/40 border-white/5 hover:border-white/10'}`}
+                     >
+                        <div className="flex flex-col h-full justify-between relative z-10">
+                           <span className={`material-symbols-outlined !text-3xl ${contentType === 'STORY' ? 'text-primary' : 'text-accent-gold'}`}>history_toggle_off</span>
+                           <div>
+                              <p className={`text-[10px] font-black uppercase tracking-[0.2em] font-outfit ${contentType === 'STORY' ? 'text-primary' : 'text-white'}`}>Ephemeral Moment</p>
+                              <p className={`text-xl font-display italic ${contentType === 'STORY' ? 'text-primary/70' : 'text-white/40'}`}>Story (24 Horas)</p>
                            </div>
                         </div>
-                     )}
+                     </button>
+                     <button
+                        onClick={() => setContentType('POST')}
+                        className={`group relative h-32 rounded-[32px] border transition-all duration-500 overflow-hidden text-left p-8 shadow-hugest ${contentType === 'POST' ? 'bg-accent-gold border-accent-gold' : 'bg-surface-dark/40 border-white/5 hover:border-white/10'}`}
+                     >
+                        <div className="flex flex-col h-full justify-between relative z-10">
+                           <span className={`material-symbols-outlined !text-3xl ${contentType === 'POST' ? 'text-primary' : 'text-accent-gold'}`}>grid_view</span>
+                           <div>
+                              <p className={`text-[10px] font-black uppercase tracking-[0.2em] font-outfit ${contentType === 'POST' ? 'text-primary' : 'text-white'}`}>Permanent Inspiration</p>
+                              <p className={`text-xl font-display italic ${contentType === 'POST' ? 'text-primary/70' : 'text-white/40'}`}>Post de Feed</p>
+                           </div>
+                        </div>
+                     </button>
                   </div>
 
-                  <div className="space-y-10 max-w-2xl mx-auto">
-                     <div className="space-y-4">
-                        <label className="text-[9px] font-black text-accent-gold/40 uppercase tracking-[0.4em] px-4">Narrativa da Imagem</label>
-                        <textarea
-                           value={caption}
-                           onChange={e => setCaption(e.target.value)}
-                           placeholder="Dê um toque de luxo e carinho à sua publicação..."
-                           className="w-full bg-background-dark/40 border border-white/5 rounded-[32px] p-8 text-sm focus:border-accent-gold/40 focus:bg-background-dark transition-all outline-none h-40 italic placeholder:text-white/10"
-                        />
+                  <div className="bg-surface-dark/40 border border-white/5 rounded-[48px] p-12 space-y-10 shadow-hugest relative overflow-hidden group">
+                     {/* ... (Upload & Form Logic) ... */}
+                     <div className="absolute top-0 right-0 w-64 h-64 bg-accent-gold/5 blur-[80px] rounded-full translate-x-1/2 -translate-y-1/2"></div>
+
+                     <div className="h-96 w-full max-w-sm mx-auto bg-white/5 border-2 border-dashed border-white/5 rounded-[48px] flex flex-col items-center justify-center gap-6 group/upload cursor-pointer active:scale-95 transition-all relative overflow-hidden shadow-inner hover:border-accent-gold/40">
+                        <input type="file" accept="image/*" onChange={e => {
+                           if (e.target.files && e.target.files[0]) {
+                              setFile(e.target.files[0]);
+                              setIsManagingCategories(false);
+                           }
+                        }} className="absolute inset-0 opacity-0 z-10 cursor-pointer" />
+                        {file ? (
+                           <img src={URL.createObjectURL(file)} className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover/upload:scale-110" alt="Preview" />
+                        ) : (
+                           <div className="text-center space-y-4">
+                              <div className="size-20 rounded-full bg-accent-gold/10 flex items-center justify-center text-accent-gold group-hover/upload:scale-110 transition-all shadow-huge">
+                                 <span className="material-symbols-outlined !text-4xl">add_a_photo</span>
+                              </div>
+                              <div className="space-y-1">
+                                 <p className="text-base font-outfit font-bold text-white">Capturar Essência</p>
+                                 <p className="text-[10px] text-white/20 uppercase font-black tracking-[0.3em]">Resolução sugerida: 1080x1350</p>
+                              </div>
+                           </div>
+                        )}
                      </div>
 
-                     {contentType === 'POST' && (
-                        <section className="space-y-6">
-                           <div className="flex items-center justify-between px-4">
-                              <label className="text-[9px] font-black text-accent-gold/40 uppercase tracking-[0.4em]">Curadoria de Categoria</label>
-                              <button
-                                 onClick={() => setIsManagingCategories(!isManagingCategories)}
-                                 className="text-[9px] font-black text-accent-gold uppercase tracking-widest hover:text-white transition-colors flex items-center gap-2"
-                              >
-                                 <span className="material-symbols-outlined !text-sm">{isManagingCategories ? 'close' : 'settings'}</span>
-                                 {isManagingCategories ? 'Fechar Gestão' : 'Gerenciar Filtros'}
-                              </button>
-                           </div>
+                     <div className="space-y-10 max-w-2xl mx-auto">
+                        <div className="space-y-4">
+                           <label className="text-[9px] font-black text-accent-gold/40 uppercase tracking-[0.4em] px-4">Narrativa da Imagem</label>
+                           <textarea
+                              value={caption}
+                              onChange={e => setCaption(e.target.value)}
+                              placeholder="Dê um toque de luxo e carinho à sua publicação..."
+                              className="w-full bg-background-dark/40 border border-white/5 rounded-[32px] p-8 text-sm focus:border-accent-gold/40 focus:bg-background-dark transition-all outline-none h-40 italic placeholder:text-white/10"
+                           />
+                        </div>
 
-                           {isManagingCategories ? (
-                              <div className="bg-white/5 border border-white/5 rounded-[32px] p-8 space-y-6 animate-reveal shadow-huge">
-                                 <div className="flex gap-4">
-                                    <input
-                                       type="text"
-                                       placeholder="Nova categoria (ex: Extensões)"
-                                       className="flex-1 h-16 bg-background-dark/60 border border-white/5 rounded-2xl px-6 text-sm outline-none focus:border-accent-gold/40 transition-all placeholder:text-white/10"
-                                       value={newCategoryName}
-                                       onChange={e => setNewCategoryName(e.target.value)}
-                                    />
-                                    <button onClick={handleAddCategory} className="size-16 rounded-2xl bg-accent-gold text-primary flex items-center justify-center shadow-huge active:scale-90 transition-all">
-                                       <span className="material-symbols-outlined">add</span>
-                                    </button>
-                                 </div>
-                                 <div className="flex flex-wrap gap-3 pt-4 border-t border-white/5">
-                                    {categories.map(cat => (
-                                       <div key={cat.id} className="flex items-center gap-3 pl-5 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60 group">
-                                          {cat.name}
-                                          {cat.name !== 'Geral' && (
-                                             <button onClick={() => handleDeleteCategory(cat.id, cat.name)} className="size-6 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-all flex items-center justify-center">
-                                                <span className="material-symbols-outlined !text-xs">close</span>
-                                             </button>
-                                          )}
-                                       </div>
-                                    ))}
-                                 </div>
-                              </div>
-                           ) : (
-                              <div className="relative group/select">
-                                 <select
-                                    value={selectedCategory}
-                                    onChange={e => setSelectedCategory(e.target.value)}
-                                    className="w-full h-18 bg-background-dark/40 border border-white/5 rounded-[24px] px-8 text-sm focus:border-accent-gold/40 focus:bg-background-dark appearance-none outline-none transition-all font-medium text-white/80"
+                        {contentType === 'POST' && (
+                           <section className="space-y-6">
+                              <div className="flex items-center justify-between px-4">
+                                 <label className="text-[9px] font-black text-accent-gold/40 uppercase tracking-[0.4em]">Curadoria de Categoria</label>
+                                 <button
+                                    onClick={() => setIsManagingCategories(!isManagingCategories)}
+                                    className="text-[9px] font-black text-accent-gold uppercase tracking-widest hover:text-white transition-colors flex items-center gap-2"
                                  >
-                                    {categories.map(cat => (
-                                       <option key={cat.id} value={cat.name} className="bg-surface-dark text-white">{cat.name}</option>
-                                    ))}
-                                 </select>
-                                 <span className="material-symbols-outlined absolute right-8 top-1/2 -translate-y-1/2 text-accent-gold group-hover/select:rotate-180 transition-transform pointer-events-none">expand_more</span>
+                                    <span className="material-symbols-outlined !text-sm">{isManagingCategories ? 'close' : 'settings'}</span>
+                                    {isManagingCategories ? 'Fechar Gestão' : 'Gerenciar Filtros'}
+                                 </button>
                               </div>
-                           )}
-                        </section>
-                     )}
 
-                     <div className="space-y-4">
-                        <label className="text-[9px] font-black text-accent-gold/40 uppercase tracking-[0.4em] px-4">Vincular Ritual (CTA)</label>
-                        <div className="relative group/select">
-                           <select
-                              value={selectedServiceId}
-                              onChange={e => setSelectedServiceId(e.target.value)}
-                              className="w-full h-18 bg-background-dark/40 border border-white/5 rounded-[24px] px-8 text-sm focus:border-accent-gold/40 focus:bg-background-dark appearance-none outline-none transition-all font-medium text-white/80"
-                           >
-                              <option value="" className="bg-surface-dark text-white">Nenhum serviço vinculado</option>
-                              {services.map(s => (
-                                 <option key={s.id} value={s.id} className="bg-surface-dark text-white">{s.name}</option>
-                              ))}
-                           </select>
-                           <span className="material-symbols-outlined absolute right-8 top-1/2 -translate-y-1/2 text-accent-gold pointer-events-none">unfold_more</span>
+                              {isManagingCategories ? (
+                                 <div className="bg-white/5 border border-white/5 rounded-[32px] p-8 space-y-6 animate-reveal shadow-huge">
+                                    <div className="flex gap-4">
+                                       <input
+                                          type="text"
+                                          placeholder="Nova categoria (ex: Extensões)"
+                                          className="flex-1 h-16 bg-background-dark/60 border border-white/5 rounded-2xl px-6 text-sm outline-none focus:border-accent-gold/40 transition-all placeholder:text-white/10"
+                                          value={newCategoryName}
+                                          onChange={e => setNewCategoryName(e.target.value)}
+                                       />
+                                       <button onClick={handleAddCategory} className="size-16 rounded-2xl bg-accent-gold text-primary flex items-center justify-center shadow-huge active:scale-90 transition-all">
+                                          <span className="material-symbols-outlined">add</span>
+                                       </button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-3 pt-4 border-t border-white/5">
+                                       {categories.map(cat => (
+                                          <div key={cat.id} className="flex items-center gap-3 pl-5 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60 group">
+                                             {cat.name}
+                                             {cat.name !== 'Geral' && (
+                                                <button onClick={() => handleDeleteCategory(cat.id, cat.name)} className="size-6 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-all flex items-center justify-center">
+                                                   <span className="material-symbols-outlined !text-xs">close</span>
+                                                </button>
+                                             )}
+                                          </div>
+                                       ))}
+                                    </div>
+                                 </div>
+                              ) : (
+                                 <div className="relative group/select">
+                                    <select
+                                       value={selectedCategory}
+                                       onChange={e => setSelectedCategory(e.target.value)}
+                                       className="w-full h-18 bg-background-dark/40 border border-white/5 rounded-[24px] px-8 text-sm focus:border-accent-gold/40 focus:bg-background-dark appearance-none outline-none transition-all font-medium text-white/80"
+                                    >
+                                       {categories.map(cat => (
+                                          <option key={cat.id} value={cat.name} className="bg-surface-dark text-white">{cat.name}</option>
+                                       ))}
+                                    </select>
+                                    <span className="material-symbols-outlined absolute right-8 top-1/2 -translate-y-1/2 text-accent-gold group-hover/select:rotate-180 transition-transform pointer-events-none">expand_more</span>
+                                 </div>
+                              )}
+                           </section>
+                        )}
+
+                        <div className="space-y-4">
+                           <label className="text-[9px] font-black text-accent-gold/40 uppercase tracking-[0.4em] px-4">Vincular Ritual (CTA)</label>
+                           <div className="relative group/select">
+                              <select
+                                 value={selectedServiceId}
+                                 onChange={e => setSelectedServiceId(e.target.value)}
+                                 className="w-full h-18 bg-background-dark/40 border border-white/5 rounded-[24px] px-8 text-sm focus:border-accent-gold/40 focus:bg-background-dark appearance-none outline-none transition-all font-medium text-white/80"
+                              >
+                                 <option value="" className="bg-surface-dark text-white">Nenhum serviço vinculado</option>
+                                 {services.map(s => (
+                                    <option key={s.id} value={s.id} className="bg-surface-dark text-white">{s.name}</option>
+                                 ))}
+                              </select>
+                              <span className="material-symbols-outlined absolute right-8 top-1/2 -translate-y-1/2 text-accent-gold pointer-events-none">unfold_more</span>
+                           </div>
                         </div>
+
+                        <button
+                           onClick={handlePublish}
+                           disabled={loading || !file}
+                           className="w-full h-16 bg-accent-gold text-primary rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] font-outfit shadow-huge hover:bg-white transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-20 mt-8"
+                        >
+                           {loading ? <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div> : (
+                              <>
+                                 <span className="material-symbols-outlined !text-xl">send</span>
+                                 Transmitir Ritual
+                              </>
+                           )}
+                        </button>
                      </div>
                   </div>
                </div>
-            </div>
+            ) : (
+               <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-reveal">
+                  {existingPosts.length === 0 ? (
+                     <div className="col-span-full py-20 text-center opacity-30">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white">Nenhum conteudo encontrado</p>
+                     </div>
+                  ) : existingPosts.map(post => (
+                     <div key={post.id} className="group relative bg-surface-dark border border-white/5 rounded-[32px] overflow-hidden">
+                        <div className="aspect-[4/5] relative">
+                           <img src={post.image_url} className="w-full h-full object-cover" alt="" />
+                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                           <div className="absolute top-4 left-4">
+                              <span className="text-[8px] font-black bg-black/50 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 uppercase tracking-widest text-white/80">{post.category}</span>
+                           </div>
+                           <div className="absolute bottom-4 left-4 right-4">
+                              <p className="text-xs text-white/80 italic font-display line-clamp-2">{post.caption}</p>
+                           </div>
+                        </div>
+                        <div className="p-4 border-t border-white/5 flex gap-2">
+                           <button onClick={() => deletePost(post.id)} className="flex-1 h-10 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all">
+                              <span className="material-symbols-outlined !text-sm">delete</span>
+                              Excluir
+                           </button>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            )}
          </main>
 
          {/* Visual Safe Area Inset */}
